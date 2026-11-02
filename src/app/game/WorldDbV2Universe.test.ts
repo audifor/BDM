@@ -61,6 +61,23 @@ describe('WorldDB V2 universe selection', () => {
     const conflicting = { ...second, countries: second.countries.map((country, i) => i === 0 ? { ...country, reference_data: { ...country.reference_data, nom_pays: 'Conflicting country' } } : country) }
     await expect(createWorldDbV2UniverseFromSnapshots([snapshots[0]!, conflicting], snapshots[0]!.clubs[0]!.entity_id)).rejects.toThrow('Conflicting WorldDB identity: countries/')
   }, 120_000)
+  it('assigns unemployed original coaches once across active competitions and preserves their identity', async () => {
+    const freeStaff = [1, 2].map(index => ({
+      entity_id: `pbm:DYN_person:unemployed-coach-${index}`, parent_id: null, source_table: 'DYN_person',
+      reference_data: { prenom: 'Libre', nom: `Coach ${index}`, sexe: 0, annee_naissance: 1980, mois_naissance: 1, jour_naissance: 1, nationalite_id: 8, job_preference_coach: 100, job_preference_chairman: 0 },
+    }))
+    const snapshots = fixtureSnapshots().map((snapshot, index) => ({
+      ...snapshot,
+      people: snapshot.people.filter(person => index > 1 || !(person.source_table === 'DYN_person' && person.parent_id === snapshot.clubs[0]!.entity_id)),
+      freeStaff,
+    }))
+    const world = await createWorldDbV2UniverseFromSnapshots(snapshots, snapshots[0]!.clubs[0]!.entity_id)
+    const assignments = Object.values(world.teamStaffAssignmentsById).filter(assignment => freeStaff.some(person => person.entity_id === assignment.staffPersonId))
+    expect(assignments).toHaveLength(2)
+    expect(new Set(assignments.map(assignment => assignment.staffPersonId))).toEqual(new Set(freeStaff.map(person => person.entity_id)))
+    expect(new Set(assignments.map(assignment => assignment.teamId)).size).toBe(2)
+    for (const person of freeStaff) expect(world.personsById[person.entity_id as never]).toBeDefined()
+  }, 120_000)
 })
 
 /** Transport-shaped synthetic fixtures exercise the adapter in CI without the private PBM master. */

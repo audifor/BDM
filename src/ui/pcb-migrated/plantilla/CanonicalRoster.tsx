@@ -46,10 +46,11 @@ import { classifyLineupCandidate } from '@/engine/tactics/LineupAvailability';
 
 import "./CanonicalRoster.css";
 
-function compactMoney(value: number) {
+function compactMoney(value: number, currencyCode = "USD") {
+  const symbol = new Intl.NumberFormat("en-US", { style: "currency", currency: currencyCode, currencyDisplay: "narrowSymbol" }).formatToParts(0).find(part => part.type === "currency")!.value;
   return value >= 1_000_000
-    ? `$${Math.round(value / 1_000_000)}M`
-    : `$${Math.round(value / 1_000)}K`;
+    ? `${symbol}${Math.round(value / 1_000_000)}M`
+    : `${symbol}${Math.round(value / 1_000)}K`;
 }
 
 /**
@@ -469,9 +470,11 @@ export function CanonicalRoster({
             .annualSalary ?? 0,
         render: (player) => {
           const contract = getCurrentPlayerContract(world, player.id);
+          const organizationId = world.teams[team.id]?.organizationId;
+          const currency = organizationId === undefined ? undefined : world.organizationFinancialProfilesById[organizationId]?.baseCurrencyCode;
           return contract === undefined
             ? (v4Mode ? "No consta" : "Beca")
-            : compactMoney(contract.compensation.annualSalary);
+            : compactMoney(contract.compensation.annualSalary, currency);
         },
       },
       {
@@ -550,6 +553,7 @@ export function CanonicalRoster({
       onLineupSlotClear,
       playerMenu,
       ratingEvaluationLookup,
+      team.id,
       world,
     ],
   );

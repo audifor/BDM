@@ -287,6 +287,7 @@ function InjuredBoard({
               <option value="ACCELERATED_REHAB">ACCELERATED REHAB</option>
             </select>
           </label>
+          {!selected.canChangeRehabilitation && <p>Hay una revisión pendiente. Ve a Overview y elige CLEAR FOR PLAY o CONTINUE RECOVERY.</p>}
         </aside>
       )}
     </div>

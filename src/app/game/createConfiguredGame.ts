@@ -1,5 +1,6 @@
-import { attachWorldDbCompetitionRuntime, updateGameWorld, type GameWorld } from '@/domain/world'
+import { withSingleWorldValidation, attachWorldDbCompetitionRuntime, updateGameWorld, type GameWorld } from '@/domain/world'
 import { createInitialCoachRpgProfile } from '@/domain/coachRpg'
+import { processClubFinanceForDate } from '@/engine/finance/ClubFinanceLifecycle'
 import { ACB_CAREER_START_DATE, ACB_TEST_UNIVERSE_ID } from '@/data/acb2026'
 import { parseGameDate } from '@/domain/date'
 import { createAcbTestGame } from './createAcbTestGame'
@@ -57,27 +58,33 @@ export async function createConfiguredGameAsync(
 ): Promise<GameWorld> {
   if (options.universeId === WORLD_DB_V2_UNIVERSE_ID) {
     if(!options.worldDbV2)throw new Error('WorldDB V2 source, date and seed are required')
+    let world: GameWorld
     if(options.worldDbV2.activeCompetitionIds){
       const { createWorldDbV2Universe } = await import('./WorldDbV2Universe')
       const active = options.worldDbV2.activeCompetitionIds
       const reduced = options.worldDbV2.reducedCompetitionIds ?? []
       if (reduced.some(id => !active.includes(id)) || new Set(reduced).size !== reduced.length) throw new Error('Reduced leagues must be unique and active')
       if (options.worldDbV2.includeNcaa) {
-        const world = await createWorldDbV2UniverseWithNcaa(options.worldDbV2.sourceRoot, options.worldDbV2.startDate, options.worldDbV2.seed, options.userTeamKey ?? '', active, options.userCoachCreation, options.ncaaSeed ?? 202627)
-        return options.userTeamKey?.startsWith('ncaa:') && options.userCoachCreation !== undefined ? applyUserCoachCreation(world, options.userCoachCreation) : world
+        world = await createWorldDbV2UniverseWithNcaa(options.worldDbV2.sourceRoot, options.worldDbV2.startDate, options.worldDbV2.seed, options.userTeamKey ?? '', active, options.userCoachCreation, options.ncaaSeed ?? 202627)
+        if (options.userTeamKey?.startsWith('ncaa:') && options.userCoachCreation !== undefined) world = applyUserCoachCreation(world, options.userCoachCreation)
+      } else {
+        world = await createWorldDbV2Universe(options.worldDbV2.sourceRoot,options.worldDbV2.startDate,options.worldDbV2.seed,options.userTeamKey??'',active,options.userCoachCreation)
+        if (reduced.length > 0) {
+          const runtime = world.worldDbCompetitionRuntime
+          if (!runtime?.worldDbV2) throw new Error('WorldDB V2 runtime provenance is required for persisted league detail')
+          world = attachWorldDbCompetitionRuntime(world, { ...runtime, worldDbV2: { ...runtime.worldDbV2, reducedCompetitionIds: reduced } })
+        }
       }
-      const world = await createWorldDbV2Universe(options.worldDbV2.sourceRoot,options.worldDbV2.startDate,options.worldDbV2.seed,options.userTeamKey??'',active,options.userCoachCreation)
-      if (reduced.length === 0) return world
-      const runtime = world.worldDbCompetitionRuntime
-      if (!runtime?.worldDbV2) throw new Error('WorldDB V2 runtime provenance is required for persisted league detail')
-      return attachWorldDbCompetitionRuntime(world, { ...runtime, worldDbV2: { ...runtime.worldDbV2, reducedCompetitionIds: reduced } })
+    } else if (options.worldDbV2.includeNcaa) {
+      world = await createWorldDbV2UniverseWithNcaa(options.worldDbV2.sourceRoot, options.worldDbV2.startDate, options.worldDbV2.seed, options.userTeamKey ?? '', [], options.userCoachCreation, options.ncaaSeed ?? 202627)
+      if (options.userTeamKey?.startsWith('ncaa:') && options.userCoachCreation !== undefined) world = applyUserCoachCreation(world, options.userCoachCreation)
+    } else {
+      const { createWorldDbV2Game } = await import('./WorldDbV2Game')
+      world = await createWorldDbV2Game(options.worldDbV2.sourceRoot, options.worldDbV2.startDate, options.worldDbV2.seed, options.userTeamKey ?? '', options.userCoachCreation, options.worldDbV2.competitionId)
     }
-    if (options.worldDbV2.includeNcaa) {
-      const world = await createWorldDbV2UniverseWithNcaa(options.worldDbV2.sourceRoot, options.worldDbV2.startDate, options.worldDbV2.seed, options.userTeamKey ?? '', [], options.userCoachCreation, options.ncaaSeed ?? 202627)
-      return options.userTeamKey?.startsWith('ncaa:') && options.userCoachCreation !== undefined ? applyUserCoachCreation(world, options.userCoachCreation) : world
-    }
-    const { createWorldDbV2Game } = await import('./WorldDbV2Game')
-    return createWorldDbV2Game(options.worldDbV2.sourceRoot,options.worldDbV2.startDate,options.worldDbV2.seed,options.userTeamKey??'',options.userCoachCreation,options.worldDbV2.competitionId)
+    // As in createNewGame, the creation date must run once before the first Advance Day
+    // changes the date. Otherwise every contract anniversary on day zero is skipped.
+    return withSingleWorldValidation(world, initial => processClubFinanceForDate(initial, initial.currentDate).world)
   }
   if (options.universeId === WORLD_DB_SPAIN_UNIVERSE_ID) {
     return createWorldDbSpainGame(options.userTeamKey ?? '', access, BDM_GAME_BALANCE_V1, options.userCoachCreation)

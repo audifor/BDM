@@ -233,7 +233,7 @@ export function MarketWorkspace({ initialWorld, initialTab = 'explore' }: { read
                 const years = 'salary' in negotiation && negotiation.years !== undefined ? negotiation.years : preparation?.termProposalYears ?? known.years
                 return <MarketViabilityPanel viability={buildMarketViability(world, team.id, { ...(salary === undefined ? {} : { annualSalary: salary }), ...(years === undefined ? {} : { years }) })} label="Viabilidad económica de esta operación" />
               })()}
-              <p>Contact: {negotiation.status === 'CONTACTED' ? 'Awaiting player response' : 'CONTACTED'} · Response: {negotiation.contactResponse?.outcome ?? 'Pending'}</p>
+              <p>Contact: {negotiation.contactResponse !== undefined ? 'Response received' : negotiation.status === 'CONTACTED' ? 'Awaiting player response' : 'CONTACTED'} · Response: {negotiation.contactResponse?.outcome ?? 'Pending'}</p>
               {marketActorLabel(world, negotiation.contactResponsibleActor ?? negotiation.responsibleActor, negotiation.startedOn) !== undefined && <p>Contact handled by: {marketActorLabel(world, negotiation.contactResponsibleActor ?? negotiation.responsibleActor, negotiation.startedOn)}</p>}
               {marketActorLabel(world, negotiation.offerResponsibleActor, negotiation.offerSubmittedOn) !== undefined && <p>Offer submitted by: {marketActorLabel(world, negotiation.offerResponsibleActor, negotiation.offerSubmittedOn)}</p>}
               <p>Negotiation: {negotiation.status}{'salary' in negotiation && negotiation.salary !== undefined ? ` · ${formatMoney(negotiation.salary)} / ${negotiation.years} years` : ''}</p>

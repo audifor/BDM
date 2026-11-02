@@ -136,6 +136,10 @@ describe('MedicalWorkspace', () => {
     const view = mountMedicalWorkspace(updateGameWorld(base, { injuries: [injury] }))
 
     expect(screen.getAllByText('RETURN-TO-PLAY REVIEW').length).toBeGreaterThan(0)
+    fireEvent.click(screen.getByRole('button', { name: /^Injured/ }))
+    expect(screen.getByLabelText('Rehab plan')).toBeDisabled()
+    expect(screen.getByText(/Hay una revisión pendiente/)).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /^Overview/ }))
     fireEvent.click(screen.getByRole('button', { name: 'CONTINUE RECOVERY' }))
     let updated = useGameStore.getState().world!
     expect(updated.injuriesById[injury.id]?.expectedReturnDate).toBe(injury.expectedReturnDate)

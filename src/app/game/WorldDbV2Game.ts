@@ -3,7 +3,7 @@ import additionalFormats from '@/data/worlddb-v2/additional-formats.json';
 import globalFormats from '@/data/worlddb-v2/global-formats.json';
 import { parseWorldCompetitionRuntimeBundle, parseWorldCompetitionFormatDocument, type WorldCompetitionRuntimeBundle } from '@/domain/competition';
 import { parseGameDate } from '@/domain/date';
-import { countryIdFromString, playerIdFromString, personIdFromString, teamIdFromString } from '@/domain/ids';
+import { countryIdFromString, playerIdFromString, personIdFromString, staffPersonIdFromString, teamIdFromString } from '@/domain/ids';
 import { createPerson } from '@/domain/person';
 import { calculateAge, createPlayer } from '@/domain/player';
 import { PLAYER_TRUTH_RATING_KEYS, PLAYER_TRUTH_TENDENCY_KEYS } from '@/domain/player/PlayerTruthCatalog';
@@ -20,6 +20,8 @@ import { pinGLeagueSourceMemberships } from './GLeagueSourceGroups';
 import { generateCanonicalDevelopmentProfile, generateCanonicalRatings } from '@/engine/world/CanonicalPlayerTruthGenerator';
 import { generatePlayerBio } from '@/engine/world/PlayerBioGenerator';
 import { generateInitialTeamStaff } from '@/engine/world/StaffGenerator';
+import { generateStaffPerson } from '@/engine/world/StaffSandboxGenerator';
+import type { StaffRoleId } from '@/domain/staff';
 import { hashStringToSeed } from '@/engine/random';
 import { ensureUserClubBoardState } from '@/engine/board';
 import { ensureCanonicalFinanceFoundation, resolveOrganizationCurrency } from '@/domain/finance';
@@ -73,7 +75,7 @@ export function projectWorldDbV2(snapshot: WorldDbV2Snapshot, config: WorldDbV2C
     const gender = snapshot.competitions[0]?.reference_data.sexe === 1 ? 'female' as const : 'male' as const;
     const persons: WorldDbGameBootstrapSliceV1['persons'][number][] = [];
     const players: WorldDbGameBootstrapSliceV1['players'][number][] = [];
-    for (const entity of snapshot.people) {
+    for (const entity of [...snapshot.people, ...(snapshot.freeStaff ?? [])]) {
         const r = entity.reference_data, id = entity.entity_id, isPlayer = entity.source_table === 'DYN_joueur';
         if (isPlayer && (r.is_alive === 0 || r.retraite === 1))
             continue;
@@ -97,9 +99,11 @@ export function projectWorldDbV2(snapshot: WorldDbV2Snapshot, config: WorldDbV2C
     const rosterTeamByPlayerId = new Map(snapshot.people.filter(e => e.source_table === 'DYN_joueur')
         .map(e => [e.entity_id, e.parent_id] as const));
     for (const team of teams) {
-        const staff = snapshot.people.filter(e => e.source_table === 'DYN_person' && e.parent_id === team.teamId).sort((a, b) => Number(b.reference_data.job_preference_coach) - Number(a.reference_data.job_preference_coach) || a.entity_id.localeCompare(b.entity_id));
-        const coach = staff.find(e => !allowSimulationPopulation || (Number(e.reference_data.job_preference_coach ?? 0) > 0
-            && Number(e.reference_data.job_preference_coach ?? 0) > Number(e.reference_data.job_preference_chairman ?? 0)));
+        const coachingPreference = (e: import('@/tauri/TauriWorldDbV2').WorldDbV2Entity) => Math.max(...['coach', 'assistant_coach', 'offense_coach', 'defense_coach'].map(role => Number(e.reference_data[`job_preference_${role}`] ?? 0)));
+        const staff = snapshot.people.filter(e => e.source_table === 'DYN_person' && e.parent_id === team.teamId && coachingPreference(e) > Number(e.reference_data.job_preference_chairman ?? 0)).sort((a, b) => Number(b.reference_data.job_preference_coach) - Number(a.reference_data.job_preference_coach) || a.entity_id.localeCompare(b.entity_id));
+        // Two original clubs have only a chairman. The fictional career appoints an
+        // existing unemployed coach before its clock starts; a chairman never becomes staff.
+        const coach = staff[0] ?? (snapshot.freeStaff ?? []).find(e => coachingPreference(e) > Number(e.reference_data.job_preference_chairman ?? 0) && !staffProfiles.some(profile => profile.staffId === e.entity_id));
         if (coach === undefined && !allowSimulationPopulation)
             throw new Error(`PBM pilot club lacks an original head-coach candidate: ${team.teamId}`);
         const generated = generateInitialTeamStaff(teamIdFromString(team.teamId), 'assistantCoach', day);
@@ -132,7 +136,7 @@ export function projectWorldDbV2(snapshot: WorldDbV2Snapshot, config: WorldDbV2C
         const attributes: Record<string, number> = {};
         STAFF_PROFESSIONAL_ATTRIBUTE_KEYS.forEach((key, i) => { for (let j = Math.floor(i * 80 / STAFF_PROFESSIONAL_ATTRIBUTE_KEYS.length); j < Math.floor((i + 1) * 80 / STAFF_PROFESSIONAL_ATTRIBUTE_KEYS.length); j++)
             attributes[`STAFF_ATTRIBUTE_${String(j + 1).padStart(2, '0')}`] = generated.person.professional.attributes[key]; });
-        staffProfiles.push({ staffId: coachId, personId: coachId, attributes, specialismIds: [] });
+        staffProfiles.push({ staffId: coachId, personId: coachId, attributes, specialismIds: [], ...(coach === undefined ? {} : { marketRole: 'headCoach' }) });
         staffAssignments.push({ assignmentId: `${coachId}:headCoach:${team.teamId}`, staffId: coachId, teamId: team.teamId, roleCode: 'headCoach', assignedOn: day });
         const originalRosterSize = players.filter(p => rosterTeamByPlayerId.get(p.playerId) === team.teamId).length;
         if (originalRosterSize < 5 && !allowSimulationPopulation)
@@ -173,6 +177,23 @@ export function projectWorldDbV2(snapshot: WorldDbV2Snapshot, config: WorldDbV2C
             });
             rosterTeamByPlayerId.set(playerId, team.teamId);
         }
+    }
+    const rolePreferences: readonly [string, StaffRoleId][] = [
+        ['job_preference_coach', 'assistantCoach'], ['job_preference_assistant_coach', 'assistantCoach'],
+        ['job_preference_offense_coach', 'offensiveSpecialist'], ['job_preference_defense_coach', 'defensiveSpecialist'],
+        ['job_preference_head_youth_development', 'playerDevelopmentCoach'], ['job_preference_scout', 'regionalScout'],
+        ['job_preference_physio', 'physiotherapist'], ['job_preference_director', 'sportingDirector'], ['job_preference_pt', 'strengthConditioningCoach'],
+    ];
+    for (const entity of [...snapshot.people, ...(snapshot.freeStaff ?? [])].filter(e => e.source_table === 'DYN_person')) {
+        if (staffProfiles.some(profile => profile.staffId === entity.entity_id)) continue;
+        const r = entity.reference_data;
+        const [preference, role] = [...rolePreferences].sort(([a], [b]) => Number(r[b] ?? 0) - Number(r[a] ?? 0))[0]!;
+        if (!Number(r[preference]) || Number(r.job_preference_chairman ?? 0) >= Number(r[preference])) continue;
+        const generated = generateStaffPerson(staffPersonIdFromString(entity.entity_id), role, 2);
+        const attributes: Record<string, number> = {};
+        STAFF_PROFESSIONAL_ATTRIBUTE_KEYS.forEach((key, i) => { for (let j = Math.floor(i * 80 / STAFF_PROFESSIONAL_ATTRIBUTE_KEYS.length); j < Math.floor((i + 1) * 80 / STAFF_PROFESSIONAL_ATTRIBUTE_KEYS.length); j++) attributes[`STAFF_ATTRIBUTE_${String(j + 1).padStart(2, '0')}`] = generated.professional.attributes[key]; });
+        staffProfiles.push({ staffId: entity.entity_id, personId: entity.entity_id, attributes, specialismIds: [], marketRole: role });
+        if (entity.parent_id !== null) staffAssignments.push({ assignmentId: `${entity.entity_id}:${role}:${entity.parent_id}`, staffId: entity.entity_id, teamId: entity.parent_id, roleCode: role, assignedOn: day });
     }
     const result: WorldDbGameBootstrapSliceV1 = { schemaVersion: 1, source: { databaseId: 'worlddb-v2-projection:' + snapshot.manifest.master.sha256, schemaId: bundle.worldDbSchema }, ecosystem: { ecosystemId: ECOSYSTEM, name: config.name + ' PBM ecosystem', kind: 'fibaLike', category: gender === 'female' ? 'women' : 'men' }, competition: { competitionId: COMPETITION, name: config.name + ' · PBM V2', gender, ecosystemId: ECOSYSTEM }, season: { competitionSeasonId: EDITION, seasonId: 'worlddb-v2:season:' + (config.sourceCompetitionId === 'pbm:DYN_championnat:5' ? '' : config.sourceCompetitionId + ':') + day, label: `${year}-${year + 1} · fictional PBM snapshot`, startDate: day, endDate: worldDbV2SeasonEnd(config, day), provenance: 'DERIVED_SIMULATION_FROM_B04' }, countries, teams, persons, players, staffProfiles, staffAssignments, organizations: teams.map(t => ({ organizationId: t.organizationId, entityId: t.teamId, legalName: t.name, foundedYear: null, dissolvedYear: null, primaryPlaceId: null, website: null })), organizationSections: teams.map(t => ({ sectionId: t.organizationSectionId, organizationId: t.organizationId, sport: 'BASKETBALL', gender: t.gender === 'female' ? 'FEMALE' : 'MALE', categoryScope: 'SENIOR', canonicalName: t.name, validFrom: null, validTo: null })), rosterAssignments: players.map(p => ({
         rosterId: p.playerId.startsWith('bdm:generated-player:') ? 'bdm:roster:' + p.playerId : 'pbm:roster:' + p.playerId,
@@ -249,5 +270,5 @@ export async function createWorldDbV2GameFromSnapshot(snapshot: WorldDbV2Snapsho
     }
 }
 export async function createWorldDbV2Game(sourceRoot: string, startDate: string, seed: string, teamId: string, userCoachCreation?: UserCoachCreationInput, competitionId?: string) {
-    return createWorldDbV2GameFromSnapshot(await buildWorldDbV2(sourceRoot, startDate, seed, competitionId), teamId, userCoachCreation);
+    return createWorldDbV2GameFromSnapshot(await buildWorldDbV2(sourceRoot, startDate, seed, competitionId, competitionId === undefined ? undefined : [competitionId]), teamId, userCoachCreation);
 }

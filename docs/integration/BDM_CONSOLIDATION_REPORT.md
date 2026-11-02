@@ -1,6 +1,6 @@
 # BDM consolidation report
 
-**Status: PARTIAL.** The candidate preserves the F6 line and adds a read-only WorldDB DB-04 catalog source. The branch is published and Draft PR [#187](https://github.com/audifor/BDM/pull/187) targets `main`; it is not ready to merge. Twenty-five of the 49 PR heads in the audit snapshot are not ancestors of the candidate; their functional equivalence or supersession has not yet been established.
+**Status: PARTIAL.** The candidate preserves the F6 line, adds a read-only WorldDB DB-04 catalog source, and selectively integrates compatible code from PR #173. Draft PR [#187](https://github.com/audifor/BDM/pull/187) targets `main`; it is not ready to merge. The other PR heads in the 49-PR audit snapshot still require ancestry or functional review. This candidate does not claim completion of the broader F6 acceptance boundary.
 
 ## Chosen base
 
@@ -9,7 +9,7 @@
 - F6 source already contains the current head of PR #186 (`7fd7742a`), plus the checked BS15/16/17 and HRPG integration heads. These were not merged a second time.
 - Additional WorldDB source commit `853d1dbe` (read-only DB-04 catalog adapter) was cherry-picked as candidate commit `eccb26e5`; it was absent as a file/module on the F6 candidate and adds no generated save or database. This preserves the catalog reader as a read-only projection and does not claim to make DB-04 game-executable.
 - Graph counts at Draft PR #187 creation: candidate is 296 commits ahead of `origin/main` with no main-only commits (`0 / 296`). Candidate is 17 commits ahead of PR #186 (`0 / 17`); F6 itself was 13 commits ahead, with four subsequent DB-04/test/documentation commits. The checked BS15/16/17 and HRPG integration tips are ancestors of F6 (their right-side unique counts are zero).
-- PR #173 has 11 commits beyond the main merge base and is not an ancestor of F6. Its diff includes fiscal closing, staff/medical/roster/home-finance changes and native acceptance evidence, plus a 1.16 MB generated save and screenshots. The PR remains unchanged; code-level review is required before selective integration, and its generated save/evidence files are excluded from candidate history.
+- PR #173 has 11 commits beyond the main merge base. Its functional changes were reviewed and selectively integrated on 2026-11-02 while preserving F6 routing and WorldDB V2 as the source of truth. The PR remains unchanged. Its generated save, screenshots, and evidence bound to that personal snapshot were excluded.
 
 ## Open PR head ancestry
 
@@ -83,12 +83,28 @@ Exact heads not yet contained: 25 (#62, #63, #64, #100, #109, #111, #114, #116, 
 - Full suite and New Game production scenarios (European, NBA, NCAA, NCAAW, shared world) have not been completed on this candidate. No global PASS is claimed.
 - The native BDM window was launched from the F6 worktree. The app opened; the agent did not complete or visually certify New Game and signing workflows.
 
+## PR #173 selective reconciliation
+
+F6/WorldDB V2 remains canonical for universe creation, categories, team selection, New Game coach identity, routing and Save V4. PR #173 was merged as a reviewable candidate commit, with the three conflicts resolved manually to preserve F6 behavior. Source staff remain eligible hiring candidates across active competition countries, are not capped at six per role, and are not gender-filtered; only players follow category/gender rules. Staff are not auto-assigned as presidents, duplicated, or allowed to overwrite the user coach. Fiscal closure uses the existing Finance ledger and is idempotent.
+
+| Functionality from #173 | Already existed on F6 | Ported | Modified for F6 | Blocked | Evidence |
+|---|---|---|---|---|---|
+| Fiscal period closure | Finance ledger and period source data | Yes | Canonical ledger postings; immutable, idempotent close | No | `FiscalPeriodClosing.test.ts`; `ClubFinanceLifecycle.test.ts` |
+| Finance, transfer fees and home finance | Finance domain and Courtside workspace | Yes | Uses canonical Finance balances and current fiscal period | No | `FinancesWorkspace.test.tsx`; `Final01CounterFinance.test.tsx`; `Final01HomeFinance.test.tsx` |
+| Original unemployed WorldDB staff pool | F6 WorldDB projection and staff market | Yes | All active competition countries; no six-per-role cap; no staff gender filter; preserves source identities and unemployed status | No | `WorldDbV2SimulatedPopulation.test.ts`; `Final01Functional.test.ts` (opt-in source snapshot) |
+| Filling a vacant head coach role | Existing F6 coach identity and roster routing | Yes | Only available unemployed source coaches; no chairman selection, duplicate assignment or user-coach overwrite | No | `WorldDbV2Universe.test.ts`; `WorldDbV2Playable.test.ts` |
+| Staff expiry and contract lifecycle | Existing Staff Career lifecycle | Supplemental | Reused canonical service and V4 persistence policy | No | `Final01Expiry.test.ts`; `StaffCareerService.test.ts`; `StaffContractV4Policy.test.ts` |
+| Market, medical, roster and staff presentation | Existing F6 domain/UI authority | Yes | Ported compatible finance, currency and workspace presentation changes | No | `MedicalWorkspace.test.tsx`; `Final01RosterCurrency.test.tsx`; focused workspace tests |
+| Native acceptance snapshots and image evidence | No | No | Tests that need external private saves remain opt-in; personal generated save and screenshot set excluded | Snapshot-based real-career run unavailable in this environment | `Final01Native*.test.ts`, `Final01Season.test.ts` are gated by local environment variables; generated evidence is not committed |
+
+The native snapshot tests are retained as opt-in acceptance coverage and were not counted as executed. The portable synthetic and focused service/UI tests listed above were run. The four-competition long progression batch was interrupted before a result summary and is inconclusive; the real WorldDB multileague test was skipped because its local SQLite source is absent.
+
 ## Integration boundary and next work
 
 - Candidate currently includes F0-F6/F5 ancestry represented by F6, the DB-04 read-only catalog adapter, and documentation.
 - Branches whose exact refs are published but whose tips are not ancestors of the candidate remain preserved for later feature review; compare equivalent behavior before merging.
-- A safe replay attempt of PR #173 stopped at conflicts in `src-tauri/resources/worlddb_v2_bridge.py`, `src/app/game/WorldDbV2Game.ts`, and `src/app/game/createConfiguredGame.ts`. The differences affect F6 multi-league/gender routing and original/free-staff/head-coach selection, so no `ours`/`theirs` resolution was chosen. The replay was aborted without applying its changes; PR #173 remains preserved on its published branch.
+- PR #173's 11 commits are now reachable through the selective integration merge. Its original branch and PR remain unchanged. Generated personal-save artifacts, screenshot evidence, and snapshot-specific workflow scripts/docs were not brought into the candidate.
 - The F6 Market code from `7365013c` is preserved, but the immersive contact/people/decision/consequence UI requested for the next F6 work has not been implemented on this candidate.
-- No integration conflicts remain from the DB-04 cherry-pick or the aborted PR #173 replay. No changes were made to `main`; Draft PR #187 is open to expose the partial candidate for review, and must not be merged while the 25 heads and full regression boundary remain under review.
+- No integration conflicts remain. No changes were made to `main`; Draft PR #187 exposes the partial candidate for review and must not be merged while the remaining PR heads and full regression boundary remain under review.
 
 Candidate code snapshot after the DB-04 adapter cherry-pick: `eccb26e555ca49931760d044242554572cf5a712`. Test-only commit `c102dcf5` raises the cold-build timeout for its CLI integration test. Draft PR #187 was opened at `57faf08cc4262969bc7ceee67e01983619286038`; this report refresh advances the branch afterward.

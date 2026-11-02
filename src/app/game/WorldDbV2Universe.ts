@@ -14,6 +14,30 @@ import officialNcaa2026 from '@/data/worlddb-v2/ncaa-d1-2026-27-official-fixture
 
 const WORLD_DB_RUNTIME_KEYS = new Set(['schemaVersion', 'currentDate', 'currentSeasonId', 'userCoachId', 'worldDbCompetitionRuntime'])
 
+const headCoachPreference = (entity: WorldDbV2Snapshot['people'][number]) => Math.max(...['coach', 'assistant_coach', 'offense_coach', 'defense_coach'].map(role => Number(entity.reference_data[`job_preference_${role}`] ?? 0)))
+const isHeadCoach = (entity: WorldDbV2Snapshot['people'][number]) => entity.source_table === 'DYN_person'
+  && headCoachPreference(entity) > Number(entity.reference_data.job_preference_chairman ?? 0)
+
+/** Appoints each original unemployed WorldDB coach at most once across a composite universe. */
+function allocateMissingOriginalHeadCoaches(snapshots: readonly WorldDbV2Snapshot[]): WorldDbV2Snapshot[] {
+  const allocated = snapshots.map(snapshot => ({ ...snapshot, people: [...snapshot.people], freeStaff: [...(snapshot.freeStaff ?? [])] }))
+  const available = new Map<string, WorldDbV2Snapshot['people'][number]>()
+  for (const snapshot of allocated) for (const person of snapshot.freeStaff ?? []) available.set(person.entity_id, person)
+  const assigned = new Set<string>()
+  for (const snapshot of allocated) {
+    for (const club of snapshot.clubs) {
+      if (snapshot.people.some(person => person.parent_id === club.entity_id && isHeadCoach(person))) continue
+      const candidate = [...available.values()].filter(isHeadCoach).sort((a, b) => a.entity_id.localeCompare(b.entity_id))[0]
+      if (candidate === undefined) continue
+      available.delete(candidate.entity_id)
+      assigned.add(candidate.entity_id)
+      snapshot.people.push({ ...candidate, parent_id: club.entity_id })
+    }
+  }
+  if (assigned.size === 0) return allocated
+  return allocated.map(snapshot => ({ ...snapshot, freeStaff: (snapshot.freeStaff ?? []).filter(person => !assigned.has(person.entity_id)) }))
+}
+
 /** Merges independent source projections before the shared GameWorld clock starts. */
 export function mergeGameWorlds(base: GameWorld, supplemental: GameWorld): GameWorld {
   const merged: Record<string, unknown> = { ...base }
@@ -38,7 +62,7 @@ export async function createWorldDbV2Universe(sourceRoot: string, startDate: str
   if (!competitionIds.length || new Set(competitionIds).size !== competitionIds.length) throw new Error('Select distinct active competitions')
   competitionIds.forEach(id => worldDbV2Competition(id))
   const snapshots: WorldDbV2Snapshot[] = []
-  for (const id of competitionIds) snapshots.push(await buildWorldDbV2(sourceRoot, startDate, seed, id))
+  for (const id of competitionIds) snapshots.push(await buildWorldDbV2(sourceRoot, startDate, seed, id, competitionIds))
   return createWorldDbV2UniverseFromSnapshots(snapshots, teamId, userCoachCreation)
 }
 
@@ -60,6 +84,7 @@ export async function createWorldDbV2UniverseFromSnapshots(
   candidates?: WorldDbV2CandidateUniverseOptions,
 ): Promise<GameWorld> {
   if (!snapshots.length) throw new Error('Select at least one active competition')
+  snapshots = allocateMissingOriginalHeadCoaches(snapshots)
   const first = snapshots[0]!
   const resolveConfig = (snapshot: WorldDbV2Snapshot) => {
     const sourceId = snapshot.competitions[0]?.entity_id
@@ -145,7 +170,7 @@ export async function createWorldDbV2UniverseWithNcaa(
     return ncaa
   }
   const snapshots: WorldDbV2Snapshot[] = []
-  for (const id of competitionIds) snapshots.push(await buildWorldDbV2(sourceRoot, startDate, seed, id))
+  for (const id of competitionIds) snapshots.push(await buildWorldDbV2(sourceRoot, startDate, seed, id, competitionIds))
   const pbmTeamId = snapshots.find(snapshot => snapshot.clubs.some(club => club.entity_id === teamId))?.clubs.find(club => club.entity_id === teamId)?.entity_id
     ?? snapshots[0]!.clubs[0]!.entity_id
   const pbm = await createWorldDbV2UniverseFromSnapshots(snapshots, pbmTeamId, teamId.startsWith('ncaa:') ? undefined : userCoachCreation)

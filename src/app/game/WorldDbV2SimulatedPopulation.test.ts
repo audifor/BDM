@@ -1,7 +1,11 @@
 import { expect, it } from 'vitest'
+import { execFileSync } from 'node:child_process'
+import { parseWorldCompetitionFormatDocument, parseWorldCompetitionRuntimeBundle } from '@/domain/competition'
+import referenceBundle from '@/data/worlddb-v2/competition-runtime.json'
 import { assertWorldDbGameBootstrapSliceV1 } from '@/domain/worldDb/GameBootstrap'
 import type { WorldDbV2Snapshot } from '@/tauri/TauriWorldDbV2'
-import { projectWorldDbV2 } from './WorldDbV2Game'
+import { createWorldDbV2GameFromSnapshot, projectWorldDbV2 } from './WorldDbV2Game'
+import { createStaffJobOpeningForTeam, identifyStaffCandidate, startStaffInterview, completeStaffInterview, createStaffJobOffer, acceptStaffJobOffer, listFreeAgentStaff } from '@/app/staffCareer'
 import { worldDbV2Calendar, worldDbV2Competition } from './WorldDbV2Competitions'
 import { parseGameDate } from '@/domain/date'
 import { scheduleRoundsByCalendar } from '@/engine/competition/schedule/SchedulePolicy'
@@ -107,4 +111,34 @@ it('keeps original staffed teams unmodified when the simulation fallback is enab
   expect(result.staffAssignments.find(s => s.teamId === clubIds[0])?.staffId).toBe(originalCoach)
   expect(result.staffAssignments.find(s => s.teamId === clubIds[1])?.staffId).toMatch(/^generated-staff-/)
   expect(result.players.filter(p => p.playerId.startsWith('bdm:generated-player:'))).toHaveLength(10)
+})
+
+it('keeps original unemployed WorldDB staff available across team gender and hires them once through StaffCareer', async () => {
+  const source = emptySourceSnapshot()
+  const originalCoaches = clubIds.map((clubId, index) => ({
+    entity_id: `pbm:DYN_person:coach-${index}`, parent_id: clubId, source_table: 'DYN_person',
+    reference_data: { prenom: 'Original', nom: `Coach ${index}`, sexe: 0, annee_naissance: 1980, mois_naissance: 1, jour_naissance: 1, nationalite_id: 8, job_preference_coach: 100 },
+  }))
+  const unemployedPhysio = {
+    entity_id: 'pbm:DYN_person:free-physio', parent_id: null, source_table: 'DYN_person',
+    reference_data: { prenom: 'Libre', nom: 'Fisióloga', sexe: 1, annee_naissance: 1985, mois_naissance: 1, jour_naissance: 1, nationalite_id: 8, job_preference_physio: 100, job_preference_chairman: 0 },
+  }
+  const snapshot = { ...source, people: originalCoaches, freeStaff: [unemployedPhysio] }
+  const generatedDocument = parseWorldCompetitionFormatDocument(JSON.parse(execFileSync(process.env.BDM_PYTHON ?? 'python', ['-c',
+    `import importlib.util,json; s=importlib.util.spec_from_file_location('f','scripts/playable/worlddb-v2-simulation-fallback.py'); m=importlib.util.module_from_spec(s); s.loader.exec_module(m); print(json.dumps(m.simulation_document('${competitionId}','Staff fixture',2,postseason=True,grouped=False)))`], { encoding: 'utf8' })))
+  const configured = { ...format, nativeCompetitionId: generatedDocument.competitionId, editionId: generatedDocument.competitionSeasonId, formatProvenance: 'GENERATED_SIMULATION' }
+  const runtime = { ...parseWorldCompetitionRuntimeBundle(referenceBundle), competitionFormats: [generatedDocument] }
+  const world = await createWorldDbV2GameFromSnapshot(snapshot, clubIds[0], undefined, configured, runtime)
+  const candidates = listFreeAgentStaff(world, 'physiotherapist')
+  expect(candidates).toContain(unemployedPhysio.entity_id)
+  expect(world.personsById[unemployedPhysio.entity_id as never]?.gender).toBe('female')
+  expect(world.staffEmploymentByStaffId[unemployedPhysio.entity_id as never]).toEqual({ status: 'unemployed' })
+
+  const opening = createStaffJobOpeningForTeam(world, { teamId: clubIds[0] as never, roleId: 'physiotherapist' })
+  const identified = identifyStaffCandidate(opening.world, { openingId: opening.opening.id, staffId: unemployedPhysio.entity_id as never })
+  const interviewed = completeStaffInterview(startStaffInterview(identified.world, identified.candidacyId), identified.candidacyId)
+  const offer = createStaffJobOffer(interviewed, { candidacyId: identified.candidacyId })
+  const hired = acceptStaffJobOffer(offer.world, offer.offerId)
+  expect(hired.staffEmploymentByStaffId[unemployedPhysio.entity_id as never]?.status).toBe('employed')
+  expect(Object.values(hired.teamStaffAssignmentsById).filter(assignment => assignment.staffPersonId === unemployedPhysio.entity_id)).toHaveLength(1)
 })

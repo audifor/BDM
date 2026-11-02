@@ -1,6 +1,6 @@
 # BDM publication report
 
-Snapshot: 2026-11-02. Repository: `https://github.com/audifor/BDM`. Publication was limited to non-destructive new refs. No PR was closed or changed.
+Snapshot: 2026-11-02. Repository: `https://github.com/audifor/BDM`. Publication is limited to non-destructive updates to the existing candidate branch and Draft PR #187. No PR was closed or merged.
 
 ## Policy and baseline
 
@@ -92,3 +92,11 @@ Each remote SHA below was compared with the preserved local source SHA. The 60 r
 - Root `C:\BDM` remains on `playable/f4` at `c1905549` with its 27 pre-existing modified/untracked entries untouched. The five stashes remain intact.
 - The F6 source worktree remains clean at `83c04b0f`; the remote F6 ref matches that SHA. Integration candidate validation is partial; Draft PR #187 is open for review only.
 - The 49 pre-existing open PRs were left unchanged. Draft PR #187 is the only new PR from this work. No PR was merged and `main` was not pushed.
+
+## Selective PR #173 update
+
+- PR #173 (`release/final-01-functional`) was merged into the local candidate with manual conflict resolution and selective F6-compatible code. Its head remains `cdd3c5050d5946e4444660c13220abc8ac0358fe`; the PR itself was not edited or merged.
+- The candidate retains F6/WorldDB V2 routing, player categories, user-coach identity and Save V4. Source staff are surfaced as original unemployed candidates across active competitions without a six-per-role cap or staff gender filter; hiring preserves source identity and avoids duplicate appointments or user-coach replacement. Fiscal closure is recorded in the canonical Finance ledger and is idempotent.
+- Personal generated saves, screenshot evidence and snapshot-specific workflow artifacts from #173 are excluded. Snapshot-based acceptance tests are retained as opt-in and were not executed without their local input saves.
+- Focused tests passed for WorldDB staff projection/hiring, cross-competition coach allocation, fiscal closing, staff contract lifecycle, finance/medical UI, roster currency, expiry and V4 persistence. `npm run typecheck`, `npm run build`, `cargo fmt --check`, and `cargo check` passed. The real WorldDB multileague test was skipped because its configured local SQLite database is absent. A long multi-season test batch was interrupted before a summary and is inconclusive; the complete suite has not been run.
+- Candidate branch and Draft PR #187 are being advanced for review. This does not authorize or perform a merge to `main`; PR #173 remains unchanged.
