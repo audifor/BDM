@@ -342,7 +342,9 @@ function derivePlayerPreferenceFactors(world: GameWorld, teamId: TeamId, playerI
 
   const coach = team?.coachId === undefined ? undefined : world.coaches[team.coachId]
   const sourceId = player?.personId ?? playerId
-  const relationshipValue = coach === undefined ? undefined : world.relationshipsByKey[relationshipKey(sourceId, coach.personId)]?.value
+  const relationshipValue = coach === undefined ? undefined
+    : world.relationshipsByKey[relationshipKey(playerId, coach.id)]?.value
+      ?? world.relationshipsByKey[relationshipKey(sourceId, coach.personId)]?.value
   const relationship = relationshipValue === undefined
     ? 1
     : 1 + (relationshipValue / 100) * RETENTION_RESPONSE_CALIBRATION.coachRelationshipAdjustment

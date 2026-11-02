@@ -1,6 +1,6 @@
 import { agentCounter, consolidateMarketSignal, createNegotiationContact as createNegotiationContactRecord, isActiveNegotiation, negotiationContactActor, negotiationIdForOpening, negotiationOfferActor, negotiationOpeningKeyString, type ContractNegotiation, type FormalOfferPlayerResponse, type MarketSignal, type NegotiationContactResponse, type NegotiationOpeningKey, type NegotiationResponsibleActor, type NegotiationRole, type NegotiationRoundHistory, type NegotiationTermSet } from '@/domain/market'
 import { agencyIdFromString, agentIdFromString, type OrganizationId, type PlayerId } from '@/domain/ids'
-import { isPlayerFreeAgent, updateGameWorld, type GameWorld } from '@/domain/world'
+import { isPlayerFreeAgent, isPlayerTeamCategoryCompatible, requirePlayerTeamCategory, updateGameWorld, type GameWorld } from '@/domain/world'
 import { evaluateTeamGameplayFinancialDecision } from '@/domain/finance'
 import type { GameDate } from '@/domain/date'
 import type { TeamId } from '@/domain/ids'
@@ -45,6 +45,7 @@ export function createNegotiationContact(world: GameWorld, input: CreateNegotiat
     return { status: 'BLOCKED', world, reason: 'TEAM_OR_ORGANIZATION_MISMATCH' }
   }
   if (world.players[input.playerId] === undefined) return { status: 'BLOCKED', world, reason: 'PLAYER_NOT_FOUND' }
+  if (!isPlayerTeamCategoryCompatible(world, input.playerId, input.teamId)) return { status: 'BLOCKED', world, reason: 'PLAYER_TEAM_CATEGORY_MISMATCH' }
   if (typeof input.actionKey !== 'string' || input.actionKey.trim() === ''
     || typeof input.sourcePlanId !== 'string' || input.sourcePlanId.trim() === ''
     || typeof input.sourceProposalId !== 'string' || input.sourceProposalId.trim() === '') {
@@ -181,6 +182,7 @@ export function deriveFormalOfferResponse(world: GameWorld, negotiationId: strin
 }
 
 export interface PlayerTermsProposal {
+  readonly organizationId?: OrganizationId
   readonly playerId: PlayerId
   readonly salary: number
   readonly years: number
@@ -192,14 +194,26 @@ export interface PlayerTermsProposal {
 
 /**
  * The single player/agent answer to proposed terms, from the hidden MarketReality and the agent's own negotiation traits. It is the
- * engine behind free-agent offers AND behind the player stage of a club-to-club transfer: terms at or above the player's real ask are
- * accepted; below it the representative counters (never under the real ask); a player without representation rejects. No probability
- * is invented here: willingness and expectations are the seeded market truth, the pressure comes from the agent's abilities.
+ * engine behind free-agent offers AND behind the player stage of a club-to-club transfer. Salary and contract length both contribute
+ * to the guaranteed value; a represented player counters an insufficient package and can trade a longer term against a lower annual
+ * salary. A player without representation rejects an insufficient package. No probability is invented here.
  */
 export function derivePlayerTermsResponse(world: GameWorld, proposal: PlayerTermsProposal, date: GameDate): DerivedFormalOfferResponse | undefined {
   const reality = world.marketRealityByPlayerId[proposal.playerId]
-  if (reality === undefined || !Number.isSafeInteger(reality.expectedSalary) || reality.expectedSalary < 1) return undefined
-  if (proposal.salary >= reality.expectedSalary) return { outcome: 'ACCEPTED', respondedOn: date, origin: 'PLAYER' }
+  if (reality === undefined || !Number.isSafeInteger(reality.expectedSalary) || reality.expectedSalary < 1
+    || !Number.isSafeInteger(reality.expectedYears) || reality.expectedYears < 1
+    || !Number.isSafeInteger(proposal.salary) || proposal.salary < 1
+    || !Number.isSafeInteger(proposal.years) || proposal.years < 1) return undefined
+  const expectedGuarantee = reality.expectedSalary * reality.expectedYears
+  const offeredGuarantee = proposal.salary * proposal.years
+  if (!Number.isSafeInteger(expectedGuarantee) || !Number.isSafeInteger(offeredGuarantee)) return undefined
+  const competingGuarantee = proposal.organizationId === undefined ? 0 : Object.values(world.negotiationsById)
+    .filter((offer): offer is Extract<ContractNegotiation, { readonly salary: number }> => offer.playerId === proposal.playerId
+      && offer.organizationId !== proposal.organizationId && (offer.status === 'OPEN' || offer.status === 'ACCEPTED'))
+    .reduce((best, offer) => Math.max(best, offer.salary * offer.years), 0)
+  if (!Number.isSafeInteger(competingGuarantee)) return undefined
+  const requiredGuarantee = Math.max(expectedGuarantee, competingGuarantee)
+  if (offeredGuarantee >= requiredGuarantee) return { outcome: 'ACCEPTED', respondedOn: date, origin: 'PLAYER' }
 
   const agent = proposal.agentId === undefined
     ? agentForPlayer(world, proposal.playerId)
@@ -212,9 +226,13 @@ export function derivePlayerTermsResponse(world: GameWorld, proposal: PlayerTerm
     ...(proposal.agentFee === undefined ? {} : { agentFee: proposal.agentFee }),
   } satisfies ContractNegotiation
   const pressured = agentCounter(asNegotiation, agent)
-  // The agent never counters below the player's real ask: an offer under the ask is answered with that ask (or more), so a counter
-  // can always be accepted knowing it satisfies the player, and a below-ask offer is never silently accepted at the offered price.
-  const counter = pressured.status === 'COUNTERED' && pressured.salary < reality.expectedSalary ? { ...pressured, salary: reality.expectedSalary } : pressured
+  // The agent can ask for the player's expected term when the submitted term is shorter, then fills only the remaining
+  // guaranteed-value gap. This makes annual salary and years genuine alternatives while keeping the counter explicit.
+  const counterYears = Math.max(proposal.years, reality.expectedYears)
+  const minimumCounterSalary = Math.ceil(requiredGuarantee / counterYears / 10_000) * 10_000
+  const counter = pressured.status === 'COUNTERED'
+    ? { ...pressured, years: counterYears, salary: Math.max(pressured.salary ?? proposal.salary, minimumCounterSalary) }
+    : pressured
   if (counter.status !== 'COUNTERED' || !Number.isSafeInteger(counter.salary) || counter.salary < 1 || counter.salary > 100_000_000
     || (counter.agentFee !== undefined && (!Number.isSafeInteger(counter.agentFee) || counter.agentFee < 0))) {
     return { outcome: 'REJECTED', respondedOn: date, origin: 'PLAYER' }
@@ -226,8 +244,11 @@ export function derivePlayerTermsResponse(world: GameWorld, proposal: PlayerTerm
 export function progressFormalOfferResponses(world: GameWorld): GameWorld {
   let current = world
   const dueOffers = Object.values(world.negotiationsById)
-    .filter((item) => item.status === 'COUNTERED' || (item.status === 'OPEN' && (item.offerSubmittedOn === undefined || item.offerSubmittedOn < world.currentDate)))
-    .sort((a, b) => a.id.localeCompare(b.id))
+    .filter((item): item is Extract<ContractNegotiation, { readonly salary: number }> => item.status === 'COUNTERED'
+      || (item.status === 'OPEN' && (item.offerSubmittedOn === undefined || item.offerSubmittedOn < world.currentDate)))
+    .sort((a, b) => a.playerId.localeCompare(b.playerId)
+      || b.salary * b.years - a.salary * a.years
+      || a.id.localeCompare(b.id))
 
   for (const offer of dueOffers) {
     const latest = current.negotiationsById[offer.id]
@@ -296,6 +317,7 @@ export function progressFormalOfferResponses(world: GameWorld): GameWorld {
         occurredOn: current.currentDate,
         reliability: 0.95,
         expectedSalary: response.counterTerms.salary,
+        expectedYears: response.counterTerms.years,
       }
       current = updateGameWorld(current, { negotiations: [...Object.values(current.negotiationsById).filter((item) => item.id !== latest.id), updated] })
       current = receiveMarketSignal(current, signal)
@@ -346,6 +368,7 @@ export function openNegotiation(world: GameWorld, input: OpenNegotiationInput): 
   const team = world.teams[input.teamId]
   if (team === undefined || team.organizationId !== input.organizationId) throw new RangeError('Negotiation team does not belong to the organization')
   if (world.players[input.playerId] === undefined) throw new RangeError('Negotiation player does not exist')
+  requirePlayerTeamCategory(world, input.playerId, input.teamId)
   if (!isAuthorizedOfferActor(world, input.teamId, input.offerResponsibleActor)) throw new RangeError('Formal offer actor is not authorized for this team')
   if (!Number.isSafeInteger(input.salary) || input.salary < 1 || input.salary > 100_000_000) throw new RangeError('Formal offer salary is invalid')
   if (!Number.isSafeInteger(input.years) || input.years < 1) throw new RangeError('Formal offer years are invalid')

@@ -7,6 +7,9 @@ import {
   navigateToPlayer,
   navigateToPlayerFromRoster,
   navigateToPlayerMedical,
+  navigateToDirectSigningPlayer,
+  navigateToPlayerTrade,
+  navigateToPortalPlayer,
   navigateToRecruitingPlayer,
   navigateToTalentApp,
   navigateToTalentDestination,
@@ -23,12 +26,13 @@ import {
 describe('workspaceApps navigation', () => {
   it('deep links an attention action to the same Player and relevant view', () => {
     const playerId = 'player:bs15h-route' as PlayerId
-    window.history.replaceState({}, '', '/?ui=ng&app=talent')
+    window.history.replaceState({}, '', '/?ui=ng&app=tactics&tacticsTab=rotations')
     navigateToTalentDestination({ app: 'player', playerId, playerView: 'scouting' })
     let params = new URL(window.location.href).searchParams
     expect(params.get('app')).toBe('player')
     expect(params.get('playerId')).toBe(playerId)
     expect(params.get('playerView')).toBe('scouting')
+    expect(params.get('tacticsTab')).toBeNull()
 
     navigateToTalentDestination({ app: 'recruiting', playerId, focusPlayerId: playerId })
     params = new URL(window.location.href).searchParams
@@ -70,6 +74,14 @@ describe('workspaceApps navigation', () => {
     expect(parseWorkspaceStaffId(null)).toBeNull()
     expect(parseWorkspaceTeamId('team:leyma')).toBe('team:leyma')
     expect(parseWorkspaceTeamId(null)).toBeNull()
+  })
+
+  it('opens the Tactics workspace at Rotations without retaining the subroute for other apps', () => {
+    window.history.replaceState({}, '', '/?ui=ng&app=home')
+    syncWorkspaceAppQuery('tactics', 'push', { tacticsTab: 'rotations' })
+    expect(new URL(window.location.href).searchParams.get('tacticsTab')).toBe('rotations')
+    syncWorkspaceAppQuery('home', 'push')
+    expect(new URL(window.location.href).searchParams.get('tacticsTab')).toBeNull()
   })
 
   it('navigateToStaff opens the staff dossier URL', () => {
@@ -130,6 +142,23 @@ describe('workspaceApps navigation', () => {
     const url = new URL(window.location.href)
     expect(url.searchParams.get('app')).toBe('recruiting')
     expect(url.searchParams.get('focusPlayerId')).toBe('player:portal')
+  })
+
+  it('opens all three player operation adapters with the selected player context', () => {
+    const playerId = 'player:operation' as PlayerId
+    window.history.replaceState({}, '', '/?ui=ng&app=player')
+
+    navigateToDirectSigningPlayer(playerId)
+    expect(new URL(window.location.href).searchParams.toString()).toContain('marketTab=free-agents')
+    expect(new URL(window.location.href).searchParams.get('playerId')).toBe(playerId)
+
+    navigateToPlayerTrade(playerId)
+    expect(new URL(window.location.href).searchParams.get('app')).toBe('trades')
+    expect(new URL(window.location.href).searchParams.get('playerId')).toBe(playerId)
+
+    navigateToPortalPlayer(playerId)
+    expect(new URL(window.location.href).searchParams.get('app')).toBe('portal')
+    expect(new URL(window.location.href).searchParams.get('focusPlayerId')).toBe(playerId)
   })
 
   it('navigateToPlayerMedical opens the player medical view', () => {

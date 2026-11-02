@@ -45,9 +45,10 @@ import { progressPlayerCareerEnds } from '@/engine/career/PlayerCareerLifecycle'
 import { progressAnnualTalentSupply } from '@/engine/world/AnnualTalentSupply'
 import { progressAiProfessionalPathways } from '@/engine/career/AiProfessionalPathways'
 import { processClubFinanceForDate } from '@/engine/finance/ClubFinanceLifecycle'
+import { materializeNcaa2027PostseasonForDay } from '@/app/game/NcaaD1Real2027DailyLifecycle'
 
 export const DAILY_LIFECYCLE_PHASE_IDS = [
-  'DATE_ADVANCE', 'ANNUAL_PLAYER_DEVELOPMENT', 'ANNUAL_TALENT_SUPPLY', 'PLAYER_CAREER_END', 'COLLEGE_ELIGIBILITY_EXITS', 'CAREER_FATIGUE_RECOVERY', 'EXPIRED_CONTRACT_RECONCILIATION', 'RETENTION_NEGOTIATION_INVALIDATION', 'AI_RETENTION_NEGOTIATIONS', 'MARKET_CONTACT_RESPONSES', 'MARKET_FORMAL_OFFER_RESPONSES', 'AI_TRAINING_PLANNING', 'TRAINING', 'RECRUITING', 'ACADEMICS',
+  'DATE_ADVANCE', 'NCAA_2027_POSTSEASON', 'ANNUAL_PLAYER_DEVELOPMENT', 'ANNUAL_TALENT_SUPPLY', 'PLAYER_CAREER_END', 'COLLEGE_ELIGIBILITY_EXITS', 'CAREER_FATIGUE_RECOVERY', 'EXPIRED_CONTRACT_RECONCILIATION', 'RETENTION_NEGOTIATION_INVALIDATION', 'AI_RETENTION_NEGOTIATIONS', 'MARKET_CONTACT_RESPONSES', 'MARKET_FORMAL_OFFER_RESPONSES', 'AI_TRAINING_PLANNING', 'TRAINING', 'RECRUITING', 'ACADEMICS',
   'NIL_LIFECYCLE', 'MONTHLY_NIL_AUTONOMY', 'MONTHLY_BOOSTER_AUTONOMY', 'COACH_FINANCE', 'MEMORY_DECAY',
   'ENFORCEMENT', 'SCOUTING_INTAKE', 'MEDICAL_AND_ROSTER_ADVISORIES', 'AI_MEDICAL_DECISIONS', 'SCOUTING_ASSIGNMENTS', 'DRAFT', 'PROFESSIONAL_PATHWAYS',
   'STAFF_HUMAN_STATE', 'STAFF_CONFLICTS', 'STAFF_CULTURE_COHESION', 'STAFF_POLITICAL_CASES', 'STAFF_APPRAISAL',
@@ -127,6 +128,7 @@ export function advanceDayWithTrace(world: GameWorld): CalendarDayLifecycleResul
   try {
     const nextDate = addDays(world.currentDate, 1)
     run('DATE_ADVANCE', nextDate, true, (input) => ensureCollegeRulesetContinuity(migrateCurrentSeasonIfElapsed(updateGameWorld(input, { currentDate: nextDate }))), 'Always runs exactly one calendar day forward and carries supplied college policies through offseason gaps.')
+    run('NCAA_2027_POSTSEASON', current.currentDate, true, materializeNcaa2027PostseasonForDay, 'Materializes complete 2027 NCAA male/female tournament brackets only after source results are final, without introducing historical fixtures.')
     run('ANNUAL_PLAYER_DEVELOPMENT', current.currentDate, current.currentDate.slice(5) === '07-01' && !hasAppliedAnnualDevelopmentCycle(current, annualDevelopmentCycleId(current.currentDate)), progressAnnualPlayerDevelopment, 'Runs once on the annual 1 July checkpoint.')
     run('ANNUAL_TALENT_SUPPLY', current.currentDate, current.currentDate.slice(5) === '07-01', progressAnnualTalentSupply, 'Creates the deterministic simulated talent age cohort once each year.')
     run('PLAYER_CAREER_END', current.currentDate, current.currentDate.slice(5) === '07-01', progressPlayerCareerEnds, 'Ends careers beyond the structural player age limit and closes current sporting membership.')
@@ -216,10 +218,23 @@ export function advanceDayWithTrace(world: GameWorld): CalendarDayLifecycleResul
     run('FACILITY_MANAGEMENT', current.currentDate, true, (input) => processFacilityManagement(input), 'The Board decides pending Facilities requests it was asked to review, and AI clubs manage their own facilities through the same Governance and Finance commands a manager uses.')
     let clubFinanceDiagnostics: readonly DailyLifecycleDiagnostic[] = []
     run('CLUB_FINANCE_V2', current.currentDate, true, (input) => {
-      const application = processClubFinanceForDate(input, input.currentDate)
-      clubFinanceDiagnostics = application.result.diagnostics
+      // Contracts signed by the manager during the outgoing date have not reached
+      // a calendar Finance phase yet. Reconcile that date before closing its fiscal
+      // period, then process the incoming date. Event identities make replay a no-op.
+      const outgoing = processClubFinanceForDate(input, original.currentDate)
+      const application = processClubFinanceForDate(outgoing.world, input.currentDate)
+      // A replay may report an already-recognized schedule as due. Include only
+      // newly materialized outgoing payroll in this day's lifecycle trace.
+      const newSchedules = new Set(outgoing.result.diagnostics.some(diagnostic => diagnostic.code === 'CONTRACT_PAYROLL_DUE') ? Object.values(outgoing.world.expenseRecognitionsById)
+        .filter(recognition => input.expenseRecognitionsById[recognition.id] === undefined)
+        .flatMap(recognition => {
+          const provenance = recognition.provenance.id ?? ''
+          const index = provenance.indexOf('contract-schedule:')
+          return index < 0 ? [] : [provenance.slice(index)]
+        }) : [])
+      clubFinanceDiagnostics = [...outgoing.result.diagnostics.filter(diagnostic => diagnostic.code !== 'CONTRACT_PAYROLL_DUE' || (diagnostic.sourceId !== undefined && newSchedules.has(diagnostic.sourceId))), ...application.result.diagnostics]
       return application.world
-    }, 'Canonical Finance materializes the economic facts whose source already exists: due guaranteed contract payroll (commitment, recognition, payable, ledger posting), plus operating cost, revenue or debt only when the world declares such a source. Obligations stay outstanding because no canonical policy says when a payable is paid.', () => clubFinanceDiagnostics)
+    }, 'Canonical Finance reconciles the outgoing and incoming dates through existing recognition, collection and Treasury authorities, then closes ended fiscal periods. It creates no economic source or funding.', () => clubFinanceDiagnostics)
     run('GOVERNANCE', current.currentDate, true, (input) => executeBoardApprovedRetentionAgreements(processBoardPlayerContractSigningDecisions(input)), 'The Board decides pending player contract signing and retention decisions it was asked to review, and fully approved renewals are executed; other Governance meetings and decisions have dated records but no automatic calendar-resolution processor.')
     const diagnostics = phases.flatMap((phase) => phase.diagnostics)
     phases.push({ phaseId: 'EVENT_COLLECTION', order: phases.length + 1, date: current.currentDate, ran: true, worldChanged: false, diagnostics: [], summary: `Collected ${diagnostics.length} phase diagnostic(s) without persisting an event stream.` })

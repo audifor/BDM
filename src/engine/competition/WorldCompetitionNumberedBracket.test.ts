@@ -23,12 +23,18 @@ describe('numbered predecessor contests from format data', () => {
   })
   it.each(['WINNER_0-WINNER_8', 'WINNER_1-WINNER_99', 'WINNER_1-WINNER_1'])('rejects invalid references %s', pairing => {
     const raw = structuredClone(documents[0]!)
-    raw.variants[0]!.nodes.find(n => n.key === 'QUARTERFINALS')!.pairing!.payload!.matchups = [pairing]
+    // Supplemental NCAA championship formats widen the JSON literal union.
+    // Mutate the existing NBB round payload without assuming every format has matchups.
+    Object.assign(raw.variants[0]!.nodes.find(n => n.key === 'QUARTERFINALS')!.pairing!.payload!, { matchups: [pairing] })
     expect(() => instantiateWorldCompetitionFixedBracketV1(parseWorldCompetitionFormatDocument(raw), 'MAIN', entries)).toThrow(/predecessor fixture/)
   })
   it('does not infer a numbered path across multiple predecessor rounds', () => {
     const raw = structuredClone(documents[0]!)
-    raw.variants[0]!.edges.push({ from: 'CLASSIFICATION', to: 'QUARTERFINALS', selector: 'WINNER' })
-    expect(() => instantiateWorldCompetitionFixedBracketV1(parseWorldCompetitionFormatDocument(raw), 'MAIN', entries)).toThrow(/one WINNER source/)
+    // Construct the invalid graph without mutating a JSON union's narrow edge array.
+    const variant = raw.variants[0]!
+    const invalid = { ...raw, variants: [
+      { ...variant, edges: [...variant.edges, { from: 'CLASSIFICATION', to: 'QUARTERFINALS', selector: 'WINNER' }] },
+    ] }
+    expect(() => instantiateWorldCompetitionFixedBracketV1(parseWorldCompetitionFormatDocument(invalid), 'MAIN', entries)).toThrow(/one WINNER source/)
   })
 })

@@ -4,8 +4,35 @@ import { createGameDate } from '@/domain/date'
 import type { EcosystemId, PlayerId, TeamId } from '@/domain/ids'
 import { updateGameWorld, type GameWorld } from '@/domain/world'
 
-export function initializeAcademicProfile(world:GameWorld, playerId:PlayerId, teamId:TeamId, ecosystemId:EcosystemId):GameWorld { if(world.ecosystems[ecosystemId]?.kind!=='ncaaLike'||Object.values(world.academicProfilesById).some(p=>p.playerId===playerId&&p.programTeamId===teamId&&p.ecosystemId===ecosystemId))return world; const seed=[...playerId].reduce((n,c)=>(n*31+c.charCodeAt(0))>>>0,0), profile:AcademicProfile={id:`academic:${ecosystemId}:${teamId}:${playerId}`,playerId,ecosystemId,programTeamId:teamId,performance:Math.min(90,Math.max(45,62+seed%25)),progress:Math.min(90,Math.max(45,60+(seed>>>8)%25))};return updateGameWorld(world,{academicRulesByEcosystemId:{...world.academicRulesByEcosystemId,[ecosystemId]:world.academicRulesByEcosystemId[ecosystemId]??defaultAcademicRules(ecosystemId)},academicProfiles:[...Object.values(world.academicProfilesById),profile]}) }
-export function ensureNcaaAcademics(world:GameWorld):GameWorld{let next=world;for(const competition of Object.values(world.competitions))if(world.ecosystems[competition.ecosystemId]?.kind==='ncaaLike')for(const teamId of competition.participantTeamIds)for(const playerId of next.teams[teamId]!.rosterPlayerIds)next=initializeAcademicProfile(next,playerId,teamId,competition.ecosystemId);return next}
+function newAcademicProfile(playerId: PlayerId, teamId: TeamId, ecosystemId: EcosystemId): AcademicProfile {
+  const seed = [...playerId].reduce((n, c) => (n * 31 + c.charCodeAt(0)) >>> 0, 0)
+  return { id: `academic:${ecosystemId}:${teamId}:${playerId}`, playerId, ecosystemId, programTeamId: teamId, performance: Math.min(90, Math.max(45, 62 + seed % 25)), progress: Math.min(90, Math.max(45, 60 + (seed >>> 8) % 25)) }
+}
+
+export function initializeAcademicProfile(world: GameWorld, playerId: PlayerId, teamId: TeamId, ecosystemId: EcosystemId): GameWorld {
+  if (world.ecosystems[ecosystemId]?.kind !== 'ncaaLike' || Object.values(world.academicProfilesById).some(p => p.playerId === playerId && p.programTeamId === teamId && p.ecosystemId === ecosystemId)) return world
+  return updateGameWorld(world, { academicRulesByEcosystemId: { ...world.academicRulesByEcosystemId, [ecosystemId]: world.academicRulesByEcosystemId[ecosystemId] ?? defaultAcademicRules(ecosystemId) }, academicProfiles: [...Object.values(world.academicProfilesById), newAcademicProfile(playerId, teamId, ecosystemId)] })
+}
+
+export function ensureNcaaAcademics(world: GameWorld): GameWorld {
+  const profiles = Object.values(world.academicProfilesById)
+  const keys = new Set(profiles.map(p => `${p.ecosystemId}:${p.programTeamId}:${p.playerId}`))
+  const rules = { ...world.academicRulesByEcosystemId }
+  let changed = false
+  for (const competition of Object.values(world.competitions)) {
+    const ecosystemId = competition.ecosystemId
+    if (world.ecosystems[ecosystemId]?.kind !== 'ncaaLike') continue
+    for (const teamId of competition.participantTeamIds) for (const playerId of world.teams[teamId]!.rosterPlayerIds) {
+      const key = `${ecosystemId}:${teamId}:${playerId}`
+      if (keys.has(key)) continue
+      profiles.push(newAcademicProfile(playerId, teamId, ecosystemId))
+      keys.add(key)
+      rules[ecosystemId] ??= defaultAcademicRules(ecosystemId)
+      changed = true
+    }
+  }
+  return changed ? updateGameWorld(world, { academicRulesByEcosystemId: rules, academicProfiles: profiles }) : world
+}
 function currentAcademicRules(world: GameWorld, profile: AcademicProfile) {
   const rules = world.academicRulesByEcosystemId[profile.ecosystemId] ?? defaultAcademicRules(profile.ecosystemId)
   const college = resolveCollegeRuleset(world, profile.ecosystemId, world.currentDate)

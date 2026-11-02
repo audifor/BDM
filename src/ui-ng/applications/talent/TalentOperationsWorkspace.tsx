@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { getUserTeam } from '@/engine/calendar'
 import type { PlayerId } from '@/domain/ids'
 import { getPlayerKnowledgeSummary } from '@/engine/scouting'
-import { resolveGameCapabilities } from '@/ui/gameContext'
+import { resolveClubActiveSeasons, resolveGameCapabilities } from '@/ui/gameContext'
 import { useGameStore } from '@/stores/gameStore'
 import { NgHoloShell } from '@/ui-ng/workspace/NgHoloShell'
 import { navigateToPlayer, navigateToTalentApp, navigateToTalentDestination } from '@/ui-ng/workspace/workspaceApps'
@@ -16,16 +16,19 @@ export function TalentOperationsWorkspace() {
     if (world === null) return null
     const team = getUserTeam(world)
     const organizationId = team?.organizationId
-    const collegeCompetition = team === undefined ? undefined : Object.values(world.competitions).find((item) => item.participantTeamIds.includes(team.id) && world.ecosystems[item.ecosystemId]?.kind === 'ncaaLike')
-    const recruitingCycle = Object.values(world.recruitingCyclesById).find((item) => item.sourceSeasonId === world.currentSeasonId && item.ecosystemId === collegeCompetition?.ecosystemId && item.status === 'open')
+    const activeSeasons = resolveClubActiveSeasons(world)
+    const activeNcaaSeason = activeSeasons.find((season) => world.ecosystems[world.competitions[season.competitionId]!.ecosystemId]?.kind === 'ncaaLike')
+    const collegeCompetition = activeNcaaSeason === undefined ? undefined : world.competitions[activeNcaaSeason.competitionId]
+    const recruitingCycle = activeNcaaSeason === undefined ? undefined : Object.values(world.recruitingCyclesById).find((item) => item.sourceSeasonId === activeNcaaSeason.id && item.ecosystemId === collegeCompetition?.ecosystemId && item.status === 'open')
     const assignments = organizationId === undefined ? [] : Object.values(world.scoutingAssignmentsById).filter((item) => item.organizationId === organizationId && ['ACTIVE', 'QUEUED'].includes(item.status))
     const discovered = organizationId === undefined ? [] : Object.values(world.organizationPlayerAwarenessById).filter((item) => item.organizationId === organizationId).sort((a, b) => b.discoveredAt.localeCompare(a.discoveredAt)).filter((item) => getPlayerKnowledgeSummary(world, organizationId, item.playerId).knownDomains.length === 0).slice(0, 5)
     const board = team === undefined ? [] : world.recruitingBoards.filter((item) => item.programTeamId === team.id)
     const portal = collegeCompetition === undefined ? [] : Object.values(world.transferPortalEntriesById).filter((entry) => entry.ecosystemId === collegeCompetition.ecosystemId && entry.status === 'authorized')
-    const draft = Object.values(world.draftsById).filter((item) => item.status === 'scheduled' || item.status === 'inProgress').sort((a, b) => a.scheduledOn.localeCompare(b.scheduledOn))[0]
+    const activeSeasonIds = new Set(activeSeasons.map((season) => season.id))
+    const draft = Object.values(world.draftsById).filter((item) => activeSeasonIds.has(item.sourceSeasonId) && (item.status === 'scheduled' || item.status === 'inProgress')).sort((a, b) => a.scheduledOn.localeCompare(b.scheduledOn))[0]
     const deadlines = buildTalentDeadlineItems(world)
     const attention = buildTalentAttentionItems(world)
-    return { team, assignments, discovered, board, portal, draft, deadlines, attention, isNcaa: collegeCompetition !== undefined, capabilities: resolveGameCapabilities(world) }
+    return { team, assignments, discovered, board, portal, draft, deadlines, attention, isNcaa: activeNcaaSeason !== undefined, capabilities: resolveGameCapabilities(world) }
   }, [world])
 
   if (world === null || model === null) return <NgHoloShell appLabel="Talent Operations" empty emptyMessage="No career loaded." region="talent-operations-workspace" />

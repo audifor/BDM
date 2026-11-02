@@ -11,9 +11,12 @@ import { BdmOsNg } from '@/ui-ng/BdmOsNg'
 import { App } from '@/ui/App'
 
 import './BootstrapApp.css'
+import { LeagueSelectionStep, type LeagueDepth } from './LeagueSelectionStep'
 import { WORLD_DB_V2_UNIVERSE_ID } from '@/app/game/NewGameUniverseCatalog'
+import { NCAA_D1_2026_MEN_UNIVERSE_ID, NCAA_D1_2026_WOMEN_UNIVERSE_ID, NCAA_D1_REAL_2026_TEAM_OPTIONS } from '@/app/game/NewGameUniverseCatalog'
 import { discoverWorldDbV2, type WorldDbV2Pilot } from '@/tauri/TauriWorldDbV2'
-import v2Competitions from '@/data/worlddb-v2/competitions.json'
+import { WORLDDB_V2_COMPETITIONS as defaultV2Competitions } from '@/app/game/WorldDbV2Competitions'
+import { WORLDDB_NEW_GAME_SELECTABLE as v2Competitions, WORLDDB_NEW_GAME_COUNTRY_NAMES } from '@/app/game/WorldDbNewGameCatalog'
 
 export function BootstrapApp({ uiMode = 'ng' }: { readonly uiMode?: 'legacy' | 'ng' }) {
   const world = useGameStore((state) => state.world)
@@ -79,7 +82,8 @@ function StartScreen({
   readonly onStart: (configuration: NewGameConfiguration) => void | Promise<void>
 }) {
   const [setupOpen, setSetupOpen] = useState(false)
-  const [universeId, setUniverseId] = useState<NewGameUniverseId>(ACB_TEST_UNIVERSE_ID)
+  const [wizardStep, setWizardStep] = useState<'leagues' | 'manager'>('leagues')
+  const [universeId, setUniverseId] = useState<NewGameUniverseId>(WORLD_DB_V2_UNIVERSE_ID)
   const selectedUniverse = NEW_GAME_UNIVERSES.find((universe) => universe.id === universeId)!
   const [teamKey, setTeamKey] = useState<string>(ACB_QUICK_START_TEAM_KEY)
   const [firstName, setFirstName] = useState('')
@@ -98,21 +102,27 @@ function StartScreen({
   const [sourceRoot,setSourceRoot]=useState('C:\\BDM_DB\\WORLDDB_PBM')
   const [v2Date,setV2Date]=useState('2025-07-01')
   const [v2Seed,setV2Seed]=useState('bdm-worlddb-v2-pilot')
+  const [includeNcaa, setIncludeNcaa] = useState(false)
   const [v2Pilot,setV2Pilot]=useState<WorldDbV2Pilot|null>(null)
   const [v2Competition,setV2Competition]=useState('pbm:DYN_championnat:5')
-  const [v2ActiveCompetitions,setV2ActiveCompetitions]=useState<string[]>(v2Competitions.map(c=>c.sourceCompetitionId))
+  const [v2Levels, setV2Levels] = useState<Record<string, LeagueDepth>>(() => Object.fromEntries(defaultV2Competitions.map(c => [c.sourceCompetitionId, 'detailed' as LeagueDepth])))
+  const v2ActiveCompetitions = v2Competitions.filter(c => (v2Levels[c.sourceCompetitionId] ?? 'off') !== 'off').map(c => c.sourceCompetitionId)
+  const v2ReducedCompetitions = v2Competitions.filter(c => v2Levels[c.sourceCompetitionId] === 'reduced').map(c => c.sourceCompetitionId)
+  const v2StartCompetition = v2ActiveCompetitions.includes(v2Competition) ? v2Competition : (v2ActiveCompetitions[0] ?? '')
   const [v2Error,setV2Error]=useState<string|null>(null)
   const [v2Loading,setV2Loading]=useState(false)
+  const [ncaaSeed, setNcaaSeed] = useState('202627')
+  const isNCAA2026 = universeId === NCAA_D1_2026_MEN_UNIVERSE_ID || universeId === NCAA_D1_2026_WOMEN_UNIVERSE_ID
   useEffect(()=>{
-    if(!setupOpen||universeId!==WORLD_DB_V2_UNIVERSE_ID)return
+    if(!setupOpen||wizardStep!=='manager'||universeId!==WORLD_DB_V2_UNIVERSE_ID||!v2StartCompetition)return
     let active=true
-    setV2Pilot(null);setV2Error(null);setV2Loading(true);setTeamKey('')
-    void discoverWorldDbV2(sourceRoot,v2Competition).then(p=>{if(active)setV2Pilot(p)}).catch(e=>{if(active)setV2Error(String(e))}).finally(()=>{if(active)setV2Loading(false)})
+    setV2Pilot(null);setV2Error(null);setV2Loading(true)
+    void discoverWorldDbV2(sourceRoot,v2StartCompetition).then(p=>{if(active){setV2Pilot(p);setTeamKey(current=>p.teams.some(team=>team.key===current)||(includeNcaa&&NCAA_D1_REAL_2026_TEAM_OPTIONS.some(team=>team.key===current))?current:'')}}).catch(e=>{if(active)setV2Error(String(e))}).finally(()=>{if(active)setV2Loading(false)})
     return ()=>{active=false}
-  },[setupOpen,universeId,sourceRoot,v2Competition])
+  },[setupOpen,wizardStep,universeId,sourceRoot,v2StartCompetition,includeNcaa])
 
   useEffect(() => {
-    if (!setupOpen || universeId !== WORLD_DB_SPAIN_UNIVERSE_ID) {
+    if (!setupOpen || wizardStep !== 'manager' || universeId !== WORLD_DB_SPAIN_UNIVERSE_ID) {
       setWorldDbTeams([])
       setWorldDbLoading(false)
       setWorldDbError(null)
@@ -136,7 +146,7 @@ function StartScreen({
       })
       .finally(() => { if (active) setWorldDbLoading(false) })
     return () => { active = false }
-  }, [setupOpen, universeId])
+  }, [setupOpen, wizardStep, universeId])
 
   const chooseUniverse = (nextId: NewGameUniverseId) => {
     setUniverseId(nextId)
@@ -145,8 +155,18 @@ function StartScreen({
     else if (nextId !== WORLD_DB_SPAIN_UNIVERSE_ID) setTeamKey('')
   }
 
-  const availableTeams = universeId === WORLD_DB_V2_UNIVERSE_ID ? v2Pilot?.teams??[] : universeId === WORLD_DB_SPAIN_UNIVERSE_ID ? worldDbTeams : selectedUniverse.teams
-  const worldDbReady = universeId === WORLD_DB_V2_UNIVERSE_ID ? !v2Loading&&v2Pilot!==null&&v2Error===null&&v2Date.length===10&&v2Seed.trim().length>0 : universeId !== WORLD_DB_SPAIN_UNIVERSE_ID || (!worldDbLoading && worldDbError === null && availableTeams.length === 18)
+  const enterManager = () => {
+    if (universeId === WORLD_DB_V2_UNIVERSE_ID) {
+      if (v2ActiveCompetitions.length === 0 && !includeNcaa) return
+      if (v2ActiveCompetitions.length > 0 && !v2ActiveCompetitions.includes(v2Competition)) setV2Competition(v2ActiveCompetitions[0]!)
+    }
+    setWizardStep('manager')
+  }
+
+  const worldDbTeamsAndNcaa = universeId === WORLD_DB_V2_UNIVERSE_ID ? [...(v2Pilot?.teams ?? []), ...(includeNcaa ? NCAA_D1_REAL_2026_TEAM_OPTIONS : [])] : []
+  const availableTeams = universeId === WORLD_DB_V2_UNIVERSE_ID ? worldDbTeamsAndNcaa : universeId === WORLD_DB_SPAIN_UNIVERSE_ID ? worldDbTeams : selectedUniverse.teams
+  const ncaaSeedReady = (!isNCAA2026 && !(universeId === WORLD_DB_V2_UNIVERSE_ID && includeNcaa)) || (ncaaSeed.trim().length > 0 && Number.isSafeInteger(Number(ncaaSeed)) && Number(ncaaSeed) >= 0 && Number(ncaaSeed) <= 0xffff_ffff)
+  const worldDbReady = universeId === WORLD_DB_V2_UNIVERSE_ID ? (v2ActiveCompetitions.length === 0 ? includeNcaa : !v2Loading && v2Pilot !== null && v2Error === null) && v2Date.length === 10 && v2Seed.trim().length > 0 : universeId !== WORLD_DB_SPAIN_UNIVERSE_ID || (!worldDbLoading && worldDbError === null && availableTeams.length === 18)
   const coachCreatorSupported = true
   const coachIdentityReady = !coachCreatorSupported || (firstName.trim().length > 0 && lastName.trim().length > 0 && dateOfBirth.length === 10)
 
@@ -158,7 +178,7 @@ function StartScreen({
           <h1>BDM</h1>
           <p className="subtitle">Basketball Dynasty Manager</p>
           <div className="bdm-start-actions">
-            <button className="primary-button" disabled={isStarting} onClick={() => setSetupOpen(true)} type="button">NEW GAME</button>
+            <button className="primary-button" disabled={isStarting} onClick={() => { setWizardStep('leagues'); setSetupOpen(true) }} type="button">NEW GAME</button>
             <button className="text-button" disabled={!canLoad || isStarting} onClick={onLoad} type="button">CONTINUE</button>
             <button className="secondary-button bdm-quick-start" disabled={isStarting} onClick={() => void onStart({ universeId: ACB_TEST_UNIVERSE_ID, userTeamKey: ACB_QUICK_START_TEAM_KEY })} type="button">
               {isStarting ? 'STARTING GAME...' : 'DEV QUICK START ACB · CASADEMONT ZARAGOZA'}
@@ -170,36 +190,71 @@ function StartScreen({
     )
   }
 
+  if (wizardStep === 'leagues') {
+    return <LeagueSelectionStep
+      universeId={universeId}
+      levels={v2Levels}
+      sourceRoot={sourceRoot}
+      startDate={v2Date}
+      seed={v2Seed}
+      ncaaSeed={ncaaSeed}
+      includeNcaa={includeNcaa}
+      onUniverseChange={chooseUniverse}
+      onLevelChange={(id,level)=>setV2Levels(current=>({...current,[id]:level}))}
+      onSourceRootChange={setSourceRoot}
+      onStartDateChange={setV2Date}
+      onSeedChange={setV2Seed}
+      onNcaaSeedChange={setNcaaSeed}
+      onIncludeNcaaChange={setIncludeNcaa}
+      onCancel={()=>setSetupOpen(false)}
+      onContinue={enterManager}
+    />
+  }
+
   return (
-    <main className="start-screen">
-      <section className="bdm-start-card bdm-new-game-card">
-        <div className="bdm-new-game-heading">
-          <div><p className="eyebrow">NEW CAREER</p><h1>NEW GAME</h1></div>
-          <button className="text-button" disabled={isStarting} onClick={() => setSetupOpen(false)} type="button">BACK</button>
-        </div>
-        <label className="bdm-start-field">
-          <span>UNIVERSE</span>
-          <select disabled={isStarting} value={universeId} onChange={(event) => chooseUniverse(event.target.value as NewGameUniverseId)}>
-            {NEW_GAME_UNIVERSES.map((universe) => <option key={universe.id} value={universe.id}>{universe.label}{universe.isTest ? ' [TEST]' : ''}</option>)}
-          </select>
-        </label>
-        <p className="bdm-universe-description">{selectedUniverse.description}</p>
-        {universeId===WORLD_DB_V2_UNIVERSE_ID&&<>
-          <label className="bdm-start-field"><span>WORLDDB SOURCE FOLDER</span><input value={sourceRoot} disabled={isStarting} onChange={e=>setSourceRoot(e.target.value)}/></label>
-          <label className="bdm-start-field"><span>START DATE</span><input type="date" value={v2Date} disabled={isStarting} onChange={e=>setV2Date(e.target.value)}/></label>
-          <label className="bdm-start-field"><span>WORLD SEED</span><input value={v2Seed} disabled={isStarting} onChange={e=>setV2Seed(e.target.value)}/></label>
-          <fieldset disabled={isStarting}><legend>ACTIVE COMPETITIONS</legend>{v2Competitions.map(c=><label key={c.sourceCompetitionId}><input type="checkbox" checked={v2ActiveCompetitions.includes(c.sourceCompetitionId)} disabled={isStarting || c.sourceCompetitionId===v2Competition} onChange={e=>setV2ActiveCompetitions(ids=>e.target.checked?[...ids,c.sourceCompetitionId]:ids.filter(id=>id!==c.sourceCompetitionId))}/>{c.name} · {c.teamCount} clubs </label>)}</fieldset>
-          <label className="bdm-start-field"><span>CLUB COMPETITION</span><select disabled={isStarting} value={v2Competition} onChange={e=>{setV2Competition(e.target.value);setV2ActiveCompetitions(ids=>ids.includes(e.target.value)?ids:[...ids,e.target.value])}}>{v2Competitions.map(c=><option key={c.sourceCompetitionId} value={c.sourceCompetitionId}>{c.name} · {c.countryCode}</option>)}</select></label>
-          <p className="bdm-universe-description">PBM reference: 1 July 2025. One fictional universe: all active leagues advance together. Profiles, contracts and opening economy are BDM-generated. Uncertified competitions remain unavailable.</p>
-          {v2Loading&&<p role="status">Checking WorldDB V2...</p>}{v2Error&&<p role="alert">{v2Error}</p>}
-        </>}
+    <main className="start-screen bdm-wizard-page">
+      <section className="bdm-wizard bdm-wizard-manager">
+        <header className="bdm-wizard__heading">
+          <div>
+            <p className="eyebrow">NUEVA PARTIDA · 2 DE 2</p>
+            <h1>Tu mánager</h1>
+            <p>Define tu trayectoria y elige el club con el que comenzará tu carrera.</p>
+          </div>
+          <nav aria-label="Pasos de nueva partida" className="bdm-wizard__progress">
+            <span>1. Ligas</span><strong aria-current="step">2. Mánager</strong>
+          </nav>
+        </header>
+        <div className="bdm-manager-layout">
+          <section className="bdm-manager-club" aria-label="Destino profesional">
+            <div className="bdm-manager-panel-head">
+              <h2>Tu primer club</h2>
+              <p>Selecciona la liga, el equipo y el entorno en el que empezarás.</p>
+            </div>
+            <p className="bdm-universe-description">{selectedUniverse.description}</p>
+        {universeId === WORLD_DB_V2_UNIVERSE_ID && (
+          <section className="bdm-manager-league-summary" aria-label="Ligas configuradas">
+            <strong>{v2ActiveCompetitions.length} ligas activas · {v2ReducedCompetitions.length} con simulación reducida</strong>
+            <label className="bdm-start-field">
+              <span>LIGA DEL CLUB INICIAL</span>
+              <select disabled={isStarting} value={v2StartCompetition} onChange={e=>{setV2Competition(e.target.value);setTeamKey('')}}>
+                {v2Competitions.filter(item=>v2ActiveCompetitions.includes(item.sourceCompetitionId)).map(item=>
+                  <option key={item.sourceCompetitionId} value={item.sourceCompetitionId}>{item.name} · {WORLDDB_NEW_GAME_COUNTRY_NAMES[item.countryCode] ?? item.countryCode}</option>
+                )}
+              </select>
+            </label>
+            <p>La categoría elegida determina qué clubes puedes dirigir. Las demás ligas activas siguen simulándose.</p>
+            {v2Loading && <p role="status">Cargando clubes de la liga seleccionada…</p>}
+            {v2Error && <p role="alert">{v2Error}</p>}
+          </section>
+        )}
+        {isNCAA2026 && <p className="bdm-universe-description">Se cargan NCAA masculina y femenina en el mismo universo. Tu club inicial pertenece a la categoría elegida. Calendarios parciales y torneos simulados.</p>}
         {universeId === WORLD_DB_SPAIN_UNIVERSE_ID && (worldDbLoading || isStarting) && <p aria-live="polite" className="bdm-world-db-status" role="status">Cargando World Database...</p>}
         {universeId === WORLD_DB_SPAIN_UNIVERSE_ID && worldDbError !== null && <p className="bdm-start-message">{worldDbError}</p>}
         {availableTeams.length > 0 && (
           <label className="bdm-start-field">
             <span>{universeId === WORLD_DB_SPAIN_UNIVERSE_ID ? `TEAM - ${availableTeams.length} CANONICAL OPTIONS` : 'TEAM'}</span>
             <select disabled={isStarting} value={teamKey} onChange={(event) => setTeamKey(event.target.value)}>
-              {(universeId === WORLD_DB_SPAIN_UNIVERSE_ID||universeId===WORLD_DB_V2_UNIVERSE_ID) && <option disabled value="">CHOOSE A TEAM</option>}
+              {(universeId === WORLD_DB_SPAIN_UNIVERSE_ID||universeId===WORLD_DB_V2_UNIVERSE_ID||isNCAA2026) && <option disabled value="">CHOOSE A TEAM</option>}
               {availableTeams.map((team) => <option key={team.key} value={team.key}>{team.name} · {team.code}</option>)}
             </select>
           </label>
@@ -210,9 +265,10 @@ function StartScreen({
             <p>Real test data: clubs, player names, positions and head-coach names. Generated by BDM: ratings, tendencies, bios, contracts and finances.</p>
           </div>
         )}
-        {coachCreatorSupported ? (
-          <section aria-label="CREATE YOUR COACH" className="bdm-coach-creator">
-            <div className="bdm-coach-creator__head"><strong>CREATE YOUR COACH</strong><span>BS19B · CANONICAL PERSON</span></div>
+          </section>
+          {coachCreatorSupported ? (
+          <section aria-label="CREATE YOUR COACH" className="bdm-coach-creator bdm-manager-profile">
+            <div className="bdm-coach-creator__head"><div><h2>Perfil de mánager</h2><p>Identidad, experiencia y objetivos personales</p></div><span>CREACIÓN DE PERSONAJE</span></div>
             <div className="bdm-coach-creator__grid">
               <label className="bdm-start-field">
                 <span>COACH FIRST NAME</span>
@@ -282,14 +338,19 @@ function StartScreen({
             </label>
             <p className="bdm-coach-creator__note">Your nationality must exist in the selected world (leave blank for the club country). Your background affects real coaching attributes or finances; ambitions and fictional stories survive saves. Imported historical people stay unchanged.</p>
           </section>
-        ) : null}
-        <button className="primary-button" disabled={isStarting || !worldDbReady || !coachIdentityReady || (availableTeams.length > 0 && teamKey.length === 0)} onClick={() => void onStart({
+          ) : null}
+        </div>
+        <footer className="bdm-wizard__footer bdm-manager-footer">
+          <button className="text-button" disabled={isStarting} onClick={() => setWizardStep('leagues')} type="button">Volver a ligas</button>
+          <button className="primary-button" disabled={isStarting || !worldDbReady || !ncaaSeedReady || !coachIdentityReady || (availableTeams.length > 0 && teamKey.length === 0)} onClick={() => void onStart({
           universeId,
-          ...(universeId===WORLD_DB_V2_UNIVERSE_ID?{worldDbV2:{sourceRoot,startDate:v2Date,seed:v2Seed,competitionId:v2Competition,activeCompetitionIds:v2ActiveCompetitions}}:{}),
+          ...(universeId===WORLD_DB_V2_UNIVERSE_ID?{worldDbV2:{sourceRoot,startDate:v2Date,seed:v2Seed,competitionId:v2StartCompetition,activeCompetitionIds:v2ActiveCompetitions,reducedCompetitionIds:v2ReducedCompetitions,includeNcaa}}:{}),
+          ...(isNCAA2026 || (universeId === WORLD_DB_V2_UNIVERSE_ID && includeNcaa) ? { ncaaSeed: Number(ncaaSeed) } : {}),
           userTeamKey: availableTeams.length > 0 ? teamKey : undefined,
           ...(coachCreatorSupported ? { userCoachCreation: { firstName, lastName, dateOfBirth, gender: coachGender, nationalityCountryCode, background, ambition, biography, coachingStyle, disposition } } : {}),
         })} type="button">{isStarting ? 'STARTING CAREER...' : 'START CAREER'}</button>
-        {message !== null && <p className="bdm-start-message">{message}</p>}
+          {message !== null && <p role="alert" className="bdm-start-message">{message}</p>}
+        </footer>
       </section>
     </main>
   )

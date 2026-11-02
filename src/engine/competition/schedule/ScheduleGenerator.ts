@@ -10,6 +10,8 @@ import type { SchedulePolicy } from './SchedulePolicy'
 import { scheduleRoundsByCalendar } from './SchedulePolicy'
 import { deriveCompetitionSeasonWindows, requireCompetitionFormatVariant } from '../WorldCompetitionCalendar'
 import { instantiateWorldCompetitionRoundRobinV1 } from '../WorldCompetitionRoundRobin'
+import { resolveWorldCompetitionGroups } from '@/domain/competition/WorldCompetitionGroups'
+import { generateBalancedMatrixRounds } from './MatrixScheduleGenerator'
 
 const DEFAULT_DAYS_BETWEEN_ROUNDS = 4
 
@@ -39,16 +41,40 @@ export function generateRoundRobinSchedule(options: GenerateRoundRobinScheduleOp
   const teamIds = season.participantTeamIds ?? competition.participantTeamIds
   validateParticipants(teamIds, season.worldCompetitionFormat !== undefined)
 
-  const rounds = teamIds.length % 2 === 0
+  const variant = season.worldCompetitionFormat && requireCompetitionFormatVariant(season.worldCompetitionFormat)
+  const regular = variant?.nodes.find(node => node.role === 'REGULAR_SEASON')
+  const groups = regular && resolveWorldCompetitionGroups(regular, teamIds)
+  const matrixTarget = regular?.pairing?.type === 'FIXED_SCHEDULE'
+    && regular.pairing.payload.bdm_generated_matrix_v1 === true
+    && regular.opponentScope?.type === 'SCHEDULE_MATRIX'
+    ? regular.pairing.payload.games_per_team : undefined
+  if (regular?.pairing?.type === 'FIXED_SCHEDULE' && matrixTarget === undefined) {
+    throw new Error('Official fixed schedule requires a source-specific scheduler; do not generate a round robin')
+  }
+  if (matrixTarget !== undefined && (typeof matrixTarget !== 'number' || !Number.isInteger(matrixTarget))) {
+    throw new Error('Generated matrix requires an integer games_per_team')
+  }
+  const rounds = matrixTarget !== undefined
+    ? generateBalancedMatrixRounds(teamIds, matrixTarget)
+    : groups && groups.length > 1
+    ? groupedRounds(season.worldCompetitionFormat!, groups, regular!.key)
+    : teamIds.length % 2 === 0 && (competition.rules.schedule.meetingsPerPair % 2 === 0 || !season.worldCompetitionFormat)
     ? (() => {
-      const firstLegRounds = createFirstLegRounds(teamIds)
+      const firstLegRounds = createFirstLegRounds(teamIds, competition.rules.schedule.meetingsPerPair % 2 === 1)
       return Array.from({ length: competition.rules.schedule.meetingsPerPair }, (_, legIndex) => legIndex % 2 === 0 ? firstLegRounds : firstLegRounds.map(invertRound)).flat()
     })()
     : createRoundsWithByes(teamIds, season.worldCompetitionFormat!, competition.rules.schedule.meetingsPerPair, options.competitionStageKey)
   const startDate = options.startDate ?? season.startDate
   const seasonWindows = deriveCompetitionSeasonWindows(startDate, season.endDate, season.worldCompetitionFormat, season.calendarPolicy)
   const schedulePolicy = options.schedulePolicy ?? (options.daysBetweenRounds === undefined && (season.worldCompetitionFormat !== undefined || season.calendarPolicy !== undefined) ? scheduleRoundsByCalendar : undefined)
-  const roundDates = schedulePolicy === undefined
+  const leagueTwoPhase = regular?.pairing?.payload.bdm_gleague_two_phase_v1 === true
+  const matrixFirst = seasonWindows.regularSeasonStart
+  const matrixLast = seasonWindows.regularSeasonEnd
+  const availableDays = Math.round((Date.parse(matrixLast + 'T00:00:00Z') - Date.parse(matrixFirst + 'T00:00:00Z')) / 86_400_000)
+  if (leagueTwoPhase && (matrixTarget !== 36 || rounds.length > availableDays + 1)) throw new Error('G League generated 36-game calendar does not fit its regular window')
+  const roundDates = leagueTwoPhase && options.schedulePolicy === undefined && options.daysBetweenRounds === undefined
+    ? rounds.map((_, i) => addDays(matrixFirst, Math.floor(i * availableDays / Math.max(1, rounds.length - 1))))
+    : schedulePolicy === undefined
     ? rounds.map((_, roundIndex) => addDays(startDate, roundIndex * (options.daysBetweenRounds ?? DEFAULT_DAYS_BETWEEN_ROUNDS)))
     : schedulePolicy(rounds.length, startDate, seasonWindows.regularSeasonEnd, season.calendarPolicy)
 
@@ -80,6 +106,21 @@ export function generateRoundRobinSchedule(options: GenerateRoundRobinScheduleOp
   })
 }
 
+function groupedRounds(format: NonNullable<ReturnType<typeof getSeason>['worldCompetitionFormat']>, groups: readonly (readonly TeamId[])[], stageKey: string): Matchup[][] {
+  const variant = requireCompetitionFormatVariant(format)
+  const regular = variant.nodes.find(node => node.key === stageKey)!
+  const rounds: Matchup[][] = []
+  for (const participants of groups) {
+    const scoped = { ...format, variants: [{ ...variant, nodes: [{ ...regular, teamCount: participants.length, opponentScope: { type: 'ALL_STAGE' as const, payload: {} } }] }] }
+    const plan = instantiateWorldCompetitionRoundRobinV1(scoped, variant.key, stageKey, participants.map(id => ({ competitionSeasonEntryId: id })))
+    const byId = new Map(participants.map(id => [String(id), id]))
+    for (const fixture of plan.fixtures) {
+      (rounds[fixture.roundNo - 1] ??= []).push({ homeTeamId: byId.get(fixture.homeEntryId)!, awayTeamId: byId.get(fixture.awayEntryId)! })
+    }
+  }
+  return rounds
+}
+
 /** Reuses the format engine's bye-aware pairing plan for a verified odd-sized stage. */
 function createRoundsWithByes(teamIds: readonly TeamId[], format: NonNullable<ReturnType<typeof getSeason>['worldCompetitionFormat']>, meetings: number, stageKey?: string): Matchup[][] {
   const variant = requireCompetitionFormatVariant(format)
@@ -93,7 +134,7 @@ function createRoundsWithByes(teamIds: readonly TeamId[], format: NonNullable<Re
   return rounds
 }
 
-function createFirstLegRounds(teamIds: readonly TeamId[]): Matchup[][] {
+function createFirstLegRounds(teamIds: readonly TeamId[], balanceSingleMeeting = false): Matchup[][] {
   const fixedTeam = teamIds[0]!
   const rotatingTeams = teamIds.slice(1)
   const rounds: Matchup[][] = []
@@ -103,10 +144,10 @@ function createFirstLegRounds(teamIds: readonly TeamId[]): Matchup[][] {
     const round: Matchup[] = []
 
     for (let pairIndex = 0; pairIndex < teamIds.length / 2; pairIndex += 1) {
-      round.push({
-        homeTeamId: arrangedTeams[pairIndex]!,
-        awayTeamId: arrangedTeams[arrangedTeams.length - 1 - pairIndex]!,
-      })
+      const left = arrangedTeams[pairIndex]!, right = arrangedTeams[arrangedTeams.length - 1 - pairIndex]!
+      const size = teamIds.length + 1
+      const reverse = balanceSingleMeeting && (teamIds.indexOf(right) - teamIds.indexOf(left) + size) % size > Math.floor(size / 2)
+      round.push({ homeTeamId: reverse ? right : left, awayTeamId: reverse ? left : right })
     }
     rounds.push(round)
 

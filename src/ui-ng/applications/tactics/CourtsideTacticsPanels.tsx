@@ -333,6 +333,7 @@ function RotationsPanel({ world, teamId, onOpenPlayer }: { world: GameWorld; tea
 
 function GamePlanPanel({ world, teamId }: { world: GameWorld; teamId: TeamId; onOpenPlayer?: (id: PlayerId) => void }) {
   const save = useGameStore(state => state.updateGamePlanTacticalOverride)
+  const acceptReport = useGameStore(state => state.acceptOppositionScoutingReport)
   const { game, opponent } = getMatch(world, teamId)
   const persisted = game === undefined ? undefined : world.gamePlansByKey[String(game.id)+':'+String(teamId)]?.tacticalOverride as MatchTacticalPlan | undefined
   const base = persisted ?? world.tacticalPlansByTeamId[teamId]?.instructions ?? createDefaultTacticalPlan()
@@ -345,11 +346,12 @@ function GamePlanPanel({ world, teamId }: { world: GameWorld; teamId: TeamId; on
   const selectCoverage = (coverage: Coverage) => setPlan({ ...plan, defense: { ...plan.defense, pickAndRollCoverage: coverage } })
   const changePace = (pace: TacticalLevel) => setPlan({ ...plan, pace })
   const savePlan = () => { if (!game) return; save(plan); setDidSave(true) }
+  const applyRecommendation = () => { if (!report) return; acceptReport(report.id); setDidSave(true) }
   return <>
     <StatStrip><Metric value={game?.date ?? 'SIN PARTIDO'} label="Próximo encuentro" tone="ct-green"/><Metric value={opponent?.name ?? 'Sin rival'} label="Adversario"/><Metric value={'PLAN '+active} label="Borrador activo"/><Metric value={report?.qualityScore === undefined ? 'SIN INFORME' : report.qualityScore+'/100'} label="Calidad del scouting"/><div className="ct-stats__actions"><button type="button" className="ct-primary" disabled={!game} onClick={savePlan}>APLICAR AL PARTIDO</button></div></StatStrip>
     <div className="ct-columns ct-columns--game">
       <Card title="INFORME DE OPOSICIÓN" note={opponent?.name ?? 'Sin rival'}><div className="ct-opponent"><strong>{opponent?.name ?? 'No hay próximo partido programado'}</strong><span>{report ? 'Informe disponible · ' + report.generatedOn : 'Scouting no disponible'}</span></div>
-        {report ? <><h3 className="ct-subheading">Señales identificadas</h3><p className="ct-hint">{report.flaggedPlayerIds.length} jugadores señalados como amenazas. {report.recommendedDefensiveEmphasis ? 'Se recomienda proteger ' + (report.recommendedDefensiveEmphasis==='interior'?'la pintura.':'el perímetro.') : 'Sin énfasis defensivo específico.'}</p>{report.recommendedPaceAdjustment !== undefined && <p className="ct-hint">Ajuste de ritmo recomendado: {report.recommendedPaceAdjustment>0?'+':''}{report.recommendedPaceAdjustment}</p>}</> : <Empty text="No existe todavía un informe de oposición para este encuentro. No se inventan amenazas ni porcentajes."/>}
+        {report ? <><h3 className="ct-subheading">Señales identificadas</h3><p className="ct-hint">{report.flaggedPlayerIds.length} jugadores señalados como amenazas. {report.recommendedDefensiveEmphasis ? 'Se recomienda proteger ' + (report.recommendedDefensiveEmphasis==='interior'?'la pintura.':'el perímetro.') : 'Sin énfasis defensivo específico.'}</p>{report.recommendedPaceAdjustment !== undefined && <p className="ct-hint">Ajuste de ritmo recomendado: {report.recommendedPaceAdjustment>0?'+':''}{report.recommendedPaceAdjustment}</p>}<button type="button" className="ct-secondary" onClick={applyRecommendation}>ACEPTAR RECOMENDACIÓN</button></> : <Empty text="No existe todavía un informe de oposición para este encuentro. No se inventan amenazas ni porcentajes."/>}
       </Card>
       <Card title="PLAN DE PARTIDO" note="BORRADORES A / B">
         <div className="ct-switch"><button aria-pressed={active==='A'} type="button" onClick={() => { setActive('A'); setDidSave(false) }}>PLAN A</button><button aria-pressed={active==='B'} type="button" onClick={() => { setActive('B'); setDidSave(false) }}>PLAN B</button></div>

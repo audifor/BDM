@@ -17,6 +17,8 @@ export interface WorldDbV2Pilot {
     }[];
 }
 export interface WorldDbV2Snapshot {
+    readonly freeStaff?: readonly WorldDbV2Entity[];
+    readonly freeStaffSelection?: { readonly eligibleOriginals: number; readonly selected: number; readonly policy: string };
     readonly freeAgents?: readonly WorldDbV2Entity[];
     readonly freeAgentSelection?: { readonly eligibleOriginals: number; readonly selected: number; readonly policy: string };
     readonly physicalContent?: import('@/domain/worldDb/GameBootstrap').WorldDbPhysicalContentV1;
@@ -35,4 +37,4 @@ export interface WorldDbV2Snapshot {
     readonly competitions: readonly WorldDbV2Entity[];
 }
 export const discoverWorldDbV2 = (sourceRoot: string, competitionId?: string) => invoke<WorldDbV2Pilot>('world_db_v2', { request: { method: 'discover', sourceRoot, competitionId } });
-export const buildWorldDbV2 = (sourceRoot: string, startDate: string, seed: string, competitionId?: string) => invoke<WorldDbV2Snapshot>('world_db_v2', { request: { method: 'build', sourceRoot, startDate, seed, competitionId } });
+export const buildWorldDbV2 = (sourceRoot: string, startDate: string, seed: string, competitionId?: string, staffCompetitionIds?: readonly string[]) => invoke<WorldDbV2Snapshot>('world_db_v2', { request: { method: 'build', sourceRoot, startDate, seed, competitionId, staffCompetitionIds } });

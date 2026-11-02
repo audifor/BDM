@@ -1,0 +1,591 @@
+{
+  "season": "2026-27",
+  "conferenceId": "big-south-conference",
+  "sourceUrl": "https://bigsouthsports.com/documents/2026/9/23/2026_27_Women_s_Basketball_Conference_Schedule.pdf",
+  "sourceQuality": "CONFERENCE_OFFICIAL",
+  "fixtures": [
+    {
+      "gender": "women",
+      "date": "2026-12-30",
+      "awayProgramId": "ncaa:2026-27:women:gardner-webb-runnin-bulldogs",
+      "homeProgramId": "ncaa:2026-27:women:radford-highlanders",
+      "sourceUrl": "https://bigsouthsports.com/documents/2026/9/23/2026_27_Women_s_Basketball_Conference_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-30",
+      "awayProgramId": "ncaa:2026-27:women:high-point-panthers",
+      "homeProgramId": "ncaa:2026-27:women:winthrop-eagles",
+      "sourceUrl": "https://bigsouthsports.com/documents/2026/9/23/2026_27_Women_s_Basketball_Conference_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-30",
+      "awayProgramId": "ncaa:2026-27:women:presbyterian-blue-hose",
+      "homeProgramId": "ncaa:2026-27:women:longwood-lancers",
+      "sourceUrl": "https://bigsouthsports.com/documents/2026/9/23/2026_27_Women_s_Basketball_Conference_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-30",
+      "awayProgramId": "ncaa:2026-27:women:unc-asheville-bulldogs",
+      "homeProgramId": "ncaa:2026-27:women:south-carolina-upstate-spartans",
+      "sourceUrl": "https://bigsouthsports.com/documents/2026/9/23/2026_27_Women_s_Basketball_Conference_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-02",
+      "awayProgramId": "ncaa:2026-27:women:high-point-panthers",
+      "homeProgramId": "ncaa:2026-27:women:charleston-southern-buccaneers",
+      "sourceUrl": "https://bigsouthsports.com/documents/2026/9/23/2026_27_Women_s_Basketball_Conference_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-02",
+      "awayProgramId": "ncaa:2026-27:women:unc-asheville-bulldogs",
+      "homeProgramId": "ncaa:2026-27:women:gardner-webb-runnin-bulldogs",
+      "sourceUrl": "https://bigsouthsports.com/documents/2026/9/23/2026_27_Women_s_Basketball_Conference_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-02",
+      "awayProgramId": "ncaa:2026-27:women:radford-highlanders",
+      "homeProgramId": "ncaa:2026-27:women:presbyterian-blue-hose",
+      "sourceUrl": "https://bigsouthsports.com/documents/2026/9/23/2026_27_Women_s_Basketball_Conference_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-02",
+      "awayProgramId": "ncaa:2026-27:women:winthrop-eagles",
+      "homeProgramId": "ncaa:2026-27:women:south-carolina-upstate-spartans",
+      "sourceUrl": "https://bigsouthsports.com/documents/2026/9/23/2026_27_Women_s_Basketball_Conference_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-06",
+      "awayProgramId": "ncaa:2026-27:women:charleston-southern-buccaneers",
+      "homeProgramId": "ncaa:2026-27:women:unc-asheville-bulldogs",
+      "sourceUrl": "https://bigsouthsports.com/documents/2026/9/23/2026_27_Women_s_Basketball_Conference_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-06",
+      "awayProgramId": "ncaa:2026-27:women:gardner-webb-runnin-bulldogs",
+      "homeProgramId": "ncaa:2026-27:women:longwood-lancers",
+      "sourceUrl": "https://bigsouthsports.com/documents/2026/9/23/2026_27_Women_s_Basketball_Conference_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-06",
+      "awayProgramId": "ncaa:2026-27:women:south-carolina-upstate-spartans",
+      "homeProgramId": "ncaa:2026-27:women:high-point-panthers",
+      "sourceUrl": "https://bigsouthsports.com/documents/2026/9/23/2026_27_Women_s_Basketball_Conference_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-06",
+      "awayProgramId": "ncaa:2026-27:women:winthrop-eagles",
+      "homeProgramId": "ncaa:2026-27:women:radford-highlanders",
+      "sourceUrl": "https://bigsouthsports.com/documents/2026/9/23/2026_27_Women_s_Basketball_Conference_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-09",
+      "awayProgramId": "ncaa:2026-27:women:longwood-lancers",
+      "homeProgramId": "ncaa:2026-27:women:charleston-southern-buccaneers",
+      "sourceUrl": "https://bigsouthsports.com/documents/2026/9/23/2026_27_Women_s_Basketball_Conference_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-09",
+      "awayProgramId": "ncaa:2026-27:women:gardner-webb-runnin-bulldogs",
+      "homeProgramId": "ncaa:2026-27:women:winthrop-eagles",
+      "sourceUrl": "https://bigsouthsports.com/documents/2026/9/23/2026_27_Women_s_Basketball_Conference_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-09",
+      "awayProgramId": "ncaa:2026-27:women:radford-highlanders",
+      "homeProgramId": "ncaa:2026-27:women:high-point-panthers",
+      "sourceUrl": "https://bigsouthsports.com/documents/2026/9/23/2026_27_Women_s_Basketball_Conference_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-09",
+      "awayProgramId": "ncaa:2026-27:women:unc-asheville-bulldogs",
+      "homeProgramId": "ncaa:2026-27:women:presbyterian-blue-hose",
+      "sourceUrl": "https://bigsouthsports.com/documents/2026/9/23/2026_27_Women_s_Basketball_Conference_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-13",
+      "awayProgramId": "ncaa:2026-27:women:charleston-southern-buccaneers",
+      "homeProgramId": "ncaa:2026-27:women:south-carolina-upstate-spartans",
+      "sourceUrl": "https://bigsouthsports.com/documents/2026/9/23/2026_27_Women_s_Basketball_Conference_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-13",
+      "awayProgramId": "ncaa:2026-27:women:high-point-panthers",
+      "homeProgramId": "ncaa:2026-27:women:gardner-webb-runnin-bulldogs",
+      "sourceUrl": "https://bigsouthsports.com/documents/2026/9/23/2026_27_Women_s_Basketball_Conference_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-13",
+      "awayProgramId": "ncaa:2026-27:women:radford-highlanders",
+      "homeProgramId": "ncaa:2026-27:women:longwood-lancers",
+      "sourceUrl": "https://bigsouthsports.com/documents/2026/9/23/2026_27_Women_s_Basketball_Conference_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-13",
+      "awayProgramId": "ncaa:2026-27:women:winthrop-eagles",
+      "homeProgramId": "ncaa:2026-27:women:presbyterian-blue-hose",
+      "sourceUrl": "https://bigsouthsports.com/documents/2026/9/23/2026_27_Women_s_Basketball_Conference_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-16",
+      "awayProgramId": "ncaa:2026-27:women:charleston-southern-buccaneers",
+      "homeProgramId": "ncaa:2026-27:women:radford-highlanders",
+      "sourceUrl": "https://bigsouthsports.com/documents/2026/9/23/2026_27_Women_s_Basketball_Conference_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-16",
+      "awayProgramId": "ncaa:2026-27:women:high-point-panthers",
+      "homeProgramId": "ncaa:2026-27:women:unc-asheville-bulldogs",
+      "sourceUrl": "https://bigsouthsports.com/documents/2026/9/23/2026_27_Women_s_Basketball_Conference_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-16",
+      "awayProgramId": "ncaa:2026-27:women:longwood-lancers",
+      "homeProgramId": "ncaa:2026-27:women:winthrop-eagles",
+      "sourceUrl": "https://bigsouthsports.com/documents/2026/9/23/2026_27_Women_s_Basketball_Conference_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-16",
+      "awayProgramId": "ncaa:2026-27:women:presbyterian-blue-hose",
+      "homeProgramId": "ncaa:2026-27:women:south-carolina-upstate-spartans",
+      "sourceUrl": "https://bigsouthsports.com/documents/2026/9/23/2026_27_Women_s_Basketball_Conference_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL",
+      "sourceCorrection": {
+        "originalHome": "USC Usptate",
+        "correctHome": "USC Upstate",
+        "evidence": [
+          "https://bigsouthsports.com/documents/2026/9/23/2026_27_Women_s_Basketball_Conference_Schedule.pdf"
+        ]
+      }
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-20",
+      "awayProgramId": "ncaa:2026-27:women:presbyterian-blue-hose",
+      "homeProgramId": "ncaa:2026-27:women:charleston-southern-buccaneers",
+      "sourceUrl": "https://bigsouthsports.com/documents/2026/9/23/2026_27_Women_s_Basketball_Conference_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-20",
+      "awayProgramId": "ncaa:2026-27:women:south-carolina-upstate-spartans",
+      "homeProgramId": "ncaa:2026-27:women:gardner-webb-runnin-bulldogs",
+      "sourceUrl": "https://bigsouthsports.com/documents/2026/9/23/2026_27_Women_s_Basketball_Conference_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-20",
+      "awayProgramId": "ncaa:2026-27:women:longwood-lancers",
+      "homeProgramId": "ncaa:2026-27:women:high-point-panthers",
+      "sourceUrl": "https://bigsouthsports.com/documents/2026/9/23/2026_27_Women_s_Basketball_Conference_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-20",
+      "awayProgramId": "ncaa:2026-27:women:radford-highlanders",
+      "homeProgramId": "ncaa:2026-27:women:unc-asheville-bulldogs",
+      "sourceUrl": "https://bigsouthsports.com/documents/2026/9/23/2026_27_Women_s_Basketball_Conference_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-23",
+      "awayProgramId": "ncaa:2026-27:women:winthrop-eagles",
+      "homeProgramId": "ncaa:2026-27:women:charleston-southern-buccaneers",
+      "sourceUrl": "https://bigsouthsports.com/documents/2026/9/23/2026_27_Women_s_Basketball_Conference_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-23",
+      "awayProgramId": "ncaa:2026-27:women:gardner-webb-runnin-bulldogs",
+      "homeProgramId": "ncaa:2026-27:women:presbyterian-blue-hose",
+      "sourceUrl": "https://bigsouthsports.com/documents/2026/9/23/2026_27_Women_s_Basketball_Conference_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-23",
+      "awayProgramId": "ncaa:2026-27:women:unc-asheville-bulldogs",
+      "homeProgramId": "ncaa:2026-27:women:longwood-lancers",
+      "sourceUrl": "https://bigsouthsports.com/documents/2026/9/23/2026_27_Women_s_Basketball_Conference_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-23",
+      "awayProgramId": "ncaa:2026-27:women:south-carolina-upstate-spartans",
+      "homeProgramId": "ncaa:2026-27:women:radford-highlanders",
+      "sourceUrl": "https://bigsouthsports.com/documents/2026/9/23/2026_27_Women_s_Basketball_Conference_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-27",
+      "awayProgramId": "ncaa:2026-27:women:charleston-southern-buccaneers",
+      "homeProgramId": "ncaa:2026-27:women:gardner-webb-runnin-bulldogs",
+      "sourceUrl": "https://bigsouthsports.com/documents/2026/9/23/2026_27_Women_s_Basketball_Conference_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-27",
+      "awayProgramId": "ncaa:2026-27:women:high-point-panthers",
+      "homeProgramId": "ncaa:2026-27:women:presbyterian-blue-hose",
+      "sourceUrl": "https://bigsouthsports.com/documents/2026/9/23/2026_27_Women_s_Basketball_Conference_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-27",
+      "awayProgramId": "ncaa:2026-27:women:longwood-lancers",
+      "homeProgramId": "ncaa:2026-27:women:south-carolina-upstate-spartans",
+      "sourceUrl": "https://bigsouthsports.com/documents/2026/9/23/2026_27_Women_s_Basketball_Conference_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-27",
+      "awayProgramId": "ncaa:2026-27:women:winthrop-eagles",
+      "homeProgramId": "ncaa:2026-27:women:unc-asheville-bulldogs",
+      "sourceUrl": "https://bigsouthsports.com/documents/2026/9/23/2026_27_Women_s_Basketball_Conference_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-30",
+      "awayProgramId": "ncaa:2026-27:women:charleston-southern-buccaneers",
+      "homeProgramId": "ncaa:2026-27:women:longwood-lancers",
+      "sourceUrl": "https://bigsouthsports.com/documents/2026/9/23/2026_27_Women_s_Basketball_Conference_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-30",
+      "awayProgramId": "ncaa:2026-27:women:radford-highlanders",
+      "homeProgramId": "ncaa:2026-27:women:gardner-webb-runnin-bulldogs",
+      "sourceUrl": "https://bigsouthsports.com/documents/2026/9/23/2026_27_Women_s_Basketball_Conference_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-30",
+      "awayProgramId": "ncaa:2026-27:women:unc-asheville-bulldogs",
+      "homeProgramId": "ncaa:2026-27:women:high-point-panthers",
+      "sourceUrl": "https://bigsouthsports.com/documents/2026/9/23/2026_27_Women_s_Basketball_Conference_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-30",
+      "awayProgramId": "ncaa:2026-27:women:south-carolina-upstate-spartans",
+      "homeProgramId": "ncaa:2026-27:women:winthrop-eagles",
+      "sourceUrl": "https://bigsouthsports.com/documents/2026/9/23/2026_27_Women_s_Basketball_Conference_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-03",
+      "awayProgramId": "ncaa:2026-27:women:unc-asheville-bulldogs",
+      "homeProgramId": "ncaa:2026-27:women:charleston-southern-buccaneers",
+      "sourceUrl": "https://bigsouthsports.com/documents/2026/9/23/2026_27_Women_s_Basketball_Conference_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-03",
+      "awayProgramId": "ncaa:2026-27:women:gardner-webb-runnin-bulldogs",
+      "homeProgramId": "ncaa:2026-27:women:high-point-panthers",
+      "sourceUrl": "https://bigsouthsports.com/documents/2026/9/23/2026_27_Women_s_Basketball_Conference_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-03",
+      "awayProgramId": "ncaa:2026-27:women:south-carolina-upstate-spartans",
+      "homeProgramId": "ncaa:2026-27:women:presbyterian-blue-hose",
+      "sourceUrl": "https://bigsouthsports.com/documents/2026/9/23/2026_27_Women_s_Basketball_Conference_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-03",
+      "awayProgramId": "ncaa:2026-27:women:radford-highlanders",
+      "homeProgramId": "ncaa:2026-27:women:winthrop-eagles",
+      "sourceUrl": "https://bigsouthsports.com/documents/2026/9/23/2026_27_Women_s_Basketball_Conference_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-06",
+      "awayProgramId": "ncaa:2026-27:women:gardner-webb-runnin-bulldogs",
+      "homeProgramId": "ncaa:2026-27:women:unc-asheville-bulldogs",
+      "sourceUrl": "https://bigsouthsports.com/documents/2026/9/23/2026_27_Women_s_Basketball_Conference_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-06",
+      "awayProgramId": "ncaa:2026-27:women:high-point-panthers",
+      "homeProgramId": "ncaa:2026-27:women:south-carolina-upstate-spartans",
+      "sourceUrl": "https://bigsouthsports.com/documents/2026/9/23/2026_27_Women_s_Basketball_Conference_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-06",
+      "awayProgramId": "ncaa:2026-27:women:winthrop-eagles",
+      "homeProgramId": "ncaa:2026-27:women:longwood-lancers",
+      "sourceUrl": "https://bigsouthsports.com/documents/2026/9/23/2026_27_Women_s_Basketball_Conference_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-06",
+      "awayProgramId": "ncaa:2026-27:women:presbyterian-blue-hose",
+      "homeProgramId": "ncaa:2026-27:women:radford-highlanders",
+      "sourceUrl": "https://bigsouthsports.com/documents/2026/9/23/2026_27_Women_s_Basketball_Conference_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-10",
+      "awayProgramId": "ncaa:2026-27:women:charleston-southern-buccaneers",
+      "homeProgramId": "ncaa:2026-27:women:winthrop-eagles",
+      "sourceUrl": "https://bigsouthsports.com/documents/2026/9/23/2026_27_Women_s_Basketball_Conference_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-10",
+      "awayProgramId": "ncaa:2026-27:women:presbyterian-blue-hose",
+      "homeProgramId": "ncaa:2026-27:women:gardner-webb-runnin-bulldogs",
+      "sourceUrl": "https://bigsouthsports.com/documents/2026/9/23/2026_27_Women_s_Basketball_Conference_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-10",
+      "awayProgramId": "ncaa:2026-27:women:high-point-panthers",
+      "homeProgramId": "ncaa:2026-27:women:radford-highlanders",
+      "sourceUrl": "https://bigsouthsports.com/documents/2026/9/23/2026_27_Women_s_Basketball_Conference_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-10",
+      "awayProgramId": "ncaa:2026-27:women:longwood-lancers",
+      "homeProgramId": "ncaa:2026-27:women:unc-asheville-bulldogs",
+      "sourceUrl": "https://bigsouthsports.com/documents/2026/9/23/2026_27_Women_s_Basketball_Conference_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-13",
+      "awayProgramId": "ncaa:2026-27:women:charleston-southern-buccaneers",
+      "homeProgramId": "ncaa:2026-27:women:high-point-panthers",
+      "sourceUrl": "https://bigsouthsports.com/documents/2026/9/23/2026_27_Women_s_Basketball_Conference_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-13",
+      "awayProgramId": "ncaa:2026-27:women:winthrop-eagles",
+      "homeProgramId": "ncaa:2026-27:women:gardner-webb-runnin-bulldogs",
+      "sourceUrl": "https://bigsouthsports.com/documents/2026/9/23/2026_27_Women_s_Basketball_Conference_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-13",
+      "awayProgramId": "ncaa:2026-27:women:longwood-lancers",
+      "homeProgramId": "ncaa:2026-27:women:presbyterian-blue-hose",
+      "sourceUrl": "https://bigsouthsports.com/documents/2026/9/23/2026_27_Women_s_Basketball_Conference_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-13",
+      "awayProgramId": "ncaa:2026-27:women:radford-highlanders",
+      "homeProgramId": "ncaa:2026-27:women:south-carolina-upstate-spartans",
+      "sourceUrl": "https://bigsouthsports.com/documents/2026/9/23/2026_27_Women_s_Basketball_Conference_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-17",
+      "awayProgramId": "ncaa:2026-27:women:gardner-webb-runnin-bulldogs",
+      "homeProgramId": "ncaa:2026-27:women:charleston-southern-buccaneers",
+      "sourceUrl": "https://bigsouthsports.com/documents/2026/9/23/2026_27_Women_s_Basketball_Conference_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-17",
+      "awayProgramId": "ncaa:2026-27:women:presbyterian-blue-hose",
+      "homeProgramId": "ncaa:2026-27:women:high-point-panthers",
+      "sourceUrl": "https://bigsouthsports.com/documents/2026/9/23/2026_27_Women_s_Basketball_Conference_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-17",
+      "awayProgramId": "ncaa:2026-27:women:south-carolina-upstate-spartans",
+      "homeProgramId": "ncaa:2026-27:women:longwood-lancers",
+      "sourceUrl": "https://bigsouthsports.com/documents/2026/9/23/2026_27_Women_s_Basketball_Conference_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-17",
+      "awayProgramId": "ncaa:2026-27:women:unc-asheville-bulldogs",
+      "homeProgramId": "ncaa:2026-27:women:winthrop-eagles",
+      "sourceUrl": "https://bigsouthsports.com/documents/2026/9/23/2026_27_Women_s_Basketball_Conference_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-20",
+      "awayProgramId": "ncaa:2026-27:women:radford-highlanders",
+      "homeProgramId": "ncaa:2026-27:women:charleston-southern-buccaneers",
+      "sourceUrl": "https://bigsouthsports.com/documents/2026/9/23/2026_27_Women_s_Basketball_Conference_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-20",
+      "awayProgramId": "ncaa:2026-27:women:gardner-webb-runnin-bulldogs",
+      "homeProgramId": "ncaa:2026-27:women:south-carolina-upstate-spartans",
+      "sourceUrl": "https://bigsouthsports.com/documents/2026/9/23/2026_27_Women_s_Basketball_Conference_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-20",
+      "awayProgramId": "ncaa:2026-27:women:high-point-panthers",
+      "homeProgramId": "ncaa:2026-27:women:longwood-lancers",
+      "sourceUrl": "https://bigsouthsports.com/documents/2026/9/23/2026_27_Women_s_Basketball_Conference_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-20",
+      "awayProgramId": "ncaa:2026-27:women:presbyterian-blue-hose",
+      "homeProgramId": "ncaa:2026-27:women:unc-asheville-bulldogs",
+      "sourceUrl": "https://bigsouthsports.com/documents/2026/9/23/2026_27_Women_s_Basketball_Conference_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-24",
+      "awayProgramId": "ncaa:2026-27:women:charleston-southern-buccaneers",
+      "homeProgramId": "ncaa:2026-27:women:presbyterian-blue-hose",
+      "sourceUrl": "https://bigsouthsports.com/documents/2026/9/23/2026_27_Women_s_Basketball_Conference_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-24",
+      "awayProgramId": "ncaa:2026-27:women:winthrop-eagles",
+      "homeProgramId": "ncaa:2026-27:women:high-point-panthers",
+      "sourceUrl": "https://bigsouthsports.com/documents/2026/9/23/2026_27_Women_s_Basketball_Conference_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-24",
+      "awayProgramId": "ncaa:2026-27:women:longwood-lancers",
+      "homeProgramId": "ncaa:2026-27:women:radford-highlanders",
+      "sourceUrl": "https://bigsouthsports.com/documents/2026/9/23/2026_27_Women_s_Basketball_Conference_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-24",
+      "awayProgramId": "ncaa:2026-27:women:south-carolina-upstate-spartans",
+      "homeProgramId": "ncaa:2026-27:women:unc-asheville-bulldogs",
+      "sourceUrl": "https://bigsouthsports.com/documents/2026/9/23/2026_27_Women_s_Basketball_Conference_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-27",
+      "awayProgramId": "ncaa:2026-27:women:south-carolina-upstate-spartans",
+      "homeProgramId": "ncaa:2026-27:women:charleston-southern-buccaneers",
+      "sourceUrl": "https://bigsouthsports.com/documents/2026/9/23/2026_27_Women_s_Basketball_Conference_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-27",
+      "awayProgramId": "ncaa:2026-27:women:longwood-lancers",
+      "homeProgramId": "ncaa:2026-27:women:gardner-webb-runnin-bulldogs",
+      "sourceUrl": "https://bigsouthsports.com/documents/2026/9/23/2026_27_Women_s_Basketball_Conference_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-27",
+      "awayProgramId": "ncaa:2026-27:women:presbyterian-blue-hose",
+      "homeProgramId": "ncaa:2026-27:women:winthrop-eagles",
+      "sourceUrl": "https://bigsouthsports.com/documents/2026/9/23/2026_27_Women_s_Basketball_Conference_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-27",
+      "awayProgramId": "ncaa:2026-27:women:unc-asheville-bulldogs",
+      "homeProgramId": "ncaa:2026-27:women:radford-highlanders",
+      "sourceUrl": "https://bigsouthsports.com/documents/2026/9/23/2026_27_Women_s_Basketball_Conference_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    }
+  ]
+}

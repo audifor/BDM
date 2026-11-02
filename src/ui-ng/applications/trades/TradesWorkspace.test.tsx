@@ -122,6 +122,14 @@ function userResponseCard(): HTMLElement {
 const playerName = (world: GameWorld, playerId: PlayerId) => `${world.players[playerId]!.firstName} ${world.players[playerId]!.lastName}`
 
 describe('TradesWorkspace trade negotiation closure', () => {
+  it('loads a player-card target into the existing two-club editor', async () => {
+    const scenario = createTradeScenario()
+    mountTrades(scenario.world, `/?ui=ng&app=trades&playerId=${encodeURIComponent(scenario.players[2]!)}`)
+
+    await waitFor(() => expect(screen.getByText(new RegExp(playerName(scenario.world, scenario.players[2]!)))).toBeInTheDocument())
+    expect(screen.getByText(`Player target loaded from ${scenario.partner.name}. Review the canonical checks before proposing.`)).toBeInTheDocument()
+  })
+
   it('opens the negotiation a breakpoint selected and shows the canonical proposal with legal controls', async () => {
     const scenario = createIncomingProposal()
     const stop = getContinueStopReason(scenario.world)

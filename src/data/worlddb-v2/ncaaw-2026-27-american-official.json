@@ -1,0 +1,944 @@
+{
+  "season": "2026-27",
+  "conferenceId": "american-conference",
+  "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+  "sourceQuality": "CONFERENCE_OFFICIAL",
+  "fixtures": [
+    {
+      "gender": "women",
+      "date": "2026-12-30",
+      "awayProgramId": "ncaa:2026-27:women:charlotte-49ers",
+      "homeProgramId": "ncaa:2026-27:women:temple-owls",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-30",
+      "awayProgramId": "ncaa:2026-27:women:rice-owls",
+      "homeProgramId": "ncaa:2026-27:women:east-carolina-pirates",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-30",
+      "awayProgramId": "ncaa:2026-27:women:utsa-roadrunners",
+      "homeProgramId": "ncaa:2026-27:women:florida-atlantic-owls",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-30",
+      "awayProgramId": "ncaa:2026-27:women:south-florida-bulls",
+      "homeProgramId": "ncaa:2026-27:women:north-texas-mean-green",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-30",
+      "awayProgramId": "ncaa:2026-27:women:wichita-state-shockers",
+      "homeProgramId": "ncaa:2026-27:women:tulane-green-wave",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-31",
+      "awayProgramId": "ncaa:2026-27:women:memphis-tigers",
+      "homeProgramId": "ncaa:2026-27:women:tulsa-golden-hurricane",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-02",
+      "awayProgramId": "ncaa:2026-27:women:uab-blazers",
+      "homeProgramId": "ncaa:2026-27:women:wichita-state-shockers",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-02",
+      "awayProgramId": "ncaa:2026-27:women:tulane-green-wave",
+      "homeProgramId": "ncaa:2026-27:women:charlotte-49ers",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-02",
+      "awayProgramId": "ncaa:2026-27:women:rice-owls",
+      "homeProgramId": "ncaa:2026-27:women:temple-owls",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-02",
+      "awayProgramId": "ncaa:2026-27:women:utsa-roadrunners",
+      "homeProgramId": "ncaa:2026-27:women:south-florida-bulls",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-03",
+      "awayProgramId": "ncaa:2026-27:women:east-carolina-pirates",
+      "homeProgramId": "ncaa:2026-27:women:tulsa-golden-hurricane",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-03",
+      "awayProgramId": "ncaa:2026-27:women:florida-atlantic-owls",
+      "homeProgramId": "ncaa:2026-27:women:north-texas-mean-green",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-06",
+      "awayProgramId": "ncaa:2026-27:women:east-carolina-pirates",
+      "homeProgramId": "ncaa:2026-27:women:wichita-state-shockers",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-06",
+      "awayProgramId": "ncaa:2026-27:women:florida-atlantic-owls",
+      "homeProgramId": "ncaa:2026-27:women:rice-owls",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-06",
+      "awayProgramId": "ncaa:2026-27:women:north-texas-mean-green",
+      "homeProgramId": "ncaa:2026-27:women:utsa-roadrunners",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-06",
+      "awayProgramId": "ncaa:2026-27:women:tulsa-golden-hurricane",
+      "homeProgramId": "ncaa:2026-27:women:south-florida-bulls",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-07",
+      "awayProgramId": "ncaa:2026-27:women:charlotte-49ers",
+      "homeProgramId": "ncaa:2026-27:women:uab-blazers",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-07",
+      "awayProgramId": "ncaa:2026-27:women:temple-owls",
+      "homeProgramId": "ncaa:2026-27:women:memphis-tigers",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-09",
+      "awayProgramId": "ncaa:2026-27:women:tulane-green-wave",
+      "homeProgramId": "ncaa:2026-27:women:east-carolina-pirates",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-09",
+      "awayProgramId": "ncaa:2026-27:women:tulsa-golden-hurricane",
+      "homeProgramId": "ncaa:2026-27:women:florida-atlantic-owls",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-09",
+      "awayProgramId": "ncaa:2026-27:women:north-texas-mean-green",
+      "homeProgramId": "ncaa:2026-27:women:rice-owls",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-10",
+      "awayProgramId": "ncaa:2026-27:women:charlotte-49ers",
+      "homeProgramId": "ncaa:2026-27:women:memphis-tigers",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-10",
+      "awayProgramId": "ncaa:2026-27:women:temple-owls",
+      "homeProgramId": "ncaa:2026-27:women:uab-blazers",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-10",
+      "awayProgramId": "ncaa:2026-27:women:wichita-state-shockers",
+      "homeProgramId": "ncaa:2026-27:women:utsa-roadrunners",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-13",
+      "awayProgramId": "ncaa:2026-27:women:uab-blazers",
+      "homeProgramId": "ncaa:2026-27:women:tulane-green-wave",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-13",
+      "awayProgramId": "ncaa:2026-27:women:east-carolina-pirates",
+      "homeProgramId": "ncaa:2026-27:women:temple-owls",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-13",
+      "awayProgramId": "ncaa:2026-27:women:florida-atlantic-owls",
+      "homeProgramId": "ncaa:2026-27:women:memphis-tigers",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-13",
+      "awayProgramId": "ncaa:2026-27:women:wichita-state-shockers",
+      "homeProgramId": "ncaa:2026-27:women:north-texas-mean-green",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-13",
+      "awayProgramId": "ncaa:2026-27:women:utsa-roadrunners",
+      "homeProgramId": "ncaa:2026-27:women:tulsa-golden-hurricane",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-14",
+      "awayProgramId": "ncaa:2026-27:women:south-florida-bulls",
+      "homeProgramId": "ncaa:2026-27:women:charlotte-49ers",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-16",
+      "awayProgramId": "ncaa:2026-27:women:memphis-tigers",
+      "homeProgramId": "ncaa:2026-27:women:uab-blazers",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-16",
+      "awayProgramId": "ncaa:2026-27:women:florida-atlantic-owls",
+      "homeProgramId": "ncaa:2026-27:women:tulane-green-wave",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-16",
+      "awayProgramId": "ncaa:2026-27:women:north-texas-mean-green",
+      "homeProgramId": "ncaa:2026-27:women:temple-owls",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-16",
+      "awayProgramId": "ncaa:2026-27:women:rice-owls",
+      "homeProgramId": "ncaa:2026-27:women:utsa-roadrunners",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-17",
+      "awayProgramId": "ncaa:2026-27:women:charlotte-49ers",
+      "homeProgramId": "ncaa:2026-27:women:wichita-state-shockers",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-17",
+      "awayProgramId": "ncaa:2026-27:women:south-florida-bulls",
+      "homeProgramId": "ncaa:2026-27:women:east-carolina-pirates",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-20",
+      "awayProgramId": "ncaa:2026-27:women:charlotte-49ers",
+      "homeProgramId": "ncaa:2026-27:women:tulsa-golden-hurricane",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-20",
+      "awayProgramId": "ncaa:2026-27:women:tulane-green-wave",
+      "homeProgramId": "ncaa:2026-27:women:memphis-tigers",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-20",
+      "awayProgramId": "ncaa:2026-27:women:temple-owls",
+      "homeProgramId": "ncaa:2026-27:women:south-florida-bulls",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-21",
+      "awayProgramId": "ncaa:2026-27:women:rice-owls",
+      "homeProgramId": "ncaa:2026-27:women:uab-blazers",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-21",
+      "awayProgramId": "ncaa:2026-27:women:east-carolina-pirates",
+      "homeProgramId": "ncaa:2026-27:women:florida-atlantic-owls",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-23",
+      "awayProgramId": "ncaa:2026-27:women:memphis-tigers",
+      "homeProgramId": "ncaa:2026-27:women:charlotte-49ers",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-23",
+      "awayProgramId": "ncaa:2026-27:women:tulane-green-wave",
+      "homeProgramId": "ncaa:2026-27:women:north-texas-mean-green",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-23",
+      "awayProgramId": "ncaa:2026-27:women:temple-owls",
+      "homeProgramId": "ncaa:2026-27:women:wichita-state-shockers",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-24",
+      "awayProgramId": "ncaa:2026-27:women:uab-blazers",
+      "homeProgramId": "ncaa:2026-27:women:utsa-roadrunners",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-24",
+      "awayProgramId": "ncaa:2026-27:women:florida-atlantic-owls",
+      "homeProgramId": "ncaa:2026-27:women:south-florida-bulls",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-24",
+      "awayProgramId": "ncaa:2026-27:women:tulsa-golden-hurricane",
+      "homeProgramId": "ncaa:2026-27:women:rice-owls",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-27",
+      "awayProgramId": "ncaa:2026-27:women:uab-blazers",
+      "homeProgramId": "ncaa:2026-27:women:temple-owls",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-27",
+      "awayProgramId": "ncaa:2026-27:women:utsa-roadrunners",
+      "homeProgramId": "ncaa:2026-27:women:charlotte-49ers",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-27",
+      "awayProgramId": "ncaa:2026-27:women:tulsa-golden-hurricane",
+      "homeProgramId": "ncaa:2026-27:women:north-texas-mean-green",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-27",
+      "awayProgramId": "ncaa:2026-27:women:rice-owls",
+      "homeProgramId": "ncaa:2026-27:women:tulane-green-wave",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-27",
+      "awayProgramId": "ncaa:2026-27:women:south-florida-bulls",
+      "homeProgramId": "ncaa:2026-27:women:wichita-state-shockers",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-27",
+      "awayProgramId": "ncaa:2026-27:women:memphis-tigers",
+      "homeProgramId": "ncaa:2026-27:women:east-carolina-pirates",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-30",
+      "awayProgramId": "ncaa:2026-27:women:utsa-roadrunners",
+      "homeProgramId": "ncaa:2026-27:women:east-carolina-pirates",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-30",
+      "awayProgramId": "ncaa:2026-27:women:wichita-state-shockers",
+      "homeProgramId": "ncaa:2026-27:women:florida-atlantic-owls",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-30",
+      "awayProgramId": "ncaa:2026-27:women:north-texas-mean-green",
+      "homeProgramId": "ncaa:2026-27:women:memphis-tigers",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-30",
+      "awayProgramId": "ncaa:2026-27:women:south-florida-bulls",
+      "homeProgramId": "ncaa:2026-27:women:tulsa-golden-hurricane",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-30",
+      "awayProgramId": "ncaa:2026-27:women:temple-owls",
+      "homeProgramId": "ncaa:2026-27:women:tulane-green-wave",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-31",
+      "awayProgramId": "ncaa:2026-27:women:charlotte-49ers",
+      "homeProgramId": "ncaa:2026-27:women:rice-owls",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-02",
+      "awayProgramId": "ncaa:2026-27:women:north-texas-mean-green",
+      "homeProgramId": "ncaa:2026-27:women:uab-blazers",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-03",
+      "awayProgramId": "ncaa:2026-27:women:east-carolina-pirates",
+      "homeProgramId": "ncaa:2026-27:women:south-florida-bulls",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-03",
+      "awayProgramId": "ncaa:2026-27:women:tulane-green-wave",
+      "homeProgramId": "ncaa:2026-27:women:florida-atlantic-owls",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-03",
+      "awayProgramId": "ncaa:2026-27:women:memphis-tigers",
+      "homeProgramId": "ncaa:2026-27:women:wichita-state-shockers",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-03",
+      "awayProgramId": "ncaa:2026-27:women:tulsa-golden-hurricane",
+      "homeProgramId": "ncaa:2026-27:women:utsa-roadrunners",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-06",
+      "awayProgramId": "ncaa:2026-27:women:east-carolina-pirates",
+      "homeProgramId": "ncaa:2026-27:women:uab-blazers",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-06",
+      "awayProgramId": "ncaa:2026-27:women:florida-atlantic-owls",
+      "homeProgramId": "ncaa:2026-27:women:charlotte-49ers",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-06",
+      "awayProgramId": "ncaa:2026-27:women:memphis-tigers",
+      "homeProgramId": "ncaa:2026-27:women:rice-owls",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-06",
+      "awayProgramId": "ncaa:2026-27:women:tulane-green-wave",
+      "homeProgramId": "ncaa:2026-27:women:south-florida-bulls",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-06",
+      "awayProgramId": "ncaa:2026-27:women:temple-owls",
+      "homeProgramId": "ncaa:2026-27:women:utsa-roadrunners",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-06",
+      "awayProgramId": "ncaa:2026-27:women:wichita-state-shockers",
+      "homeProgramId": "ncaa:2026-27:women:tulsa-golden-hurricane",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-09",
+      "awayProgramId": "ncaa:2026-27:women:florida-atlantic-owls",
+      "homeProgramId": "ncaa:2026-27:women:east-carolina-pirates",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-09",
+      "awayProgramId": "ncaa:2026-27:women:rice-owls",
+      "homeProgramId": "ncaa:2026-27:women:wichita-state-shockers",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-10",
+      "awayProgramId": "ncaa:2026-27:women:uab-blazers",
+      "homeProgramId": "ncaa:2026-27:women:south-florida-bulls",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-10",
+      "awayProgramId": "ncaa:2026-27:women:charlotte-49ers",
+      "homeProgramId": "ncaa:2026-27:women:north-texas-mean-green",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-10",
+      "awayProgramId": "ncaa:2026-27:women:utsa-roadrunners",
+      "homeProgramId": "ncaa:2026-27:women:memphis-tigers",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-10",
+      "awayProgramId": "ncaa:2026-27:women:tulsa-golden-hurricane",
+      "homeProgramId": "ncaa:2026-27:women:temple-owls",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-13",
+      "awayProgramId": "ncaa:2026-27:women:uab-blazers",
+      "homeProgramId": "ncaa:2026-27:women:florida-atlantic-owls",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-13",
+      "awayProgramId": "ncaa:2026-27:women:charlotte-49ers",
+      "homeProgramId": "ncaa:2026-27:women:east-carolina-pirates",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-13",
+      "awayProgramId": "ncaa:2026-27:women:memphis-tigers",
+      "homeProgramId": "ncaa:2026-27:women:tulane-green-wave",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-13",
+      "awayProgramId": "ncaa:2026-27:women:utsa-roadrunners",
+      "homeProgramId": "ncaa:2026-27:women:north-texas-mean-green",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-13",
+      "awayProgramId": "ncaa:2026-27:women:wichita-state-shockers",
+      "homeProgramId": "ncaa:2026-27:women:temple-owls",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-13",
+      "awayProgramId": "ncaa:2026-27:women:rice-owls",
+      "homeProgramId": "ncaa:2026-27:women:tulsa-golden-hurricane",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-16",
+      "awayProgramId": "ncaa:2026-27:women:wichita-state-shockers",
+      "homeProgramId": "ncaa:2026-27:women:charlotte-49ers",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-17",
+      "awayProgramId": "ncaa:2026-27:women:tulsa-golden-hurricane",
+      "homeProgramId": "ncaa:2026-27:women:uab-blazers",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-17",
+      "awayProgramId": "ncaa:2026-27:women:east-carolina-pirates",
+      "homeProgramId": "ncaa:2026-27:women:rice-owls",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-17",
+      "awayProgramId": "ncaa:2026-27:women:florida-atlantic-owls",
+      "homeProgramId": "ncaa:2026-27:women:temple-owls",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-17",
+      "awayProgramId": "ncaa:2026-27:women:north-texas-mean-green",
+      "homeProgramId": "ncaa:2026-27:women:tulane-green-wave",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-17",
+      "awayProgramId": "ncaa:2026-27:women:south-florida-bulls",
+      "homeProgramId": "ncaa:2026-27:women:utsa-roadrunners",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-20",
+      "awayProgramId": "ncaa:2026-27:women:east-carolina-pirates",
+      "homeProgramId": "ncaa:2026-27:women:utsa-roadrunners",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-20",
+      "awayProgramId": "ncaa:2026-27:women:tulsa-golden-hurricane",
+      "homeProgramId": "ncaa:2026-27:women:memphis-tigers",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-20",
+      "awayProgramId": "ncaa:2026-27:women:rice-owls",
+      "homeProgramId": "ncaa:2026-27:women:south-florida-bulls",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-21",
+      "awayProgramId": "ncaa:2026-27:women:uab-blazers",
+      "homeProgramId": "ncaa:2026-27:women:charlotte-49ers",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-21",
+      "awayProgramId": "ncaa:2026-27:women:temple-owls",
+      "homeProgramId": "ncaa:2026-27:women:north-texas-mean-green",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-21",
+      "awayProgramId": "ncaa:2026-27:women:tulane-green-wave",
+      "homeProgramId": "ncaa:2026-27:women:wichita-state-shockers",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-24",
+      "awayProgramId": "ncaa:2026-27:women:uab-blazers",
+      "homeProgramId": "ncaa:2026-27:women:east-carolina-pirates",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-24",
+      "awayProgramId": "ncaa:2026-27:women:north-texas-mean-green",
+      "homeProgramId": "ncaa:2026-27:women:charlotte-49ers",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-24",
+      "awayProgramId": "ncaa:2026-27:women:south-florida-bulls",
+      "homeProgramId": "ncaa:2026-27:women:florida-atlantic-owls",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-24",
+      "awayProgramId": "ncaa:2026-27:women:wichita-state-shockers",
+      "homeProgramId": "ncaa:2026-27:women:memphis-tigers",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-24",
+      "awayProgramId": "ncaa:2026-27:women:temple-owls",
+      "homeProgramId": "ncaa:2026-27:women:rice-owls",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-24",
+      "awayProgramId": "ncaa:2026-27:women:tulane-green-wave",
+      "homeProgramId": "ncaa:2026-27:women:tulsa-golden-hurricane",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-27",
+      "awayProgramId": "ncaa:2026-27:women:wichita-state-shockers",
+      "homeProgramId": "ncaa:2026-27:women:uab-blazers",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-27",
+      "awayProgramId": "ncaa:2026-27:women:charlotte-49ers",
+      "homeProgramId": "ncaa:2026-27:women:tulane-green-wave",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-27",
+      "awayProgramId": "ncaa:2026-27:women:north-texas-mean-green",
+      "homeProgramId": "ncaa:2026-27:women:east-carolina-pirates",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-27",
+      "awayProgramId": "ncaa:2026-27:women:memphis-tigers",
+      "homeProgramId": "ncaa:2026-27:women:florida-atlantic-owls",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-27",
+      "awayProgramId": "ncaa:2026-27:women:utsa-roadrunners",
+      "homeProgramId": "ncaa:2026-27:women:rice-owls",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-27",
+      "awayProgramId": "ncaa:2026-27:women:south-florida-bulls",
+      "homeProgramId": "ncaa:2026-27:women:temple-owls",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-03-02",
+      "awayProgramId": "ncaa:2026-27:women:memphis-tigers",
+      "homeProgramId": "ncaa:2026-27:women:south-florida-bulls",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-03-03",
+      "awayProgramId": "ncaa:2026-27:women:tulane-green-wave",
+      "homeProgramId": "ncaa:2026-27:women:uab-blazers",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-03-03",
+      "awayProgramId": "ncaa:2026-27:women:florida-atlantic-owls",
+      "homeProgramId": "ncaa:2026-27:women:utsa-roadrunners",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-03-03",
+      "awayProgramId": "ncaa:2026-27:women:rice-owls",
+      "homeProgramId": "ncaa:2026-27:women:north-texas-mean-green",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-03-03",
+      "awayProgramId": "ncaa:2026-27:women:tulsa-golden-hurricane",
+      "homeProgramId": "ncaa:2026-27:women:wichita-state-shockers",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-03-06",
+      "awayProgramId": "ncaa:2026-27:women:uab-blazers",
+      "homeProgramId": "ncaa:2026-27:women:memphis-tigers",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-03-06",
+      "awayProgramId": "ncaa:2026-27:women:east-carolina-pirates",
+      "homeProgramId": "ncaa:2026-27:women:charlotte-49ers",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-03-06",
+      "awayProgramId": "ncaa:2026-27:women:temple-owls",
+      "homeProgramId": "ncaa:2026-27:women:florida-atlantic-owls",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-03-06",
+      "awayProgramId": "ncaa:2026-27:women:north-texas-mean-green",
+      "homeProgramId": "ncaa:2026-27:women:tulsa-golden-hurricane",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-03-06",
+      "awayProgramId": "ncaa:2026-27:women:south-florida-bulls",
+      "homeProgramId": "ncaa:2026-27:women:rice-owls",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-03-06",
+      "awayProgramId": "ncaa:2026-27:women:utsa-roadrunners",
+      "homeProgramId": "ncaa:2026-27:women:tulane-green-wave",
+      "sourceUrl": "https://theamerican.org/documents/2026/9/30/26_27_WBB_Conference_Composite_Schedule.pdf",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    }
+  ]
+}

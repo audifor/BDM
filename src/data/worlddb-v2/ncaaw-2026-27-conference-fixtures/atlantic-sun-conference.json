@@ -1,0 +1,1837 @@
+{
+  "schemaVersion": 2,
+  "division": "NCAA Division I",
+  "gender": "women",
+  "season": "2026-27",
+  "conferenceId": "atlantic-sun-conference",
+  "sourceQuality": "SECONDARY_DIRECTORY_NOT_OFFICIALLY_VERIFIED",
+  "coverageStatus": "SOURCE_PUBLISHED_FIXTURES_PARTIAL_UNTIL_OFFICIAL_CONFERENCE_VERIFIED",
+  "note": "Every published D1 vs D1 fixture from current member school source pages, without fictional games. Includes nonconference/interconference games. Some 2026-27 opponents and additional games can remain unpublished. Do NOT treat as a full official schedule.",
+  "memberCount": 8,
+  "memberProgramIds": [
+    "ncaa:2026-27:women:bellarmine-knights",
+    "ncaa:2026-27:women:florida-gulf-coast-eagles",
+    "ncaa:2026-27:women:jacksonville-dolphins",
+    "ncaa:2026-27:women:lipscomb-bisons",
+    "ncaa:2026-27:women:north-florida-ospreys",
+    "ncaa:2026-27:women:queens-university-royals",
+    "ncaa:2026-27:women:stetson-hatters",
+    "ncaa:2026-27:women:west-florida-argonauts"
+  ],
+  "sourcePages": [
+    "https://www.ncaawomensbasketball.com/womens-college-basketball/team/bellarmine-knights",
+    "https://www.ncaawomensbasketball.com/womens-college-basketball/team/florida-gulf-coast-eagles",
+    "https://www.ncaawomensbasketball.com/womens-college-basketball/team/jacksonville-dolphins",
+    "https://www.ncaawomensbasketball.com/womens-college-basketball/team/lipscomb-bisons",
+    "https://www.ncaawomensbasketball.com/womens-college-basketball/team/north-florida-ospreys",
+    "https://www.ncaawomensbasketball.com/womens-college-basketball/team/queens-university-royals",
+    "https://www.ncaawomensbasketball.com/womens-college-basketball/team/stetson-hatters",
+    "https://www.ncaawomensbasketball.com/womens-college-basketball/team/west-florida-argonauts"
+  ],
+  "coverage": [
+    {
+      "id": "ncaa:2026-27:women:bellarmine-knights",
+      "listedGames": 22,
+      "inUniverseGames": 22
+    },
+    {
+      "id": "ncaa:2026-27:women:florida-gulf-coast-eagles",
+      "listedGames": 23,
+      "inUniverseGames": 23
+    },
+    {
+      "id": "ncaa:2026-27:women:jacksonville-dolphins",
+      "listedGames": 21,
+      "inUniverseGames": 21
+    },
+    {
+      "id": "ncaa:2026-27:women:lipscomb-bisons",
+      "listedGames": 28,
+      "inUniverseGames": 27
+    },
+    {
+      "id": "ncaa:2026-27:women:north-florida-ospreys",
+      "listedGames": 23,
+      "inUniverseGames": 23
+    },
+    {
+      "id": "ncaa:2026-27:women:queens-university-royals",
+      "listedGames": 30,
+      "inUniverseGames": 28
+    },
+    {
+      "id": "ncaa:2026-27:women:stetson-hatters",
+      "listedGames": 23,
+      "inUniverseGames": 23
+    },
+    {
+      "id": "ncaa:2026-27:women:west-florida-argonauts",
+      "listedGames": 30,
+      "inUniverseGames": 28
+    }
+  ],
+  "fixtureCount": 139,
+  "nonD1OrUnmatched": [
+    {
+      "origin": "ncaa:2026-27:women:lipscomb-bisons",
+      "issue": "opponent_not_in_d1",
+      "date": "2026-11-07",
+      "homeId": "ncaa:2026-27:women:lipscomb-bisons",
+      "awayId": "ncaa:2026-27:women:carolina-university-bruins"
+    },
+    {
+      "origin": "ncaa:2026-27:women:queens-university-royals",
+      "issue": "opponent_not_in_d1",
+      "date": "2026-11-09",
+      "homeId": "ncaa:2026-27:women:queens-university-royals",
+      "awayId": "ncaa:2026-27:women:carolina-university-bruins"
+    },
+    {
+      "origin": "ncaa:2026-27:women:queens-university-royals",
+      "issue": "opponent_not_in_d1",
+      "date": "2026-11-21",
+      "homeId": "ncaa:2026-27:women:queens-university-royals",
+      "awayId": "ncaa:2026-27:women:coker-cobras"
+    },
+    {
+      "origin": "ncaa:2026-27:women:west-florida-argonauts",
+      "issue": "opponent_not_in_d1",
+      "date": "2026-11-09",
+      "homeId": "ncaa:2026-27:women:west-florida-argonauts",
+      "awayId": "ncaa:2026-27:women:pensacola-christian-eagles"
+    },
+    {
+      "origin": "ncaa:2026-27:women:west-florida-argonauts",
+      "issue": "opponent_not_in_d1",
+      "date": "2026-11-18",
+      "homeId": "ncaa:2026-27:women:west-florida-argonauts",
+      "awayId": "ncaa:2026-27:women:spring-hill-badgers"
+    }
+  ],
+  "fixtures": [
+    {
+      "gameId": "401906074",
+      "gender": "women",
+      "date": "2026-11-02",
+      "homeProgramId": "ncaa:2026-27:women:louisville-cardinals",
+      "awayProgramId": "ncaa:2026-27:women:bellarmine-knights",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/bellarmine-knights-vs-louisville-cardinals-401906074",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:bellarmine-knights"
+      ]
+    },
+    {
+      "gameId": "401912988",
+      "gender": "women",
+      "date": "2026-11-02",
+      "homeProgramId": "ncaa:2026-27:women:alabama-crimson-tide",
+      "awayProgramId": "ncaa:2026-27:women:queens-university-royals",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/queens-university-royals-vs-alabama-crimson-tide-401912988",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:queens-university-royals"
+      ]
+    },
+    {
+      "gameId": "401916067",
+      "gender": "women",
+      "date": "2026-11-02",
+      "homeProgramId": "ncaa:2026-27:women:vanderbilt-commodores",
+      "awayProgramId": "ncaa:2026-27:women:lipscomb-bisons",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/lipscomb-bisons-vs-vanderbilt-commodores-401916067",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:lipscomb-bisons"
+      ]
+    },
+    {
+      "gameId": "401913898",
+      "gender": "women",
+      "date": "2026-11-03",
+      "homeProgramId": "ncaa:2026-27:women:east-tennessee-state-bucs",
+      "awayProgramId": "ncaa:2026-27:women:west-florida-argonauts",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/west-florida-argonauts-vs-east-tennessee-state-bucs-401913898",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:west-florida-argonauts"
+      ]
+    },
+    {
+      "gameId": "401918923",
+      "gender": "women",
+      "date": "2026-11-03",
+      "homeProgramId": "ncaa:2026-27:women:indiana-hoosiers",
+      "awayProgramId": "ncaa:2026-27:women:florida-gulf-coast-eagles",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/florida-gulf-coast-eagles-vs-indiana-hoosiers-401918923",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:florida-gulf-coast-eagles"
+      ]
+    },
+    {
+      "gameId": "401906075",
+      "gender": "women",
+      "date": "2026-11-04",
+      "homeProgramId": "ncaa:2026-27:women:louisville-cardinals",
+      "awayProgramId": "ncaa:2026-27:women:stetson-hatters",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/stetson-hatters-vs-louisville-cardinals-401906075",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:stetson-hatters"
+      ]
+    },
+    {
+      "gameId": "401913884",
+      "gender": "women",
+      "date": "2026-11-04",
+      "homeProgramId": "ncaa:2026-27:women:vanderbilt-commodores",
+      "awayProgramId": "ncaa:2026-27:women:queens-university-royals",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/queens-university-royals-vs-vanderbilt-commodores-401913884",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:queens-university-royals"
+      ]
+    },
+    {
+      "gameId": "401913706",
+      "gender": "women",
+      "date": "2026-11-05",
+      "homeProgramId": "ncaa:2026-27:women:florida-state-seminoles",
+      "awayProgramId": "ncaa:2026-27:women:north-florida-ospreys",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/north-florida-ospreys-vs-florida-state-seminoles-401913706",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:north-florida-ospreys"
+      ]
+    },
+    {
+      "gameId": "401913724",
+      "gender": "women",
+      "date": "2026-11-05",
+      "homeProgramId": "ncaa:2026-27:women:miami-hurricanes",
+      "awayProgramId": "ncaa:2026-27:women:jacksonville-dolphins",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/jacksonville-dolphins-vs-miami-hurricanes-401913724",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:jacksonville-dolphins"
+      ]
+    },
+    {
+      "gameId": "401913899",
+      "gender": "women",
+      "date": "2026-11-05",
+      "homeProgramId": "ncaa:2026-27:women:western-carolina-catamounts",
+      "awayProgramId": "ncaa:2026-27:women:west-florida-argonauts",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/west-florida-argonauts-vs-western-carolina-catamounts-401913899",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:west-florida-argonauts"
+      ]
+    },
+    {
+      "gameId": "401916068",
+      "gender": "women",
+      "date": "2026-11-05",
+      "homeProgramId": "ncaa:2026-27:women:butler-bulldogs",
+      "awayProgramId": "ncaa:2026-27:women:lipscomb-bisons",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/lipscomb-bisons-vs-butler-bulldogs-401916068",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:lipscomb-bisons"
+      ]
+    },
+    {
+      "gameId": "401918704",
+      "gender": "women",
+      "date": "2026-11-07",
+      "homeProgramId": "ncaa:2026-27:women:florida-gulf-coast-eagles",
+      "awayProgramId": "ncaa:2026-27:women:arkansas-state-red-wolves",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/arkansas-state-red-wolves-vs-florida-gulf-coast-eagles-401918704",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:florida-gulf-coast-eagles"
+      ]
+    },
+    {
+      "gameId": "401913725",
+      "gender": "women",
+      "date": "2026-11-08",
+      "homeProgramId": "ncaa:2026-27:women:miami-hurricanes",
+      "awayProgramId": "ncaa:2026-27:women:stetson-hatters",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/stetson-hatters-vs-miami-hurricanes-401913725",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:stetson-hatters"
+      ]
+    },
+    {
+      "gameId": "401913708",
+      "gender": "women",
+      "date": "2026-11-11",
+      "homeProgramId": "ncaa:2026-27:women:florida-state-seminoles",
+      "awayProgramId": "ncaa:2026-27:women:west-florida-argonauts",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/west-florida-argonauts-vs-florida-state-seminoles-401913708",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:west-florida-argonauts"
+      ]
+    },
+    {
+      "gameId": "401918696",
+      "gender": "women",
+      "date": "2026-11-11",
+      "homeProgramId": "ncaa:2026-27:women:coastal-carolina-chanticleers",
+      "awayProgramId": "ncaa:2026-27:women:jacksonville-dolphins",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/jacksonville-dolphins-vs-coastal-carolina-chanticleers-401918696",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:jacksonville-dolphins"
+      ]
+    },
+    {
+      "gameId": "401916070",
+      "gender": "women",
+      "date": "2026-11-12",
+      "homeProgramId": "ncaa:2026-27:women:lipscomb-bisons",
+      "awayProgramId": "ncaa:2026-27:women:mississippi-valley-state-devilettes",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/mississippi-valley-state-devilettes-vs-lipscomb-bisons-401916070",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:lipscomb-bisons"
+      ]
+    },
+    {
+      "gameId": "401911494",
+      "gender": "women",
+      "date": "2026-11-14",
+      "homeProgramId": "ncaa:2026-27:women:gardner-webb-runnin-bulldogs",
+      "awayProgramId": "ncaa:2026-27:women:queens-university-royals",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/queens-university-royals-vs-gardner-webb-runnin-bulldogs-401911494",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:queens-university-royals"
+      ]
+    },
+    {
+      "gameId": "401918519",
+      "gender": "women",
+      "date": "2026-11-14",
+      "homeProgramId": "ncaa:2026-27:women:central-arkansas-bears",
+      "awayProgramId": "ncaa:2026-27:women:north-florida-ospreys",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/north-florida-ospreys-vs-central-arkansas-bears-401918519",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:north-florida-ospreys"
+      ]
+    },
+    {
+      "gameId": "401919667",
+      "gender": "women",
+      "date": "2026-11-14",
+      "homeProgramId": "ncaa:2026-27:women:bellarmine-knights",
+      "awayProgramId": "ncaa:2026-27:women:bradley-braves",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/bradley-braves-vs-bellarmine-knights-401919667",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:bellarmine-knights"
+      ]
+    },
+    {
+      "gameId": "401913901",
+      "gender": "women",
+      "date": "2026-11-15",
+      "homeProgramId": "ncaa:2026-27:women:west-florida-argonauts",
+      "awayProgramId": "ncaa:2026-27:women:florida-a-and-m-rattlers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/florida-a-and-m-rattlers-vs-west-florida-argonauts-401913901",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:west-florida-argonauts"
+      ]
+    },
+    {
+      "gameId": "401915887",
+      "gender": "women",
+      "date": "2026-11-15",
+      "homeProgramId": "ncaa:2026-27:women:clemson-tigers",
+      "awayProgramId": "ncaa:2026-27:women:stetson-hatters",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/stetson-hatters-vs-clemson-tigers-401915887",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:stetson-hatters"
+      ]
+    },
+    {
+      "gameId": "401916071",
+      "gender": "women",
+      "date": "2026-11-15",
+      "homeProgramId": "ncaa:2026-27:women:chattanooga-mocs",
+      "awayProgramId": "ncaa:2026-27:women:lipscomb-bisons",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/lipscomb-bisons-vs-chattanooga-mocs-401916071",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:lipscomb-bisons"
+      ]
+    },
+    {
+      "gameId": "401918851",
+      "gender": "women",
+      "date": "2026-11-17",
+      "homeProgramId": "ncaa:2026-27:women:south-carolina-gamecocks",
+      "awayProgramId": "ncaa:2026-27:women:florida-gulf-coast-eagles",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/florida-gulf-coast-eagles-vs-south-carolina-gamecocks-401918851",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:florida-gulf-coast-eagles"
+      ]
+    },
+    {
+      "gameId": "401919059",
+      "gender": "women",
+      "date": "2026-11-17",
+      "homeProgramId": "ncaa:2026-27:women:ucf-knights",
+      "awayProgramId": "ncaa:2026-27:women:north-florida-ospreys",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/north-florida-ospreys-vs-ucf-knights-401919059",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:north-florida-ospreys"
+      ]
+    },
+    {
+      "gameId": "401919701",
+      "gender": "women",
+      "date": "2026-11-17",
+      "homeProgramId": "ncaa:2026-27:women:indiana-state-sycamores",
+      "awayProgramId": "ncaa:2026-27:women:bellarmine-knights",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/bellarmine-knights-vs-indiana-state-sycamores-401919701",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:bellarmine-knights"
+      ]
+    },
+    {
+      "gameId": "401913886",
+      "gender": "women",
+      "date": "2026-11-18",
+      "homeProgramId": "ncaa:2026-27:women:queens-university-royals",
+      "awayProgramId": "ncaa:2026-27:women:charleston-cougars",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/charleston-cougars-vs-queens-university-royals-401913886",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:queens-university-royals"
+      ]
+    },
+    {
+      "gameId": "401918585",
+      "gender": "women",
+      "date": "2026-11-19",
+      "homeProgramId": "ncaa:2026-27:women:bethune-cookman-wildcats",
+      "awayProgramId": "ncaa:2026-27:women:north-florida-ospreys",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/north-florida-ospreys-vs-bethune-cookman-wildcats-401918585",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:north-florida-ospreys"
+      ]
+    },
+    {
+      "gameId": "401919060",
+      "gender": "women",
+      "date": "2026-11-19",
+      "homeProgramId": "ncaa:2026-27:women:ucf-knights",
+      "awayProgramId": "ncaa:2026-27:women:stetson-hatters",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/stetson-hatters-vs-ucf-knights-401919060",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:stetson-hatters"
+      ]
+    },
+    {
+      "gameId": "401918687",
+      "gender": "women",
+      "date": "2026-11-20",
+      "homeProgramId": "ncaa:2026-27:women:georgia-southern-eagles",
+      "awayProgramId": "ncaa:2026-27:women:florida-gulf-coast-eagles",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/florida-gulf-coast-eagles-vs-georgia-southern-eagles-401918687",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:florida-gulf-coast-eagles"
+      ]
+    },
+    {
+      "gameId": "401913903",
+      "gender": "women",
+      "date": "2026-11-21",
+      "homeProgramId": "ncaa:2026-27:women:texas-a-and-m-corpus-christi-islanders",
+      "awayProgramId": "ncaa:2026-27:women:west-florida-argonauts",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/west-florida-argonauts-vs-texas-a-and-m-corpus-christi-islanders-401913903",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:west-florida-argonauts"
+      ]
+    },
+    {
+      "gameId": "401916072",
+      "gender": "women",
+      "date": "2026-11-23",
+      "homeProgramId": "ncaa:2026-27:women:lipscomb-bisons",
+      "awayProgramId": "ncaa:2026-27:women:tennessee-tech-golden-eagles",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/tennessee-tech-golden-eagles-vs-lipscomb-bisons-401916072",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:lipscomb-bisons"
+      ]
+    },
+    {
+      "gameId": "401919061",
+      "gender": "women",
+      "date": "2026-11-24",
+      "homeProgramId": "ncaa:2026-27:women:ucf-knights",
+      "awayProgramId": "ncaa:2026-27:women:jacksonville-dolphins",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/jacksonville-dolphins-vs-ucf-knights-401919061",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:jacksonville-dolphins"
+      ]
+    },
+    {
+      "gameId": "401915874",
+      "gender": "women",
+      "date": "2026-11-25",
+      "homeProgramId": "ncaa:2026-27:women:stetson-hatters",
+      "awayProgramId": "ncaa:2026-27:women:robert-morris-colonials",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/robert-morris-colonials-vs-stetson-hatters-401915874",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:stetson-hatters"
+      ]
+    },
+    {
+      "gameId": "401915875",
+      "gender": "women",
+      "date": "2026-11-26",
+      "homeProgramId": "ncaa:2026-27:women:boise-state-broncos",
+      "awayProgramId": "ncaa:2026-27:women:stetson-hatters",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/stetson-hatters-vs-boise-state-broncos-401915875",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:stetson-hatters"
+      ]
+    },
+    {
+      "gameId": "401913889",
+      "gender": "women",
+      "date": "2026-11-27",
+      "homeProgramId": "ncaa:2026-27:women:western-carolina-catamounts",
+      "awayProgramId": "ncaa:2026-27:women:queens-university-royals",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/queens-university-royals-vs-western-carolina-catamounts-401913889",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:queens-university-royals"
+      ]
+    },
+    {
+      "gameId": "401913904",
+      "gender": "women",
+      "date": "2026-11-27",
+      "homeProgramId": "ncaa:2026-27:women:west-florida-argonauts",
+      "awayProgramId": "ncaa:2026-27:women:ut-arlington-mavericks",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/ut-arlington-mavericks-vs-west-florida-argonauts-401913904",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:west-florida-argonauts"
+      ]
+    },
+    {
+      "gameId": "401918743",
+      "gender": "women",
+      "date": "2026-11-27",
+      "homeProgramId": "ncaa:2026-27:women:north-florida-ospreys",
+      "awayProgramId": "ncaa:2026-27:women:south-dakota-coyotes",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/south-dakota-coyotes-vs-north-florida-ospreys-401918743",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:north-florida-ospreys"
+      ]
+    },
+    {
+      "gameId": "401913888",
+      "gender": "women",
+      "date": "2026-11-28",
+      "homeProgramId": "ncaa:2026-27:women:unc-asheville-bulldogs",
+      "awayProgramId": "ncaa:2026-27:women:queens-university-royals",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/queens-university-royals-vs-unc-asheville-bulldogs-401913888",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:queens-university-royals"
+      ]
+    },
+    {
+      "gameId": "401913905",
+      "gender": "women",
+      "date": "2026-11-28",
+      "homeProgramId": "ncaa:2026-27:women:west-florida-argonauts",
+      "awayProgramId": "ncaa:2026-27:women:southern-illinois-salukis",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/southern-illinois-salukis-vs-west-florida-argonauts-401913905",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:west-florida-argonauts"
+      ]
+    },
+    {
+      "gameId": "401916073",
+      "gender": "women",
+      "date": "2026-11-30",
+      "homeProgramId": "ncaa:2026-27:women:middle-tennessee-blue-raiders",
+      "awayProgramId": "ncaa:2026-27:women:lipscomb-bisons",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/lipscomb-bisons-vs-middle-tennessee-blue-raiders-401916073",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:lipscomb-bisons"
+      ]
+    },
+    {
+      "gameId": "401913890",
+      "gender": "women",
+      "date": "2026-12-02",
+      "homeProgramId": "ncaa:2026-27:women:south-carolina-upstate-spartans",
+      "awayProgramId": "ncaa:2026-27:women:queens-university-royals",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/queens-university-royals-vs-south-carolina-upstate-spartans-401913890",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:queens-university-royals"
+      ]
+    },
+    {
+      "gameId": "401913906",
+      "gender": "women",
+      "date": "2026-12-02",
+      "homeProgramId": "ncaa:2026-27:women:west-georgia-wolves",
+      "awayProgramId": "ncaa:2026-27:women:west-florida-argonauts",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/west-florida-argonauts-vs-west-georgia-wolves-401913906",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:west-florida-argonauts"
+      ]
+    },
+    {
+      "gameId": "401916190",
+      "gender": "women",
+      "date": "2026-12-02",
+      "homeProgramId": "ncaa:2026-27:women:cincinnati-bearcats",
+      "awayProgramId": "ncaa:2026-27:women:bellarmine-knights",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/bellarmine-knights-vs-cincinnati-bearcats-401916190",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:bellarmine-knights"
+      ]
+    },
+    {
+      "gameId": "401916074",
+      "gender": "women",
+      "date": "2026-12-03",
+      "homeProgramId": "ncaa:2026-27:women:lipscomb-bisons",
+      "awayProgramId": "ncaa:2026-27:women:belmont-bruins",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/belmont-bruins-vs-lipscomb-bisons-401916074",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:lipscomb-bisons"
+      ]
+    },
+    {
+      "gameId": "401906897",
+      "gender": "women",
+      "date": "2026-12-06",
+      "homeProgramId": "ncaa:2026-27:women:florida-gators",
+      "awayProgramId": "ncaa:2026-27:women:north-florida-ospreys",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/north-florida-ospreys-vs-florida-gators-401906897",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:north-florida-ospreys"
+      ]
+    },
+    {
+      "gameId": "401913721",
+      "gender": "women",
+      "date": "2026-12-06",
+      "homeProgramId": "ncaa:2026-27:women:georgia-tech-yellow-jackets",
+      "awayProgramId": "ncaa:2026-27:women:lipscomb-bisons",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/lipscomb-bisons-vs-georgia-tech-yellow-jackets-401913721",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:lipscomb-bisons"
+      ]
+    },
+    {
+      "gameId": "401913891",
+      "gender": "women",
+      "date": "2026-12-06",
+      "homeProgramId": "ncaa:2026-27:women:queens-university-royals",
+      "awayProgramId": "ncaa:2026-27:women:west-georgia-wolves",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/west-georgia-wolves-vs-queens-university-royals-401913891",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:queens-university-royals"
+      ]
+    },
+    {
+      "gameId": "401913742",
+      "gender": "women",
+      "date": "2026-12-09",
+      "homeProgramId": "ncaa:2026-27:women:nc-state-wolfpack",
+      "awayProgramId": "ncaa:2026-27:women:jacksonville-dolphins",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/jacksonville-dolphins-vs-nc-state-wolfpack-401913742",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:jacksonville-dolphins"
+      ]
+    },
+    {
+      "gameId": "401918535",
+      "gender": "women",
+      "date": "2026-12-09",
+      "homeProgramId": "ncaa:2026-27:women:bellarmine-knights",
+      "awayProgramId": "ncaa:2026-27:women:austin-peay-governors",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/austin-peay-governors-vs-bellarmine-knights-401918535",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:bellarmine-knights"
+      ]
+    },
+    {
+      "gameId": "401918718",
+      "gender": "women",
+      "date": "2026-12-12",
+      "homeProgramId": "ncaa:2026-27:women:app-state-mountaineers",
+      "awayProgramId": "ncaa:2026-27:women:florida-gulf-coast-eagles",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/florida-gulf-coast-eagles-vs-app-state-mountaineers-401918718",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:florida-gulf-coast-eagles"
+      ]
+    },
+    {
+      "gameId": "401913892",
+      "gender": "women",
+      "date": "2026-12-13",
+      "homeProgramId": "ncaa:2026-27:women:queens-university-royals",
+      "awayProgramId": "ncaa:2026-27:women:unc-wilmington-seahawks",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/unc-wilmington-seahawks-vs-queens-university-royals-401913892",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:queens-university-royals"
+      ]
+    },
+    {
+      "gameId": "401913907",
+      "gender": "women",
+      "date": "2026-12-13",
+      "homeProgramId": "ncaa:2026-27:women:west-florida-argonauts",
+      "awayProgramId": "ncaa:2026-27:women:lsu-new-orleans-privateers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/lsu-new-orleans-privateers-vs-west-florida-argonauts-401913907",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:west-florida-argonauts"
+      ]
+    },
+    {
+      "gameId": "401916075",
+      "gender": "women",
+      "date": "2026-12-14",
+      "homeProgramId": "ncaa:2026-27:women:lipscomb-bisons",
+      "awayProgramId": "ncaa:2026-27:women:samford-bulldogs",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/samford-bulldogs-vs-lipscomb-bisons-401916075",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:lipscomb-bisons"
+      ]
+    },
+    {
+      "gameId": "401918547",
+      "gender": "women",
+      "date": "2026-12-14",
+      "homeProgramId": "ncaa:2026-27:women:abilene-christian-wildcats",
+      "awayProgramId": "ncaa:2026-27:women:stetson-hatters",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/stetson-hatters-vs-abilene-christian-wildcats-401918547",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:stetson-hatters"
+      ]
+    },
+    {
+      "gameId": "401919715",
+      "gender": "women",
+      "date": "2026-12-15",
+      "homeProgramId": "ncaa:2026-27:women:bellarmine-knights",
+      "awayProgramId": "ncaa:2026-27:women:murray-state-racers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/murray-state-racers-vs-bellarmine-knights-401919715",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:bellarmine-knights"
+      ]
+    },
+    {
+      "gameId": "401916076",
+      "gender": "women",
+      "date": "2026-12-16",
+      "homeProgramId": "ncaa:2026-27:women:lipscomb-bisons",
+      "awayProgramId": "ncaa:2026-27:women:austin-peay-governors",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/austin-peay-governors-vs-lipscomb-bisons-401916076",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:lipscomb-bisons"
+      ]
+    },
+    {
+      "gameId": "401918946",
+      "gender": "women",
+      "date": "2026-12-16",
+      "homeProgramId": "ncaa:2026-27:women:texas-tech-lady-raiders",
+      "awayProgramId": "ncaa:2026-27:women:north-florida-ospreys",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/north-florida-ospreys-vs-texas-tech-lady-raiders-401918946",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:north-florida-ospreys"
+      ]
+    },
+    {
+      "gameId": "401921083",
+      "gender": "women",
+      "date": "2026-12-16",
+      "homeProgramId": "ncaa:2026-27:women:florida-gulf-coast-eagles",
+      "awayProgramId": "ncaa:2026-27:women:george-mason-patriots",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/george-mason-patriots-vs-florida-gulf-coast-eagles-401921083",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:florida-gulf-coast-eagles"
+      ]
+    },
+    {
+      "gameId": "401912985",
+      "gender": "women",
+      "date": "2026-12-17",
+      "homeProgramId": "ncaa:2026-27:women:georgia-lady-bulldogs",
+      "awayProgramId": "ncaa:2026-27:women:jacksonville-dolphins",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/jacksonville-dolphins-vs-georgia-lady-bulldogs-401912985",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:jacksonville-dolphins"
+      ]
+    },
+    {
+      "gameId": "401913893",
+      "gender": "women",
+      "date": "2026-12-19",
+      "homeProgramId": "ncaa:2026-27:women:queens-university-royals",
+      "awayProgramId": "ncaa:2026-27:women:north-alabama-lions",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/north-alabama-lions-vs-queens-university-royals-401913893",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:queens-university-royals"
+      ]
+    },
+    {
+      "gameId": "401913908",
+      "gender": "women",
+      "date": "2026-12-19",
+      "homeProgramId": "ncaa:2026-27:women:west-florida-argonauts",
+      "awayProgramId": "ncaa:2026-27:women:west-georgia-wolves",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/west-georgia-wolves-vs-west-florida-argonauts-401913908",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:west-florida-argonauts"
+      ]
+    },
+    {
+      "gameId": "401916077",
+      "gender": "women",
+      "date": "2026-12-19",
+      "homeProgramId": "ncaa:2026-27:women:lipscomb-bisons",
+      "awayProgramId": "ncaa:2026-27:women:eastern-kentucky-colonels",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/eastern-kentucky-colonels-vs-lipscomb-bisons-401916077",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:lipscomb-bisons"
+      ]
+    },
+    {
+      "gameId": "401913909",
+      "gender": "women",
+      "date": "2026-12-21",
+      "homeProgramId": "ncaa:2026-27:women:west-florida-argonauts",
+      "awayProgramId": "ncaa:2026-27:women:north-alabama-lions",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/north-alabama-lions-vs-west-florida-argonauts-401913909",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:west-florida-argonauts"
+      ]
+    },
+    {
+      "gameId": "401918516",
+      "gender": "women",
+      "date": "2026-12-21",
+      "homeProgramId": "ncaa:2026-27:women:bellarmine-knights",
+      "awayProgramId": "ncaa:2026-27:women:eastern-kentucky-colonels",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/eastern-kentucky-colonels-vs-bellarmine-knights-401918516",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:bellarmine-knights"
+      ]
+    },
+    {
+      "gameId": "401918549",
+      "gender": "women",
+      "date": "2026-12-21",
+      "homeProgramId": "ncaa:2026-27:women:abilene-christian-wildcats",
+      "awayProgramId": "ncaa:2026-27:women:florida-gulf-coast-eagles",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/florida-gulf-coast-eagles-vs-abilene-christian-wildcats-401918549",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:florida-gulf-coast-eagles"
+      ]
+    },
+    {
+      "gameId": "401913894",
+      "gender": "women",
+      "date": "2026-12-22",
+      "homeProgramId": "ncaa:2026-27:women:north-carolina-central-eagles",
+      "awayProgramId": "ncaa:2026-27:women:queens-university-royals",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/queens-university-royals-vs-north-carolina-central-eagles-401913894",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:queens-university-royals"
+      ]
+    },
+    {
+      "gameId": "401913910",
+      "gender": "women",
+      "date": "2026-12-28",
+      "homeProgramId": "ncaa:2026-27:women:west-florida-argonauts",
+      "awayProgramId": "ncaa:2026-27:women:ut-arlington-mavericks",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/ut-arlington-mavericks-vs-west-florida-argonauts-401913910",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:west-florida-argonauts"
+      ]
+    },
+    {
+      "gameId": "401918442",
+      "gender": "women",
+      "date": "2026-12-29",
+      "homeProgramId": "ncaa:2026-27:women:north-florida-ospreys",
+      "awayProgramId": "ncaa:2026-27:women:tarleton-state-texans",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/tarleton-state-texans-vs-north-florida-ospreys-401918442",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:north-florida-ospreys"
+      ]
+    },
+    {
+      "gameId": "401918526",
+      "gender": "women",
+      "date": "2026-12-29",
+      "homeProgramId": "ncaa:2026-27:women:stetson-hatters",
+      "awayProgramId": "ncaa:2026-27:women:central-arkansas-bears",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/central-arkansas-bears-vs-stetson-hatters-401918526",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:stetson-hatters"
+      ]
+    },
+    {
+      "gameId": "401913895",
+      "gender": "women",
+      "date": "2026-12-31",
+      "homeProgramId": "ncaa:2026-27:women:austin-peay-governors",
+      "awayProgramId": "ncaa:2026-27:women:queens-university-royals",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/queens-university-royals-vs-austin-peay-governors-401913895",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:queens-university-royals"
+      ]
+    },
+    {
+      "gameId": "401913911",
+      "gender": "women",
+      "date": "2026-12-31",
+      "homeProgramId": "ncaa:2026-27:women:eastern-kentucky-colonels",
+      "awayProgramId": "ncaa:2026-27:women:west-florida-argonauts",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/west-florida-argonauts-vs-eastern-kentucky-colonels-401913911",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:west-florida-argonauts"
+      ]
+    },
+    {
+      "gameId": "401916078",
+      "gender": "women",
+      "date": "2026-12-31",
+      "homeProgramId": "ncaa:2026-27:women:west-georgia-wolves",
+      "awayProgramId": "ncaa:2026-27:women:lipscomb-bisons",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/lipscomb-bisons-vs-west-georgia-wolves-401916078",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:lipscomb-bisons"
+      ]
+    },
+    {
+      "gameId": "401918443",
+      "gender": "women",
+      "date": "2026-12-31",
+      "homeProgramId": "ncaa:2026-27:women:jacksonville-dolphins",
+      "awayProgramId": "ncaa:2026-27:women:tarleton-state-texans",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/tarleton-state-texans-vs-jacksonville-dolphins-401918443",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:jacksonville-dolphins"
+      ]
+    },
+    {
+      "gameId": "401918527",
+      "gender": "women",
+      "date": "2026-12-31",
+      "homeProgramId": "ncaa:2026-27:women:florida-gulf-coast-eagles",
+      "awayProgramId": "ncaa:2026-27:women:central-arkansas-bears",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/central-arkansas-bears-vs-florida-gulf-coast-eagles-401918527",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:florida-gulf-coast-eagles"
+      ]
+    },
+    {
+      "gameId": "401918551",
+      "gender": "women",
+      "date": "2026-12-31",
+      "homeProgramId": "ncaa:2026-27:women:north-florida-ospreys",
+      "awayProgramId": "ncaa:2026-27:women:abilene-christian-wildcats",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/abilene-christian-wildcats-vs-north-florida-ospreys-401918551",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:north-florida-ospreys"
+      ]
+    },
+    {
+      "gameId": "401913896",
+      "gender": "women",
+      "date": "2027-01-02",
+      "homeProgramId": "ncaa:2026-27:women:eastern-kentucky-colonels",
+      "awayProgramId": "ncaa:2026-27:women:queens-university-royals",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/queens-university-royals-vs-eastern-kentucky-colonels-401913896",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:queens-university-royals"
+      ]
+    },
+    {
+      "gameId": "401916079",
+      "gender": "women",
+      "date": "2027-01-02",
+      "homeProgramId": "ncaa:2026-27:women:north-alabama-lions",
+      "awayProgramId": "ncaa:2026-27:women:lipscomb-bisons",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/lipscomb-bisons-vs-north-alabama-lions-401916079",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:lipscomb-bisons"
+      ]
+    },
+    {
+      "gameId": "401916226",
+      "gender": "women",
+      "date": "2027-01-02",
+      "homeProgramId": "ncaa:2026-27:women:austin-peay-governors",
+      "awayProgramId": "ncaa:2026-27:women:west-florida-argonauts",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/west-florida-argonauts-vs-austin-peay-governors-401916226",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:west-florida-argonauts"
+      ]
+    },
+    {
+      "gameId": "401918430",
+      "gender": "women",
+      "date": "2027-01-02",
+      "homeProgramId": "ncaa:2026-27:women:west-georgia-wolves",
+      "awayProgramId": "ncaa:2026-27:women:bellarmine-knights",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/bellarmine-knights-vs-west-georgia-wolves-401918430",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:bellarmine-knights"
+      ]
+    },
+    {
+      "gameId": "401918552",
+      "gender": "women",
+      "date": "2027-01-02",
+      "homeProgramId": "ncaa:2026-27:women:jacksonville-dolphins",
+      "awayProgramId": "ncaa:2026-27:women:abilene-christian-wildcats",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/abilene-christian-wildcats-vs-jacksonville-dolphins-401918552",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:jacksonville-dolphins"
+      ]
+    },
+    {
+      "gameId": "401918444",
+      "gender": "women",
+      "date": "2027-01-03",
+      "homeProgramId": "ncaa:2026-27:women:tarleton-state-texans",
+      "awayProgramId": "ncaa:2026-27:women:stetson-hatters",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/stetson-hatters-vs-tarleton-state-texans-401918444",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:stetson-hatters"
+      ]
+    },
+    {
+      "gameId": "401918445",
+      "gender": "women",
+      "date": "2027-01-05",
+      "homeProgramId": "ncaa:2026-27:women:tarleton-state-texans",
+      "awayProgramId": "ncaa:2026-27:women:florida-gulf-coast-eagles",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/florida-gulf-coast-eagles-vs-tarleton-state-texans-401918445",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:florida-gulf-coast-eagles"
+      ]
+    },
+    {
+      "gameId": "401905457",
+      "gender": "women",
+      "date": "2027-01-09",
+      "homeProgramId": "ncaa:2026-27:women:bellarmine-knights",
+      "awayProgramId": "ncaa:2026-27:women:lipscomb-bisons",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/lipscomb-bisons-vs-bellarmine-knights-401905457",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:bellarmine-knights",
+        "ncaa:2026-27:women:lipscomb-bisons"
+      ]
+    },
+    {
+      "gameId": "401905458",
+      "gender": "women",
+      "date": "2027-01-09",
+      "homeProgramId": "ncaa:2026-27:women:west-florida-argonauts",
+      "awayProgramId": "ncaa:2026-27:women:queens-university-royals",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/queens-university-royals-vs-west-florida-argonauts-401905458",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:queens-university-royals",
+        "ncaa:2026-27:women:west-florida-argonauts"
+      ]
+    },
+    {
+      "gameId": "401905459",
+      "gender": "women",
+      "date": "2027-01-09",
+      "homeProgramId": "ncaa:2026-27:women:jacksonville-dolphins",
+      "awayProgramId": "ncaa:2026-27:women:north-florida-ospreys",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/north-florida-ospreys-vs-jacksonville-dolphins-401905459",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:jacksonville-dolphins",
+        "ncaa:2026-27:women:north-florida-ospreys"
+      ]
+    },
+    {
+      "gameId": "401905460",
+      "gender": "women",
+      "date": "2027-01-09",
+      "homeProgramId": "ncaa:2026-27:women:florida-gulf-coast-eagles",
+      "awayProgramId": "ncaa:2026-27:women:stetson-hatters",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/stetson-hatters-vs-florida-gulf-coast-eagles-401905460",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:florida-gulf-coast-eagles",
+        "ncaa:2026-27:women:stetson-hatters"
+      ]
+    },
+    {
+      "gameId": "401913897",
+      "gender": "women",
+      "date": "2027-01-11",
+      "homeProgramId": "ncaa:2026-27:women:queens-university-royals",
+      "awayProgramId": "ncaa:2026-27:women:south-carolina-state-lady-bulldogs",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/south-carolina-state-lady-bulldogs-vs-queens-university-royals-401913897",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:queens-university-royals"
+      ]
+    },
+    {
+      "gameId": "401905461",
+      "gender": "women",
+      "date": "2027-01-14",
+      "homeProgramId": "ncaa:2026-27:women:north-florida-ospreys",
+      "awayProgramId": "ncaa:2026-27:women:bellarmine-knights",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/bellarmine-knights-vs-north-florida-ospreys-401905461",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:bellarmine-knights",
+        "ncaa:2026-27:women:north-florida-ospreys"
+      ]
+    },
+    {
+      "gameId": "401905462",
+      "gender": "women",
+      "date": "2027-01-14",
+      "homeProgramId": "ncaa:2026-27:women:jacksonville-dolphins",
+      "awayProgramId": "ncaa:2026-27:women:lipscomb-bisons",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/lipscomb-bisons-vs-jacksonville-dolphins-401905462",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:jacksonville-dolphins",
+        "ncaa:2026-27:women:lipscomb-bisons"
+      ]
+    },
+    {
+      "gameId": "401905463",
+      "gender": "women",
+      "date": "2027-01-14",
+      "homeProgramId": "ncaa:2026-27:women:florida-gulf-coast-eagles",
+      "awayProgramId": "ncaa:2026-27:women:queens-university-royals",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/queens-university-royals-vs-florida-gulf-coast-eagles-401905463",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:florida-gulf-coast-eagles",
+        "ncaa:2026-27:women:queens-university-royals"
+      ]
+    },
+    {
+      "gameId": "401905464",
+      "gender": "women",
+      "date": "2027-01-14",
+      "homeProgramId": "ncaa:2026-27:women:stetson-hatters",
+      "awayProgramId": "ncaa:2026-27:women:west-florida-argonauts",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/west-florida-argonauts-vs-stetson-hatters-401905464",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:stetson-hatters",
+        "ncaa:2026-27:women:west-florida-argonauts"
+      ]
+    },
+    {
+      "gameId": "401905465",
+      "gender": "women",
+      "date": "2027-01-16",
+      "homeProgramId": "ncaa:2026-27:women:jacksonville-dolphins",
+      "awayProgramId": "ncaa:2026-27:women:bellarmine-knights",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/bellarmine-knights-vs-jacksonville-dolphins-401905465",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:bellarmine-knights",
+        "ncaa:2026-27:women:jacksonville-dolphins"
+      ]
+    },
+    {
+      "gameId": "401905466",
+      "gender": "women",
+      "date": "2027-01-16",
+      "homeProgramId": "ncaa:2026-27:women:north-florida-ospreys",
+      "awayProgramId": "ncaa:2026-27:women:lipscomb-bisons",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/lipscomb-bisons-vs-north-florida-ospreys-401905466",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:lipscomb-bisons",
+        "ncaa:2026-27:women:north-florida-ospreys"
+      ]
+    },
+    {
+      "gameId": "401905467",
+      "gender": "women",
+      "date": "2027-01-16",
+      "homeProgramId": "ncaa:2026-27:women:stetson-hatters",
+      "awayProgramId": "ncaa:2026-27:women:queens-university-royals",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/queens-university-royals-vs-stetson-hatters-401905467",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:queens-university-royals",
+        "ncaa:2026-27:women:stetson-hatters"
+      ]
+    },
+    {
+      "gameId": "401905468",
+      "gender": "women",
+      "date": "2027-01-16",
+      "homeProgramId": "ncaa:2026-27:women:florida-gulf-coast-eagles",
+      "awayProgramId": "ncaa:2026-27:women:west-florida-argonauts",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/west-florida-argonauts-vs-florida-gulf-coast-eagles-401905468",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:florida-gulf-coast-eagles",
+        "ncaa:2026-27:women:west-florida-argonauts"
+      ]
+    },
+    {
+      "gameId": "401905469",
+      "gender": "women",
+      "date": "2027-01-21",
+      "homeProgramId": "ncaa:2026-27:women:bellarmine-knights",
+      "awayProgramId": "ncaa:2026-27:women:florida-gulf-coast-eagles",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/florida-gulf-coast-eagles-vs-bellarmine-knights-401905469",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:bellarmine-knights",
+        "ncaa:2026-27:women:florida-gulf-coast-eagles"
+      ]
+    },
+    {
+      "gameId": "401905470",
+      "gender": "women",
+      "date": "2027-01-21",
+      "homeProgramId": "ncaa:2026-27:women:lipscomb-bisons",
+      "awayProgramId": "ncaa:2026-27:women:stetson-hatters",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/stetson-hatters-vs-lipscomb-bisons-401905470",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:lipscomb-bisons",
+        "ncaa:2026-27:women:stetson-hatters"
+      ]
+    },
+    {
+      "gameId": "401905471",
+      "gender": "women",
+      "date": "2027-01-21",
+      "homeProgramId": "ncaa:2026-27:women:queens-university-royals",
+      "awayProgramId": "ncaa:2026-27:women:jacksonville-dolphins",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/jacksonville-dolphins-vs-queens-university-royals-401905471",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:jacksonville-dolphins",
+        "ncaa:2026-27:women:queens-university-royals"
+      ]
+    },
+    {
+      "gameId": "401905472",
+      "gender": "women",
+      "date": "2027-01-21",
+      "homeProgramId": "ncaa:2026-27:women:west-florida-argonauts",
+      "awayProgramId": "ncaa:2026-27:women:north-florida-ospreys",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/north-florida-ospreys-vs-west-florida-argonauts-401905472",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:north-florida-ospreys",
+        "ncaa:2026-27:women:west-florida-argonauts"
+      ]
+    },
+    {
+      "gameId": "401905473",
+      "gender": "women",
+      "date": "2027-01-23",
+      "homeProgramId": "ncaa:2026-27:women:bellarmine-knights",
+      "awayProgramId": "ncaa:2026-27:women:stetson-hatters",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/stetson-hatters-vs-bellarmine-knights-401905473",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:bellarmine-knights",
+        "ncaa:2026-27:women:stetson-hatters"
+      ]
+    },
+    {
+      "gameId": "401905474",
+      "gender": "women",
+      "date": "2027-01-23",
+      "homeProgramId": "ncaa:2026-27:women:lipscomb-bisons",
+      "awayProgramId": "ncaa:2026-27:women:florida-gulf-coast-eagles",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/florida-gulf-coast-eagles-vs-lipscomb-bisons-401905474",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:florida-gulf-coast-eagles",
+        "ncaa:2026-27:women:lipscomb-bisons"
+      ]
+    },
+    {
+      "gameId": "401905475",
+      "gender": "women",
+      "date": "2027-01-23",
+      "homeProgramId": "ncaa:2026-27:women:queens-university-royals",
+      "awayProgramId": "ncaa:2026-27:women:north-florida-ospreys",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/north-florida-ospreys-vs-queens-university-royals-401905475",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:north-florida-ospreys",
+        "ncaa:2026-27:women:queens-university-royals"
+      ]
+    },
+    {
+      "gameId": "401905476",
+      "gender": "women",
+      "date": "2027-01-23",
+      "homeProgramId": "ncaa:2026-27:women:west-florida-argonauts",
+      "awayProgramId": "ncaa:2026-27:women:jacksonville-dolphins",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/jacksonville-dolphins-vs-west-florida-argonauts-401905476",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:jacksonville-dolphins",
+        "ncaa:2026-27:women:west-florida-argonauts"
+      ]
+    },
+    {
+      "gameId": "401905477",
+      "gender": "women",
+      "date": "2027-01-28",
+      "homeProgramId": "ncaa:2026-27:women:bellarmine-knights",
+      "awayProgramId": "ncaa:2026-27:women:queens-university-royals",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/queens-university-royals-vs-bellarmine-knights-401905477",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:bellarmine-knights",
+        "ncaa:2026-27:women:queens-university-royals"
+      ]
+    },
+    {
+      "gameId": "401905478",
+      "gender": "women",
+      "date": "2027-01-28",
+      "homeProgramId": "ncaa:2026-27:women:lipscomb-bisons",
+      "awayProgramId": "ncaa:2026-27:women:west-florida-argonauts",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/west-florida-argonauts-vs-lipscomb-bisons-401905478",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:lipscomb-bisons",
+        "ncaa:2026-27:women:west-florida-argonauts"
+      ]
+    },
+    {
+      "gameId": "401905479",
+      "gender": "women",
+      "date": "2027-01-28",
+      "homeProgramId": "ncaa:2026-27:women:jacksonville-dolphins",
+      "awayProgramId": "ncaa:2026-27:women:florida-gulf-coast-eagles",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/florida-gulf-coast-eagles-vs-jacksonville-dolphins-401905479",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:florida-gulf-coast-eagles",
+        "ncaa:2026-27:women:jacksonville-dolphins"
+      ]
+    },
+    {
+      "gameId": "401905480",
+      "gender": "women",
+      "date": "2027-01-28",
+      "homeProgramId": "ncaa:2026-27:women:north-florida-ospreys",
+      "awayProgramId": "ncaa:2026-27:women:stetson-hatters",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/stetson-hatters-vs-north-florida-ospreys-401905480",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:north-florida-ospreys",
+        "ncaa:2026-27:women:stetson-hatters"
+      ]
+    },
+    {
+      "gameId": "401905481",
+      "gender": "women",
+      "date": "2027-01-30",
+      "homeProgramId": "ncaa:2026-27:women:bellarmine-knights",
+      "awayProgramId": "ncaa:2026-27:women:west-florida-argonauts",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/west-florida-argonauts-vs-bellarmine-knights-401905481",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:bellarmine-knights",
+        "ncaa:2026-27:women:west-florida-argonauts"
+      ]
+    },
+    {
+      "gameId": "401905482",
+      "gender": "women",
+      "date": "2027-01-30",
+      "homeProgramId": "ncaa:2026-27:women:lipscomb-bisons",
+      "awayProgramId": "ncaa:2026-27:women:queens-university-royals",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/queens-university-royals-vs-lipscomb-bisons-401905482",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:lipscomb-bisons",
+        "ncaa:2026-27:women:queens-university-royals"
+      ]
+    },
+    {
+      "gameId": "401905483",
+      "gender": "women",
+      "date": "2027-01-30",
+      "homeProgramId": "ncaa:2026-27:women:jacksonville-dolphins",
+      "awayProgramId": "ncaa:2026-27:women:stetson-hatters",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/stetson-hatters-vs-jacksonville-dolphins-401905483",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:jacksonville-dolphins",
+        "ncaa:2026-27:women:stetson-hatters"
+      ]
+    },
+    {
+      "gameId": "401905484",
+      "gender": "women",
+      "date": "2027-01-30",
+      "homeProgramId": "ncaa:2026-27:women:north-florida-ospreys",
+      "awayProgramId": "ncaa:2026-27:women:florida-gulf-coast-eagles",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/florida-gulf-coast-eagles-vs-north-florida-ospreys-401905484",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:florida-gulf-coast-eagles",
+        "ncaa:2026-27:women:north-florida-ospreys"
+      ]
+    },
+    {
+      "gameId": "401905485",
+      "gender": "women",
+      "date": "2027-02-04",
+      "homeProgramId": "ncaa:2026-27:women:stetson-hatters",
+      "awayProgramId": "ncaa:2026-27:women:bellarmine-knights",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/bellarmine-knights-vs-stetson-hatters-401905485",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:bellarmine-knights",
+        "ncaa:2026-27:women:stetson-hatters"
+      ]
+    },
+    {
+      "gameId": "401905486",
+      "gender": "women",
+      "date": "2027-02-04",
+      "homeProgramId": "ncaa:2026-27:women:florida-gulf-coast-eagles",
+      "awayProgramId": "ncaa:2026-27:women:lipscomb-bisons",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/lipscomb-bisons-vs-florida-gulf-coast-eagles-401905486",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:florida-gulf-coast-eagles",
+        "ncaa:2026-27:women:lipscomb-bisons"
+      ]
+    },
+    {
+      "gameId": "401905487",
+      "gender": "women",
+      "date": "2027-02-06",
+      "homeProgramId": "ncaa:2026-27:women:florida-gulf-coast-eagles",
+      "awayProgramId": "ncaa:2026-27:women:bellarmine-knights",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/bellarmine-knights-vs-florida-gulf-coast-eagles-401905487",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:bellarmine-knights",
+        "ncaa:2026-27:women:florida-gulf-coast-eagles"
+      ]
+    },
+    {
+      "gameId": "401905488",
+      "gender": "women",
+      "date": "2027-02-06",
+      "homeProgramId": "ncaa:2026-27:women:stetson-hatters",
+      "awayProgramId": "ncaa:2026-27:women:lipscomb-bisons",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/lipscomb-bisons-vs-stetson-hatters-401905488",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:lipscomb-bisons",
+        "ncaa:2026-27:women:stetson-hatters"
+      ]
+    },
+    {
+      "gameId": "401905489",
+      "gender": "women",
+      "date": "2027-02-06",
+      "homeProgramId": "ncaa:2026-27:women:queens-university-royals",
+      "awayProgramId": "ncaa:2026-27:women:west-florida-argonauts",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/west-florida-argonauts-vs-queens-university-royals-401905489",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:queens-university-royals",
+        "ncaa:2026-27:women:west-florida-argonauts"
+      ]
+    },
+    {
+      "gameId": "401905490",
+      "gender": "women",
+      "date": "2027-02-06",
+      "homeProgramId": "ncaa:2026-27:women:north-florida-ospreys",
+      "awayProgramId": "ncaa:2026-27:women:jacksonville-dolphins",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/jacksonville-dolphins-vs-north-florida-ospreys-401905490",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:jacksonville-dolphins",
+        "ncaa:2026-27:women:north-florida-ospreys"
+      ]
+    },
+    {
+      "gameId": "401905491",
+      "gender": "women",
+      "date": "2027-02-11",
+      "homeProgramId": "ncaa:2026-27:women:bellarmine-knights",
+      "awayProgramId": "ncaa:2026-27:women:jacksonville-dolphins",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/jacksonville-dolphins-vs-bellarmine-knights-401905491",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:bellarmine-knights",
+        "ncaa:2026-27:women:jacksonville-dolphins"
+      ]
+    },
+    {
+      "gameId": "401905492",
+      "gender": "women",
+      "date": "2027-02-11",
+      "homeProgramId": "ncaa:2026-27:women:lipscomb-bisons",
+      "awayProgramId": "ncaa:2026-27:women:north-florida-ospreys",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/north-florida-ospreys-vs-lipscomb-bisons-401905492",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:lipscomb-bisons",
+        "ncaa:2026-27:women:north-florida-ospreys"
+      ]
+    },
+    {
+      "gameId": "401905493",
+      "gender": "women",
+      "date": "2027-02-11",
+      "homeProgramId": "ncaa:2026-27:women:queens-university-royals",
+      "awayProgramId": "ncaa:2026-27:women:stetson-hatters",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/stetson-hatters-vs-queens-university-royals-401905493",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:queens-university-royals",
+        "ncaa:2026-27:women:stetson-hatters"
+      ]
+    },
+    {
+      "gameId": "401905494",
+      "gender": "women",
+      "date": "2027-02-11",
+      "homeProgramId": "ncaa:2026-27:women:west-florida-argonauts",
+      "awayProgramId": "ncaa:2026-27:women:florida-gulf-coast-eagles",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/florida-gulf-coast-eagles-vs-west-florida-argonauts-401905494",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:florida-gulf-coast-eagles",
+        "ncaa:2026-27:women:west-florida-argonauts"
+      ]
+    },
+    {
+      "gameId": "401905495",
+      "gender": "women",
+      "date": "2027-02-13",
+      "homeProgramId": "ncaa:2026-27:women:bellarmine-knights",
+      "awayProgramId": "ncaa:2026-27:women:north-florida-ospreys",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/north-florida-ospreys-vs-bellarmine-knights-401905495",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:bellarmine-knights",
+        "ncaa:2026-27:women:north-florida-ospreys"
+      ]
+    },
+    {
+      "gameId": "401905496",
+      "gender": "women",
+      "date": "2027-02-13",
+      "homeProgramId": "ncaa:2026-27:women:lipscomb-bisons",
+      "awayProgramId": "ncaa:2026-27:women:jacksonville-dolphins",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/jacksonville-dolphins-vs-lipscomb-bisons-401905496",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:jacksonville-dolphins",
+        "ncaa:2026-27:women:lipscomb-bisons"
+      ]
+    },
+    {
+      "gameId": "401905497",
+      "gender": "women",
+      "date": "2027-02-13",
+      "homeProgramId": "ncaa:2026-27:women:queens-university-royals",
+      "awayProgramId": "ncaa:2026-27:women:florida-gulf-coast-eagles",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/florida-gulf-coast-eagles-vs-queens-university-royals-401905497",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:florida-gulf-coast-eagles",
+        "ncaa:2026-27:women:queens-university-royals"
+      ]
+    },
+    {
+      "gameId": "401905498",
+      "gender": "women",
+      "date": "2027-02-13",
+      "homeProgramId": "ncaa:2026-27:women:west-florida-argonauts",
+      "awayProgramId": "ncaa:2026-27:women:stetson-hatters",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/stetson-hatters-vs-west-florida-argonauts-401905498",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:stetson-hatters",
+        "ncaa:2026-27:women:west-florida-argonauts"
+      ]
+    },
+    {
+      "gameId": "401905499",
+      "gender": "women",
+      "date": "2027-02-18",
+      "homeProgramId": "ncaa:2026-27:women:north-florida-ospreys",
+      "awayProgramId": "ncaa:2026-27:women:queens-university-royals",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/queens-university-royals-vs-north-florida-ospreys-401905499",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:north-florida-ospreys",
+        "ncaa:2026-27:women:queens-university-royals"
+      ]
+    },
+    {
+      "gameId": "401905500",
+      "gender": "women",
+      "date": "2027-02-18",
+      "homeProgramId": "ncaa:2026-27:women:jacksonville-dolphins",
+      "awayProgramId": "ncaa:2026-27:women:west-florida-argonauts",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/west-florida-argonauts-vs-jacksonville-dolphins-401905500",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:jacksonville-dolphins",
+        "ncaa:2026-27:women:west-florida-argonauts"
+      ]
+    },
+    {
+      "gameId": "401905501",
+      "gender": "women",
+      "date": "2027-02-20",
+      "homeProgramId": "ncaa:2026-27:women:lipscomb-bisons",
+      "awayProgramId": "ncaa:2026-27:women:bellarmine-knights",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/bellarmine-knights-vs-lipscomb-bisons-401905501",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:bellarmine-knights",
+        "ncaa:2026-27:women:lipscomb-bisons"
+      ]
+    },
+    {
+      "gameId": "401905502",
+      "gender": "women",
+      "date": "2027-02-20",
+      "homeProgramId": "ncaa:2026-27:women:jacksonville-dolphins",
+      "awayProgramId": "ncaa:2026-27:women:queens-university-royals",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/queens-university-royals-vs-jacksonville-dolphins-401905502",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:jacksonville-dolphins",
+        "ncaa:2026-27:women:queens-university-royals"
+      ]
+    },
+    {
+      "gameId": "401905503",
+      "gender": "women",
+      "date": "2027-02-20",
+      "homeProgramId": "ncaa:2026-27:women:north-florida-ospreys",
+      "awayProgramId": "ncaa:2026-27:women:west-florida-argonauts",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/west-florida-argonauts-vs-north-florida-ospreys-401905503",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:north-florida-ospreys",
+        "ncaa:2026-27:women:west-florida-argonauts"
+      ]
+    },
+    {
+      "gameId": "401905504",
+      "gender": "women",
+      "date": "2027-02-20",
+      "homeProgramId": "ncaa:2026-27:women:stetson-hatters",
+      "awayProgramId": "ncaa:2026-27:women:florida-gulf-coast-eagles",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/florida-gulf-coast-eagles-vs-stetson-hatters-401905504",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:florida-gulf-coast-eagles",
+        "ncaa:2026-27:women:stetson-hatters"
+      ]
+    },
+    {
+      "gameId": "401905505",
+      "gender": "women",
+      "date": "2027-02-25",
+      "homeProgramId": "ncaa:2026-27:women:west-florida-argonauts",
+      "awayProgramId": "ncaa:2026-27:women:bellarmine-knights",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/bellarmine-knights-vs-west-florida-argonauts-401905505",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:bellarmine-knights",
+        "ncaa:2026-27:women:west-florida-argonauts"
+      ]
+    },
+    {
+      "gameId": "401905506",
+      "gender": "women",
+      "date": "2027-02-25",
+      "homeProgramId": "ncaa:2026-27:women:queens-university-royals",
+      "awayProgramId": "ncaa:2026-27:women:lipscomb-bisons",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/lipscomb-bisons-vs-queens-university-royals-401905506",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:lipscomb-bisons",
+        "ncaa:2026-27:women:queens-university-royals"
+      ]
+    },
+    {
+      "gameId": "401905507",
+      "gender": "women",
+      "date": "2027-02-25",
+      "homeProgramId": "ncaa:2026-27:women:stetson-hatters",
+      "awayProgramId": "ncaa:2026-27:women:jacksonville-dolphins",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/jacksonville-dolphins-vs-stetson-hatters-401905507",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:jacksonville-dolphins",
+        "ncaa:2026-27:women:stetson-hatters"
+      ]
+    },
+    {
+      "gameId": "401905508",
+      "gender": "women",
+      "date": "2027-02-25",
+      "homeProgramId": "ncaa:2026-27:women:florida-gulf-coast-eagles",
+      "awayProgramId": "ncaa:2026-27:women:north-florida-ospreys",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/north-florida-ospreys-vs-florida-gulf-coast-eagles-401905508",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:florida-gulf-coast-eagles",
+        "ncaa:2026-27:women:north-florida-ospreys"
+      ]
+    },
+    {
+      "gameId": "401905509",
+      "gender": "women",
+      "date": "2027-02-27",
+      "homeProgramId": "ncaa:2026-27:women:queens-university-royals",
+      "awayProgramId": "ncaa:2026-27:women:bellarmine-knights",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/bellarmine-knights-vs-queens-university-royals-401905509",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:bellarmine-knights",
+        "ncaa:2026-27:women:queens-university-royals"
+      ]
+    },
+    {
+      "gameId": "401905510",
+      "gender": "women",
+      "date": "2027-02-27",
+      "homeProgramId": "ncaa:2026-27:women:west-florida-argonauts",
+      "awayProgramId": "ncaa:2026-27:women:lipscomb-bisons",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/lipscomb-bisons-vs-west-florida-argonauts-401905510",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:lipscomb-bisons",
+        "ncaa:2026-27:women:west-florida-argonauts"
+      ]
+    },
+    {
+      "gameId": "401905511",
+      "gender": "women",
+      "date": "2027-02-27",
+      "homeProgramId": "ncaa:2026-27:women:florida-gulf-coast-eagles",
+      "awayProgramId": "ncaa:2026-27:women:jacksonville-dolphins",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/jacksonville-dolphins-vs-florida-gulf-coast-eagles-401905511",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:florida-gulf-coast-eagles",
+        "ncaa:2026-27:women:jacksonville-dolphins"
+      ]
+    },
+    {
+      "gameId": "401905512",
+      "gender": "women",
+      "date": "2027-02-27",
+      "homeProgramId": "ncaa:2026-27:women:stetson-hatters",
+      "awayProgramId": "ncaa:2026-27:women:north-florida-ospreys",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/north-florida-ospreys-vs-stetson-hatters-401905512",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:north-florida-ospreys",
+        "ncaa:2026-27:women:stetson-hatters"
+      ]
+    }
+  ]
+}

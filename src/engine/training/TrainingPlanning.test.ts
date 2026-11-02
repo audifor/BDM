@@ -5,6 +5,8 @@ import { addDays, parseGameDate } from '@/domain/date'
 import { createGame } from '@/domain/game'
 import { gameIdFromString, type TeamId } from '@/domain/ids'
 import { updateGameWorld } from '@/domain/world'
+import { getEligibleResponsibilityCandidates } from '@/domain/world'
+import { setTeamResponsibility } from '@/app/staffResponsibilities'
 import { advanceDayWithTrace, getUserTeam } from '@/engine/calendar'
 import { canTeamTrainOnDate, setTeamTrainingPlan } from './TrainingEngine'
 import { executeScheduledTrainingSessionsWithEvidence } from './ScheduledTrainingEngine'
@@ -142,6 +144,18 @@ describe('BS12B Training planning', () => {
     expect(Object.values(result.world.scheduledTrainingSessionsById).filter((session) => session.teamId === userTeam.id)).toEqual(
       Object.values(withManualSession.scheduledTrainingSessionsById).filter((session) => session.teamId === userTeam.id),
     )
+  })
+
+  it('plans the user team when canonical team-training responsibility is delegated', () => {
+    const base = updateGameWorld(createNewGame(), { currentDate: MONDAY, games: [] })
+    const userTeam = getUserTeam(base)!
+    const holder = getEligibleResponsibilityCandidates(base, userTeam.id, 'createTeamTrainingPlan', 'delegated')[0]!
+    const delegated = setTeamResponsibility(base, { teamId: userTeam.id, kind: 'createTeamTrainingPlan', mode: 'delegated', holderStaffId: holder.staffPersonId })
+    const result = progressAiTrainingPlanning(delegated)
+    const sessions = Object.values(result.world.scheduledTrainingSessionsById).filter((session) => session.teamId === userTeam.id)
+
+    expect(sessions.length).toBeGreaterThan(0)
+    expect(sessions.some((session) => session.assignedStaffPersonIds?.includes(holder.staffPersonId))).toBe(true)
   })
 
   it('preserves any existing AI session on a date instead of replacing or duplicating it', () => {

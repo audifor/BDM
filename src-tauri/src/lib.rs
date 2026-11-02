@@ -1,3 +1,4 @@
+pub mod db04_catalog_adapter;
 mod world_db;
 mod world_db_bootstrap;
 mod world_db_facilities;
@@ -19,9 +20,15 @@ use tauri::Manager;
 
 #[tauri::command]
 async fn world_db_v2(app: tauri::AppHandle, mut request: Value) -> Result<Value, String> {
-    request["competitionCatalog"] =
+    let mut catalog: Vec<Value> =
         serde_json::from_str(include_str!("../../src/data/worlddb-v2/competitions.json"))
             .map_err(|e| e.to_string())?;
+    let global: Vec<Value> = serde_json::from_str(include_str!(
+        "../../src/data/worlddb-v2/global-competitions.json"
+    ))
+    .map_err(|e| e.to_string())?;
+    catalog.extend(global);
+    request["competitionCatalog"] = Value::Array(catalog);
     let method = request
         .get("method")
         .and_then(Value::as_str)

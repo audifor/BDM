@@ -4,12 +4,18 @@ import type { CompetitionId } from '@/domain/ids'
 import type { ConferenceId, SeasonId, TeamId } from '@/domain/ids'
 import type { GameDate } from '@/domain/date'
 import type { GameWorld } from '@/domain/world'
+import { calculateSeasonGroupStandings } from '@/domain/season/calculateStandings'
 
 export type StandingsEntry = FinalStandingLine
 
 /** Compatibility boundary: standings remain an Engine-facing projection. */
 export function calculateStandings(world: GameWorld, seasonId: SeasonId, throughDate?: GameDate): StandingsEntry[] {
   return calculateSeasonStandings(world, seasonId, throughDate)
+}
+
+/** Each group uses the same canonical classification/tie-break authority. */
+export function calculateGroupStandings(world: GameWorld, seasonId: SeasonId): readonly StandingsEntry[][] {
+  return calculateSeasonGroupStandings(world, seasonId)
 }
 
 export function calculateStandingsForCompetition(world: GameWorld, competitionId: CompetitionId): StandingsEntry[] {

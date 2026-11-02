@@ -1,0 +1,592 @@
+{
+  "season": "2026-27",
+  "conferenceId": "pac-12-conference",
+  "sourceUrl": "https://pac-12.com/news/2026/10/2/pac-12-announces-2026-27-womens-basketball-schedule.aspx",
+  "sourceQuality": "CONFERENCE_OFFICIAL",
+  "fixtures": [
+    {
+      "gender": "women",
+      "date": "2027-01-06",
+      "awayProgramId": "ncaa:2026-27:women:oregon-state-beavers",
+      "homeProgramId": "ncaa:2026-27:women:gonzaga-bulldogs",
+      "sourceUrl": "https://pac-12.com/news/2026/10/2/pac-12-announces-2026-27-womens-basketball-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-06",
+      "awayProgramId": "ncaa:2026-27:women:utah-state-aggies",
+      "homeProgramId": "ncaa:2026-27:women:san-diego-state-aztecs",
+      "sourceUrl": "https://pac-12.com/news/2026/10/2/pac-12-announces-2026-27-womens-basketball-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-06",
+      "awayProgramId": "ncaa:2026-27:women:boise-state-broncos",
+      "homeProgramId": "ncaa:2026-27:women:texas-state-bobcats",
+      "sourceUrl": "https://pac-12.com/news/2026/10/2/pac-12-announces-2026-27-womens-basketball-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-07",
+      "awayProgramId": "ncaa:2026-27:women:fresno-state-bulldogs",
+      "homeProgramId": "ncaa:2026-27:women:colorado-state-rams",
+      "sourceUrl": "https://pac-12.com/news/2026/10/2/pac-12-announces-2026-27-womens-basketball-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-09",
+      "awayProgramId": "ncaa:2026-27:women:gonzaga-bulldogs",
+      "homeProgramId": "ncaa:2026-27:women:fresno-state-bulldogs",
+      "sourceUrl": "https://pac-12.com/news/2026/10/2/pac-12-announces-2026-27-womens-basketball-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-09",
+      "awayProgramId": "ncaa:2026-27:women:oregon-state-beavers",
+      "homeProgramId": "ncaa:2026-27:women:utah-state-aggies",
+      "sourceUrl": "https://pac-12.com/news/2026/10/2/pac-12-announces-2026-27-womens-basketball-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-09",
+      "awayProgramId": "ncaa:2026-27:women:texas-state-bobcats",
+      "homeProgramId": "ncaa:2026-27:women:washington-state-cougars",
+      "sourceUrl": "https://pac-12.com/news/2026/10/2/pac-12-announces-2026-27-womens-basketball-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-10",
+      "awayProgramId": "ncaa:2026-27:women:boise-state-broncos",
+      "homeProgramId": "ncaa:2026-27:women:san-diego-state-aztecs",
+      "sourceUrl": "https://pac-12.com/news/2026/10/2/pac-12-announces-2026-27-womens-basketball-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-13",
+      "awayProgramId": "ncaa:2026-27:women:texas-state-bobcats",
+      "homeProgramId": "ncaa:2026-27:women:gonzaga-bulldogs",
+      "sourceUrl": "https://pac-12.com/news/2026/10/2/pac-12-announces-2026-27-womens-basketball-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-13",
+      "awayProgramId": "ncaa:2026-27:women:san-diego-state-aztecs",
+      "homeProgramId": "ncaa:2026-27:women:oregon-state-beavers",
+      "sourceUrl": "https://pac-12.com/news/2026/10/2/pac-12-announces-2026-27-womens-basketball-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-13",
+      "awayProgramId": "ncaa:2026-27:women:colorado-state-rams",
+      "homeProgramId": "ncaa:2026-27:women:utah-state-aggies",
+      "sourceUrl": "https://pac-12.com/news/2026/10/2/pac-12-announces-2026-27-womens-basketball-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-14",
+      "awayProgramId": "ncaa:2026-27:women:washington-state-cougars",
+      "homeProgramId": "ncaa:2026-27:women:boise-state-broncos",
+      "sourceUrl": "https://pac-12.com/news/2026/10/2/pac-12-announces-2026-27-womens-basketball-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-16",
+      "awayProgramId": "ncaa:2026-27:women:gonzaga-bulldogs",
+      "homeProgramId": "ncaa:2026-27:women:boise-state-broncos",
+      "sourceUrl": "https://pac-12.com/news/2026/10/2/pac-12-announces-2026-27-womens-basketball-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-16",
+      "awayProgramId": "ncaa:2026-27:women:san-diego-state-aztecs",
+      "homeProgramId": "ncaa:2026-27:women:colorado-state-rams",
+      "sourceUrl": "https://pac-12.com/news/2026/10/2/pac-12-announces-2026-27-womens-basketball-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-16",
+      "awayProgramId": "ncaa:2026-27:women:utah-state-aggies",
+      "homeProgramId": "ncaa:2026-27:women:fresno-state-bulldogs",
+      "sourceUrl": "https://pac-12.com/news/2026/10/2/pac-12-announces-2026-27-womens-basketball-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-17",
+      "awayProgramId": "ncaa:2026-27:women:washington-state-cougars",
+      "homeProgramId": "ncaa:2026-27:women:oregon-state-beavers",
+      "sourceUrl": "https://pac-12.com/news/2026/10/2/pac-12-announces-2026-27-womens-basketball-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-20",
+      "awayProgramId": "ncaa:2026-27:women:fresno-state-bulldogs",
+      "homeProgramId": "ncaa:2026-27:women:texas-state-bobcats",
+      "sourceUrl": "https://pac-12.com/news/2026/10/2/pac-12-announces-2026-27-womens-basketball-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-20",
+      "awayProgramId": "ncaa:2026-27:women:boise-state-broncos",
+      "homeProgramId": "ncaa:2026-27:women:utah-state-aggies",
+      "sourceUrl": "https://pac-12.com/news/2026/10/2/pac-12-announces-2026-27-womens-basketball-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-20",
+      "awayProgramId": "ncaa:2026-27:women:colorado-state-rams",
+      "homeProgramId": "ncaa:2026-27:women:washington-state-cougars",
+      "sourceUrl": "https://pac-12.com/news/2026/10/2/pac-12-announces-2026-27-womens-basketball-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-21",
+      "awayProgramId": "ncaa:2026-27:women:gonzaga-bulldogs",
+      "homeProgramId": "ncaa:2026-27:women:san-diego-state-aztecs",
+      "sourceUrl": "https://pac-12.com/news/2026/10/2/pac-12-announces-2026-27-womens-basketball-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-23",
+      "awayProgramId": "ncaa:2026-27:women:oregon-state-beavers",
+      "homeProgramId": "ncaa:2026-27:women:fresno-state-bulldogs",
+      "sourceUrl": "https://pac-12.com/news/2026/10/2/pac-12-announces-2026-27-womens-basketball-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-23",
+      "awayProgramId": "ncaa:2026-27:women:washington-state-cougars",
+      "homeProgramId": "ncaa:2026-27:women:utah-state-aggies",
+      "sourceUrl": "https://pac-12.com/news/2026/10/2/pac-12-announces-2026-27-womens-basketball-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-24",
+      "awayProgramId": "ncaa:2026-27:women:colorado-state-rams",
+      "homeProgramId": "ncaa:2026-27:women:boise-state-broncos",
+      "sourceUrl": "https://pac-12.com/news/2026/10/2/pac-12-announces-2026-27-womens-basketball-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-24",
+      "awayProgramId": "ncaa:2026-27:women:san-diego-state-aztecs",
+      "homeProgramId": "ncaa:2026-27:women:texas-state-bobcats",
+      "sourceUrl": "https://pac-12.com/news/2026/10/2/pac-12-announces-2026-27-womens-basketball-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-27",
+      "awayProgramId": "ncaa:2026-27:women:texas-state-bobcats",
+      "homeProgramId": "ncaa:2026-27:women:colorado-state-rams",
+      "sourceUrl": "https://pac-12.com/news/2026/10/2/pac-12-announces-2026-27-womens-basketball-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-27",
+      "awayProgramId": "ncaa:2026-27:women:boise-state-broncos",
+      "homeProgramId": "ncaa:2026-27:women:oregon-state-beavers",
+      "sourceUrl": "https://pac-12.com/news/2026/10/2/pac-12-announces-2026-27-womens-basketball-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-28",
+      "awayProgramId": "ncaa:2026-27:women:utah-state-aggies",
+      "homeProgramId": "ncaa:2026-27:women:gonzaga-bulldogs",
+      "sourceUrl": "https://pac-12.com/news/2026/10/2/pac-12-announces-2026-27-womens-basketball-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-28",
+      "awayProgramId": "ncaa:2026-27:women:fresno-state-bulldogs",
+      "homeProgramId": "ncaa:2026-27:women:washington-state-cougars",
+      "sourceUrl": "https://pac-12.com/news/2026/10/2/pac-12-announces-2026-27-womens-basketball-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-30",
+      "awayProgramId": "ncaa:2026-27:women:utah-state-aggies",
+      "homeProgramId": "ncaa:2026-27:women:oregon-state-beavers",
+      "sourceUrl": "https://pac-12.com/news/2026/10/2/pac-12-announces-2026-27-womens-basketball-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-31",
+      "awayProgramId": "ncaa:2026-27:women:fresno-state-bulldogs",
+      "homeProgramId": "ncaa:2026-27:women:gonzaga-bulldogs",
+      "sourceUrl": "https://pac-12.com/news/2026/10/2/pac-12-announces-2026-27-womens-basketball-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-31",
+      "awayProgramId": "ncaa:2026-27:women:colorado-state-rams",
+      "homeProgramId": "ncaa:2026-27:women:san-diego-state-aztecs",
+      "sourceUrl": "https://pac-12.com/news/2026/10/2/pac-12-announces-2026-27-womens-basketball-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-31",
+      "awayProgramId": "ncaa:2026-27:women:washington-state-cougars",
+      "homeProgramId": "ncaa:2026-27:women:texas-state-bobcats",
+      "sourceUrl": "https://pac-12.com/news/2026/10/2/pac-12-announces-2026-27-womens-basketball-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-03",
+      "awayProgramId": "ncaa:2026-27:women:gonzaga-bulldogs",
+      "homeProgramId": "ncaa:2026-27:women:colorado-state-rams",
+      "sourceUrl": "https://pac-12.com/news/2026/10/2/pac-12-announces-2026-27-womens-basketball-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-03",
+      "awayProgramId": "ncaa:2026-27:women:boise-state-broncos",
+      "homeProgramId": "ncaa:2026-27:women:fresno-state-bulldogs",
+      "sourceUrl": "https://pac-12.com/news/2026/10/2/pac-12-announces-2026-27-womens-basketball-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-03",
+      "awayProgramId": "ncaa:2026-27:women:texas-state-bobcats",
+      "homeProgramId": "ncaa:2026-27:women:utah-state-aggies",
+      "sourceUrl": "https://pac-12.com/news/2026/10/2/pac-12-announces-2026-27-womens-basketball-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-03",
+      "awayProgramId": "ncaa:2026-27:women:san-diego-state-aztecs",
+      "homeProgramId": "ncaa:2026-27:women:washington-state-cougars",
+      "sourceUrl": "https://pac-12.com/news/2026/10/2/pac-12-announces-2026-27-womens-basketball-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-06",
+      "awayProgramId": "ncaa:2026-27:women:texas-state-bobcats",
+      "homeProgramId": "ncaa:2026-27:women:boise-state-broncos",
+      "sourceUrl": "https://pac-12.com/news/2026/10/2/pac-12-announces-2026-27-womens-basketball-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-06",
+      "awayProgramId": "ncaa:2026-27:women:san-diego-state-aztecs",
+      "homeProgramId": "ncaa:2026-27:women:gonzaga-bulldogs",
+      "sourceUrl": "https://pac-12.com/news/2026/10/2/pac-12-announces-2026-27-womens-basketball-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-07",
+      "awayProgramId": "ncaa:2026-27:women:colorado-state-rams",
+      "homeProgramId": "ncaa:2026-27:women:fresno-state-bulldogs",
+      "sourceUrl": "https://pac-12.com/news/2026/10/2/pac-12-announces-2026-27-womens-basketball-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-07",
+      "awayProgramId": "ncaa:2026-27:women:oregon-state-beavers",
+      "homeProgramId": "ncaa:2026-27:women:washington-state-cougars",
+      "sourceUrl": "https://pac-12.com/news/2026/10/2/pac-12-announces-2026-27-womens-basketball-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-10",
+      "awayProgramId": "ncaa:2026-27:women:fresno-state-bulldogs",
+      "homeProgramId": "ncaa:2026-27:women:san-diego-state-aztecs",
+      "sourceUrl": "https://pac-12.com/news/2026/10/2/pac-12-announces-2026-27-womens-basketball-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-10",
+      "awayProgramId": "ncaa:2026-27:women:colorado-state-rams",
+      "homeProgramId": "ncaa:2026-27:women:texas-state-bobcats",
+      "sourceUrl": "https://pac-12.com/news/2026/10/2/pac-12-announces-2026-27-womens-basketball-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-11",
+      "awayProgramId": "ncaa:2026-27:women:utah-state-aggies",
+      "homeProgramId": "ncaa:2026-27:women:boise-state-broncos",
+      "sourceUrl": "https://pac-12.com/news/2026/10/2/pac-12-announces-2026-27-womens-basketball-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-11",
+      "awayProgramId": "ncaa:2026-27:women:gonzaga-bulldogs",
+      "homeProgramId": "ncaa:2026-27:women:oregon-state-beavers",
+      "sourceUrl": "https://pac-12.com/news/2026/10/2/pac-12-announces-2026-27-womens-basketball-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-13",
+      "awayProgramId": "ncaa:2026-27:women:oregon-state-beavers",
+      "homeProgramId": "ncaa:2026-27:women:texas-state-bobcats",
+      "sourceUrl": "https://pac-12.com/news/2026/10/2/pac-12-announces-2026-27-womens-basketball-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-13",
+      "awayProgramId": "ncaa:2026-27:women:fresno-state-bulldogs",
+      "homeProgramId": "ncaa:2026-27:women:utah-state-aggies",
+      "sourceUrl": "https://pac-12.com/news/2026/10/2/pac-12-announces-2026-27-womens-basketball-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-14",
+      "awayProgramId": "ncaa:2026-27:women:san-diego-state-aztecs",
+      "homeProgramId": "ncaa:2026-27:women:boise-state-broncos",
+      "sourceUrl": "https://pac-12.com/news/2026/10/2/pac-12-announces-2026-27-womens-basketball-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-14",
+      "awayProgramId": "ncaa:2026-27:women:washington-state-cougars",
+      "homeProgramId": "ncaa:2026-27:women:colorado-state-rams",
+      "sourceUrl": "https://pac-12.com/news/2026/10/2/pac-12-announces-2026-27-womens-basketball-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL",
+      "sourceCorrection": {
+        "originalAway": "Colorado State",
+        "originalHome": "Washington State",
+        "evidence": [
+          "https://csurams.com/sports/womens-basketball/schedule/text",
+          "https://wsucougars.com/sports/womens-basketball/schedule"
+        ]
+      }
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-17",
+      "awayProgramId": "ncaa:2026-27:women:utah-state-aggies",
+      "homeProgramId": "ncaa:2026-27:women:colorado-state-rams",
+      "sourceUrl": "https://pac-12.com/news/2026/10/2/pac-12-announces-2026-27-womens-basketball-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-17",
+      "awayProgramId": "ncaa:2026-27:women:texas-state-bobcats",
+      "homeProgramId": "ncaa:2026-27:women:fresno-state-bulldogs",
+      "sourceUrl": "https://pac-12.com/news/2026/10/2/pac-12-announces-2026-27-womens-basketball-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-17",
+      "awayProgramId": "ncaa:2026-27:women:oregon-state-beavers",
+      "homeProgramId": "ncaa:2026-27:women:san-diego-state-aztecs",
+      "sourceUrl": "https://pac-12.com/news/2026/10/2/pac-12-announces-2026-27-womens-basketball-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-17",
+      "awayProgramId": "ncaa:2026-27:women:gonzaga-bulldogs",
+      "homeProgramId": "ncaa:2026-27:women:washington-state-cougars",
+      "sourceUrl": "https://pac-12.com/news/2026/10/2/pac-12-announces-2026-27-womens-basketball-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-20",
+      "awayProgramId": "ncaa:2026-27:women:boise-state-broncos",
+      "homeProgramId": "ncaa:2026-27:women:gonzaga-bulldogs",
+      "sourceUrl": "https://pac-12.com/news/2026/10/2/pac-12-announces-2026-27-womens-basketball-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-20",
+      "awayProgramId": "ncaa:2026-27:women:utah-state-aggies",
+      "homeProgramId": "ncaa:2026-27:women:texas-state-bobcats",
+      "sourceUrl": "https://pac-12.com/news/2026/10/2/pac-12-announces-2026-27-womens-basketball-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-21",
+      "awayProgramId": "ncaa:2026-27:women:colorado-state-rams",
+      "homeProgramId": "ncaa:2026-27:women:oregon-state-beavers",
+      "sourceUrl": "https://pac-12.com/news/2026/10/2/pac-12-announces-2026-27-womens-basketball-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-21",
+      "awayProgramId": "ncaa:2026-27:women:washington-state-cougars",
+      "homeProgramId": "ncaa:2026-27:women:san-diego-state-aztecs",
+      "sourceUrl": "https://pac-12.com/news/2026/10/2/pac-12-announces-2026-27-womens-basketball-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-24",
+      "awayProgramId": "ncaa:2026-27:women:oregon-state-beavers",
+      "homeProgramId": "ncaa:2026-27:women:boise-state-broncos",
+      "sourceUrl": "https://pac-12.com/news/2026/10/2/pac-12-announces-2026-27-womens-basketball-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-24",
+      "awayProgramId": "ncaa:2026-27:women:washington-state-cougars",
+      "homeProgramId": "ncaa:2026-27:women:fresno-state-bulldogs",
+      "sourceUrl": "https://pac-12.com/news/2026/10/2/pac-12-announces-2026-27-womens-basketball-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-24",
+      "awayProgramId": "ncaa:2026-27:women:colorado-state-rams",
+      "homeProgramId": "ncaa:2026-27:women:gonzaga-bulldogs",
+      "sourceUrl": "https://pac-12.com/news/2026/10/2/pac-12-announces-2026-27-womens-basketball-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-24",
+      "awayProgramId": "ncaa:2026-27:women:san-diego-state-aztecs",
+      "homeProgramId": "ncaa:2026-27:women:utah-state-aggies",
+      "sourceUrl": "https://pac-12.com/news/2026/10/2/pac-12-announces-2026-27-womens-basketball-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-27",
+      "awayProgramId": "ncaa:2026-27:women:san-diego-state-aztecs",
+      "homeProgramId": "ncaa:2026-27:women:fresno-state-bulldogs",
+      "sourceUrl": "https://pac-12.com/news/2026/10/2/pac-12-announces-2026-27-womens-basketball-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-27",
+      "awayProgramId": "ncaa:2026-27:women:gonzaga-bulldogs",
+      "homeProgramId": "ncaa:2026-27:women:utah-state-aggies",
+      "sourceUrl": "https://pac-12.com/news/2026/10/2/pac-12-announces-2026-27-womens-basketball-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-28",
+      "awayProgramId": "ncaa:2026-27:women:texas-state-bobcats",
+      "homeProgramId": "ncaa:2026-27:women:oregon-state-beavers",
+      "sourceUrl": "https://pac-12.com/news/2026/10/2/pac-12-announces-2026-27-womens-basketball-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-28",
+      "awayProgramId": "ncaa:2026-27:women:boise-state-broncos",
+      "homeProgramId": "ncaa:2026-27:women:washington-state-cougars",
+      "sourceUrl": "https://pac-12.com/news/2026/10/2/pac-12-announces-2026-27-womens-basketball-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-03-03",
+      "awayProgramId": "ncaa:2026-27:women:boise-state-broncos",
+      "homeProgramId": "ncaa:2026-27:women:colorado-state-rams",
+      "sourceUrl": "https://pac-12.com/news/2026/10/2/pac-12-announces-2026-27-womens-basketball-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-03-03",
+      "awayProgramId": "ncaa:2026-27:women:fresno-state-bulldogs",
+      "homeProgramId": "ncaa:2026-27:women:oregon-state-beavers",
+      "sourceUrl": "https://pac-12.com/news/2026/10/2/pac-12-announces-2026-27-womens-basketball-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-03-03",
+      "awayProgramId": "ncaa:2026-27:women:gonzaga-bulldogs",
+      "homeProgramId": "ncaa:2026-27:women:texas-state-bobcats",
+      "sourceUrl": "https://pac-12.com/news/2026/10/2/pac-12-announces-2026-27-womens-basketball-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-03-03",
+      "awayProgramId": "ncaa:2026-27:women:utah-state-aggies",
+      "homeProgramId": "ncaa:2026-27:women:washington-state-cougars",
+      "sourceUrl": "https://pac-12.com/news/2026/10/2/pac-12-announces-2026-27-womens-basketball-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-03-06",
+      "awayProgramId": "ncaa:2026-27:women:fresno-state-bulldogs",
+      "homeProgramId": "ncaa:2026-27:women:boise-state-broncos",
+      "sourceUrl": "https://pac-12.com/news/2026/10/2/pac-12-announces-2026-27-womens-basketball-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-03-06",
+      "awayProgramId": "ncaa:2026-27:women:oregon-state-beavers",
+      "homeProgramId": "ncaa:2026-27:women:colorado-state-rams",
+      "sourceUrl": "https://pac-12.com/news/2026/10/2/pac-12-announces-2026-27-womens-basketball-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-03-06",
+      "awayProgramId": "ncaa:2026-27:women:washington-state-cougars",
+      "homeProgramId": "ncaa:2026-27:women:gonzaga-bulldogs",
+      "sourceUrl": "https://pac-12.com/news/2026/10/2/pac-12-announces-2026-27-womens-basketball-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-03-06",
+      "awayProgramId": "ncaa:2026-27:women:texas-state-bobcats",
+      "homeProgramId": "ncaa:2026-27:women:san-diego-state-aztecs",
+      "sourceUrl": "https://pac-12.com/news/2026/10/2/pac-12-announces-2026-27-womens-basketball-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    }
+  ]
+}

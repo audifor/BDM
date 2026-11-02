@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 
 import { getUserTeam } from '@/engine/calendar'
 import type { PlayerId } from '@/domain/ids'
-import { resolveGameCapabilities } from '@/ui/gameContext'
+import { resolveClubActiveSeasons, resolveGameCapabilities } from '@/ui/gameContext'
 import { useGameStore } from '@/stores/gameStore'
 import { UNAVAILABLE_SECTION_MESSAGE } from '@/ui-ng/system/startMenuCatalog'
 import { clearRecruitingPlayerFocus, navigateToPlayer } from '@/ui-ng/workspace/workspaceApps'
@@ -91,13 +91,10 @@ export function RecruitingWorkspace() {
     )
   }
 
-  const controlled =
-    team !== undefined &&
-    Object.values(world.competitions).some(
-      (competition) => competition.participantTeamIds.includes(team.id) && world.ecosystems[competition.ecosystemId]?.kind === 'ncaaLike',
-    )
+  const activeNcaaSeason = resolveClubActiveSeasons(world).find((season) => world.ecosystems[world.competitions[season.competitionId]!.ecosystemId]?.kind === 'ncaaLike')
+  const controlled = team !== undefined && activeNcaaSeason !== undefined
   const profiles = Object.values(world.recruitProfilesById).filter((profile) => focusPlayerId === null || profile.playerId === focusPlayerId).sort((left, right) => left.publicRank - right.publicRank)
-  const cycle = Object.values(world.recruitingCyclesById).find((item) => item.status === 'open' || item.status === 'signing')
+  const cycle = activeNcaaSeason === undefined ? undefined : Object.values(world.recruitingCyclesById).find((item) => item.sourceSeasonId === activeNcaaSeason.id && (item.status === 'open' || item.status === 'signing'))
   const run = (callback: () => string | null) => {
     const reason = callback()
     setFeedback(reason === null ? 'Action completed.' : (REASON_TEXT[reason] ?? reason.toLocaleLowerCase().replaceAll('_', ' ')))
@@ -171,7 +168,7 @@ export function RecruitingWorkspace() {
               ngCol('knowledge', 'Known priorities', (row) => row.known.length ? row.known.join(', ') : 'Not yet known', { value: (row) => row.known.join(', ') }),
               ngCol('status', 'Status', (row) => row.status, { value: (row) => row.status }),
               ngCol('actions', 'Actions', (row) =>
-                controlled && cycle !== undefined ? (
+                controlled ? (
                   <div className="ng-canon__actions">
                     {row.cycleStatus === 'open' && row.cycleId !== undefined && !['signed', 'incoming', 'arrived', 'ineligible', 'unsigned'].includes(row.status) ? <>
                     {row.board === undefined ? (

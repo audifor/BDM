@@ -1,0 +1,1304 @@
+{
+  "season": "2026-27",
+  "conferenceId": "big-ten-conference",
+  "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+  "sourceQuality": "CONFERENCE_OFFICIAL",
+  "fixtures": [
+    {
+      "gender": "women",
+      "date": "2026-12-05",
+      "awayProgramId": "ncaa:2026-27:women:indiana-hoosiers",
+      "homeProgramId": "ncaa:2026-27:women:northwestern-wildcats",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-05",
+      "awayProgramId": "ncaa:2026-27:women:nebraska-cornhuskers",
+      "homeProgramId": "ncaa:2026-27:women:iowa-hawkeyes",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-05",
+      "awayProgramId": "ncaa:2026-27:women:ohio-state-buckeyes",
+      "homeProgramId": "ncaa:2026-27:women:rutgers-scarlet-knights",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-05",
+      "awayProgramId": "ncaa:2026-27:women:usc-trojans",
+      "homeProgramId": "ncaa:2026-27:women:washington-huskies",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-05",
+      "awayProgramId": "ncaa:2026-27:women:illinois-fighting-illini",
+      "homeProgramId": "ncaa:2026-27:women:wisconsin-badgers",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-06",
+      "awayProgramId": "ncaa:2026-27:women:minnesota-golden-gophers",
+      "homeProgramId": "ncaa:2026-27:women:purdue-boilermakers",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-06",
+      "awayProgramId": "ncaa:2026-27:women:penn-state-lady-lions",
+      "homeProgramId": "ncaa:2026-27:women:michigan-state-spartans",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-06",
+      "awayProgramId": "ncaa:2026-27:women:ucla-bruins",
+      "homeProgramId": "ncaa:2026-27:women:oregon-ducks",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-11",
+      "awayProgramId": "ncaa:2026-27:women:michigan-wolverines",
+      "homeProgramId": "ncaa:2026-27:women:maryland-terrapins",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-29",
+      "awayProgramId": "ncaa:2026-27:women:iowa-hawkeyes",
+      "homeProgramId": "ncaa:2026-27:women:illinois-fighting-illini",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-29",
+      "awayProgramId": "ncaa:2026-27:women:michigan-state-spartans",
+      "homeProgramId": "ncaa:2026-27:women:michigan-wolverines",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-29",
+      "awayProgramId": "ncaa:2026-27:women:oregon-ducks",
+      "homeProgramId": "ncaa:2026-27:women:ohio-state-buckeyes",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-29",
+      "awayProgramId": "ncaa:2026-27:women:purdue-boilermakers",
+      "homeProgramId": "ncaa:2026-27:women:penn-state-lady-lions",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-29",
+      "awayProgramId": "ncaa:2026-27:women:rutgers-scarlet-knights",
+      "homeProgramId": "ncaa:2026-27:women:indiana-hoosiers",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-29",
+      "awayProgramId": "ncaa:2026-27:women:usc-trojans",
+      "homeProgramId": "ncaa:2026-27:women:wisconsin-badgers",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-29",
+      "awayProgramId": "ncaa:2026-27:women:washington-huskies",
+      "homeProgramId": "ncaa:2026-27:women:nebraska-cornhuskers",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-30",
+      "awayProgramId": "ncaa:2026-27:women:minnesota-golden-gophers",
+      "homeProgramId": "ncaa:2026-27:women:maryland-terrapins",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-30",
+      "awayProgramId": "ncaa:2026-27:women:northwestern-wildcats",
+      "homeProgramId": "ncaa:2026-27:women:ucla-bruins",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-01",
+      "awayProgramId": "ncaa:2026-27:women:iowa-hawkeyes",
+      "homeProgramId": "ncaa:2026-27:women:michigan-state-spartans",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-01",
+      "awayProgramId": "ncaa:2026-27:women:michigan-wolverines",
+      "homeProgramId": "ncaa:2026-27:women:purdue-boilermakers",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-01",
+      "awayProgramId": "ncaa:2026-27:women:oregon-ducks",
+      "homeProgramId": "ncaa:2026-27:women:penn-state-lady-lions",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-02",
+      "awayProgramId": "ncaa:2026-27:women:illinois-fighting-illini",
+      "homeProgramId": "ncaa:2026-27:women:rutgers-scarlet-knights",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-02",
+      "awayProgramId": "ncaa:2026-27:women:indiana-hoosiers",
+      "homeProgramId": "ncaa:2026-27:women:minnesota-golden-gophers",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-02",
+      "awayProgramId": "ncaa:2026-27:women:maryland-terrapins",
+      "homeProgramId": "ncaa:2026-27:women:ohio-state-buckeyes",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-02",
+      "awayProgramId": "ncaa:2026-27:women:nebraska-cornhuskers",
+      "homeProgramId": "ncaa:2026-27:women:ucla-bruins",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-02",
+      "awayProgramId": "ncaa:2026-27:women:northwestern-wildcats",
+      "homeProgramId": "ncaa:2026-27:women:usc-trojans",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-02",
+      "awayProgramId": "ncaa:2026-27:women:wisconsin-badgers",
+      "homeProgramId": "ncaa:2026-27:women:washington-huskies",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-05",
+      "awayProgramId": "ncaa:2026-27:women:maryland-terrapins",
+      "homeProgramId": "ncaa:2026-27:women:indiana-hoosiers",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-05",
+      "awayProgramId": "ncaa:2026-27:women:nebraska-cornhuskers",
+      "homeProgramId": "ncaa:2026-27:women:usc-trojans",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-05",
+      "awayProgramId": "ncaa:2026-27:women:penn-state-lady-lions",
+      "homeProgramId": "ncaa:2026-27:women:minnesota-golden-gophers",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-05",
+      "awayProgramId": "ncaa:2026-27:women:rutgers-scarlet-knights",
+      "homeProgramId": "ncaa:2026-27:women:iowa-hawkeyes",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-05",
+      "awayProgramId": "ncaa:2026-27:women:ucla-bruins",
+      "homeProgramId": "ncaa:2026-27:women:purdue-boilermakers",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-05",
+      "awayProgramId": "ncaa:2026-27:women:wisconsin-badgers",
+      "homeProgramId": "ncaa:2026-27:women:oregon-ducks",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-07",
+      "awayProgramId": "ncaa:2026-27:women:michigan-state-spartans",
+      "homeProgramId": "ncaa:2026-27:women:northwestern-wildcats",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-07",
+      "awayProgramId": "ncaa:2026-27:women:ohio-state-buckeyes",
+      "homeProgramId": "ncaa:2026-27:women:michigan-wolverines",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-07",
+      "awayProgramId": "ncaa:2026-27:women:washington-huskies",
+      "homeProgramId": "ncaa:2026-27:women:illinois-fighting-illini",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-08",
+      "awayProgramId": "ncaa:2026-27:women:rutgers-scarlet-knights",
+      "homeProgramId": "ncaa:2026-27:women:penn-state-lady-lions",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-08",
+      "awayProgramId": "ncaa:2026-27:women:ucla-bruins",
+      "homeProgramId": "ncaa:2026-27:women:indiana-hoosiers",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-08",
+      "awayProgramId": "ncaa:2026-27:women:usc-trojans",
+      "homeProgramId": "ncaa:2026-27:women:maryland-terrapins",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-09",
+      "awayProgramId": "ncaa:2026-27:women:iowa-hawkeyes",
+      "homeProgramId": "ncaa:2026-27:women:minnesota-golden-gophers",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-10",
+      "awayProgramId": "ncaa:2026-27:women:michigan-state-spartans",
+      "homeProgramId": "ncaa:2026-27:women:nebraska-cornhuskers",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-10",
+      "awayProgramId": "ncaa:2026-27:women:oregon-ducks",
+      "homeProgramId": "ncaa:2026-27:women:michigan-wolverines",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-10",
+      "awayProgramId": "ncaa:2026-27:women:ohio-state-buckeyes",
+      "homeProgramId": "ncaa:2026-27:women:wisconsin-badgers",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-10",
+      "awayProgramId": "ncaa:2026-27:women:purdue-boilermakers",
+      "homeProgramId": "ncaa:2026-27:women:illinois-fighting-illini",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-10",
+      "awayProgramId": "ncaa:2026-27:women:washington-huskies",
+      "homeProgramId": "ncaa:2026-27:women:northwestern-wildcats",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-11",
+      "awayProgramId": "ncaa:2026-27:women:usc-trojans",
+      "homeProgramId": "ncaa:2026-27:women:rutgers-scarlet-knights",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-12",
+      "awayProgramId": "ncaa:2026-27:women:indiana-hoosiers",
+      "homeProgramId": "ncaa:2026-27:women:penn-state-lady-lions",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-12",
+      "awayProgramId": "ncaa:2026-27:women:minnesota-golden-gophers",
+      "homeProgramId": "ncaa:2026-27:women:ucla-bruins",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-13",
+      "awayProgramId": "ncaa:2026-27:women:illinois-fighting-illini",
+      "homeProgramId": "ncaa:2026-27:women:ohio-state-buckeyes",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-13",
+      "awayProgramId": "ncaa:2026-27:women:michigan-wolverines",
+      "homeProgramId": "ncaa:2026-27:women:nebraska-cornhuskers",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-13",
+      "awayProgramId": "ncaa:2026-27:women:oregon-ducks",
+      "homeProgramId": "ncaa:2026-27:women:michigan-state-spartans",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-14",
+      "awayProgramId": "ncaa:2026-27:women:maryland-terrapins",
+      "homeProgramId": "ncaa:2026-27:women:washington-huskies",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-14",
+      "awayProgramId": "ncaa:2026-27:women:northwestern-wildcats",
+      "homeProgramId": "ncaa:2026-27:women:iowa-hawkeyes",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-14",
+      "awayProgramId": "ncaa:2026-27:women:wisconsin-badgers",
+      "homeProgramId": "ncaa:2026-27:women:purdue-boilermakers",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-15",
+      "awayProgramId": "ncaa:2026-27:women:minnesota-golden-gophers",
+      "homeProgramId": "ncaa:2026-27:women:usc-trojans",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-15",
+      "awayProgramId": "ncaa:2026-27:women:penn-state-lady-lions",
+      "homeProgramId": "ncaa:2026-27:women:ucla-bruins",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-17",
+      "awayProgramId": "ncaa:2026-27:women:indiana-hoosiers",
+      "homeProgramId": "ncaa:2026-27:women:iowa-hawkeyes",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-17",
+      "awayProgramId": "ncaa:2026-27:women:maryland-terrapins",
+      "homeProgramId": "ncaa:2026-27:women:oregon-ducks",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-17",
+      "awayProgramId": "ncaa:2026-27:women:michigan-state-spartans",
+      "homeProgramId": "ncaa:2026-27:women:illinois-fighting-illini",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-17",
+      "awayProgramId": "ncaa:2026-27:women:northwestern-wildcats",
+      "homeProgramId": "ncaa:2026-27:women:wisconsin-badgers",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-17",
+      "awayProgramId": "ncaa:2026-27:women:ohio-state-buckeyes",
+      "homeProgramId": "ncaa:2026-27:women:nebraska-cornhuskers",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-17",
+      "awayProgramId": "ncaa:2026-27:women:purdue-boilermakers",
+      "homeProgramId": "ncaa:2026-27:women:washington-huskies",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-17",
+      "awayProgramId": "ncaa:2026-27:women:rutgers-scarlet-knights",
+      "homeProgramId": "ncaa:2026-27:women:michigan-wolverines",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-18",
+      "awayProgramId": "ncaa:2026-27:women:penn-state-lady-lions",
+      "homeProgramId": "ncaa:2026-27:women:usc-trojans",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-20",
+      "awayProgramId": "ncaa:2026-27:women:michigan-wolverines",
+      "homeProgramId": "ncaa:2026-27:women:illinois-fighting-illini",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-20",
+      "awayProgramId": "ncaa:2026-27:women:nebraska-cornhuskers",
+      "homeProgramId": "ncaa:2026-27:women:northwestern-wildcats",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-20",
+      "awayProgramId": "ncaa:2026-27:women:purdue-boilermakers",
+      "homeProgramId": "ncaa:2026-27:women:oregon-ducks",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-20",
+      "awayProgramId": "ncaa:2026-27:women:washington-huskies",
+      "homeProgramId": "ncaa:2026-27:women:michigan-state-spartans",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-21",
+      "awayProgramId": "ncaa:2026-27:women:ohio-state-buckeyes",
+      "homeProgramId": "ncaa:2026-27:women:maryland-terrapins",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-21",
+      "awayProgramId": "ncaa:2026-27:women:ucla-bruins",
+      "homeProgramId": "ncaa:2026-27:women:rutgers-scarlet-knights",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-21",
+      "awayProgramId": "ncaa:2026-27:women:wisconsin-badgers",
+      "homeProgramId": "ncaa:2026-27:women:minnesota-golden-gophers",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-23",
+      "awayProgramId": "ncaa:2026-27:women:illinois-fighting-illini",
+      "homeProgramId": "ncaa:2026-27:women:northwestern-wildcats",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-23",
+      "awayProgramId": "ncaa:2026-27:women:washington-huskies",
+      "homeProgramId": "ncaa:2026-27:women:michigan-wolverines",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-24",
+      "awayProgramId": "ncaa:2026-27:women:indiana-hoosiers",
+      "homeProgramId": "ncaa:2026-27:women:michigan-state-spartans",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-24",
+      "awayProgramId": "ncaa:2026-27:women:iowa-hawkeyes",
+      "homeProgramId": "ncaa:2026-27:women:oregon-ducks",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-24",
+      "awayProgramId": "ncaa:2026-27:women:minnesota-golden-gophers",
+      "homeProgramId": "ncaa:2026-27:women:ohio-state-buckeyes",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-24",
+      "awayProgramId": "ncaa:2026-27:women:rutgers-scarlet-knights",
+      "homeProgramId": "ncaa:2026-27:women:wisconsin-badgers",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-24",
+      "awayProgramId": "ncaa:2026-27:women:ucla-bruins",
+      "homeProgramId": "ncaa:2026-27:women:maryland-terrapins",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-24",
+      "awayProgramId": "ncaa:2026-27:women:usc-trojans",
+      "homeProgramId": "ncaa:2026-27:women:purdue-boilermakers",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-26",
+      "awayProgramId": "ncaa:2026-27:women:nebraska-cornhuskers",
+      "homeProgramId": "ncaa:2026-27:women:illinois-fighting-illini",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-27",
+      "awayProgramId": "ncaa:2026-27:women:iowa-hawkeyes",
+      "homeProgramId": "ncaa:2026-27:women:washington-huskies",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-27",
+      "awayProgramId": "ncaa:2026-27:women:penn-state-lady-lions",
+      "homeProgramId": "ncaa:2026-27:women:michigan-wolverines",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-27",
+      "awayProgramId": "ncaa:2026-27:women:usc-trojans",
+      "homeProgramId": "ncaa:2026-27:women:indiana-hoosiers",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-28",
+      "awayProgramId": "ncaa:2026-27:women:maryland-terrapins",
+      "homeProgramId": "ncaa:2026-27:women:wisconsin-badgers",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-28",
+      "awayProgramId": "ncaa:2026-27:women:michigan-state-spartans",
+      "homeProgramId": "ncaa:2026-27:women:rutgers-scarlet-knights",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-28",
+      "awayProgramId": "ncaa:2026-27:women:northwestern-wildcats",
+      "homeProgramId": "ncaa:2026-27:women:ohio-state-buckeyes",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-28",
+      "awayProgramId": "ncaa:2026-27:women:oregon-ducks",
+      "homeProgramId": "ncaa:2026-27:women:minnesota-golden-gophers",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-30",
+      "awayProgramId": "ncaa:2026-27:women:illinois-fighting-illini",
+      "homeProgramId": "ncaa:2026-27:women:ucla-bruins",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-30",
+      "awayProgramId": "ncaa:2026-27:women:michigan-wolverines",
+      "homeProgramId": "ncaa:2026-27:women:usc-trojans",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-31",
+      "awayProgramId": "ncaa:2026-27:women:northwestern-wildcats",
+      "homeProgramId": "ncaa:2026-27:women:rutgers-scarlet-knights",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-31",
+      "awayProgramId": "ncaa:2026-27:women:oregon-ducks",
+      "homeProgramId": "ncaa:2026-27:women:nebraska-cornhuskers",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-31",
+      "awayProgramId": "ncaa:2026-27:women:ohio-state-buckeyes",
+      "homeProgramId": "ncaa:2026-27:women:penn-state-lady-lions",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-31",
+      "awayProgramId": "ncaa:2026-27:women:purdue-boilermakers",
+      "homeProgramId": "ncaa:2026-27:women:indiana-hoosiers",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-31",
+      "awayProgramId": "ncaa:2026-27:women:wisconsin-badgers",
+      "homeProgramId": "ncaa:2026-27:women:iowa-hawkeyes",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-01",
+      "awayProgramId": "ncaa:2026-27:women:michigan-state-spartans",
+      "homeProgramId": "ncaa:2026-27:women:maryland-terrapins",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-02",
+      "awayProgramId": "ncaa:2026-27:women:illinois-fighting-illini",
+      "homeProgramId": "ncaa:2026-27:women:usc-trojans",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-02",
+      "awayProgramId": "ncaa:2026-27:women:michigan-wolverines",
+      "homeProgramId": "ncaa:2026-27:women:ucla-bruins",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-03",
+      "awayProgramId": "ncaa:2026-27:women:ohio-state-buckeyes",
+      "homeProgramId": "ncaa:2026-27:women:indiana-hoosiers",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-04",
+      "awayProgramId": "ncaa:2026-27:women:iowa-hawkeyes",
+      "homeProgramId": "ncaa:2026-27:women:nebraska-cornhuskers",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-04",
+      "awayProgramId": "ncaa:2026-27:women:maryland-terrapins",
+      "homeProgramId": "ncaa:2026-27:women:purdue-boilermakers",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-04",
+      "awayProgramId": "ncaa:2026-27:women:minnesota-golden-gophers",
+      "homeProgramId": "ncaa:2026-27:women:wisconsin-badgers",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-04",
+      "awayProgramId": "ncaa:2026-27:women:penn-state-lady-lions",
+      "homeProgramId": "ncaa:2026-27:women:northwestern-wildcats",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-04",
+      "awayProgramId": "ncaa:2026-27:women:washington-huskies",
+      "homeProgramId": "ncaa:2026-27:women:oregon-ducks",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-07",
+      "awayProgramId": "ncaa:2026-27:women:indiana-hoosiers",
+      "homeProgramId": "ncaa:2026-27:women:washington-huskies",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-07",
+      "awayProgramId": "ncaa:2026-27:women:iowa-hawkeyes",
+      "homeProgramId": "ncaa:2026-27:women:michigan-wolverines",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-07",
+      "awayProgramId": "ncaa:2026-27:women:maryland-terrapins",
+      "homeProgramId": "ncaa:2026-27:women:penn-state-lady-lions",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-07",
+      "awayProgramId": "ncaa:2026-27:women:michigan-state-spartans",
+      "homeProgramId": "ncaa:2026-27:women:ohio-state-buckeyes",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-07",
+      "awayProgramId": "ncaa:2026-27:women:nebraska-cornhuskers",
+      "homeProgramId": "ncaa:2026-27:women:purdue-boilermakers",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-07",
+      "awayProgramId": "ncaa:2026-27:women:northwestern-wildcats",
+      "homeProgramId": "ncaa:2026-27:women:illinois-fighting-illini",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-07",
+      "awayProgramId": "ncaa:2026-27:women:rutgers-scarlet-knights",
+      "homeProgramId": "ncaa:2026-27:women:minnesota-golden-gophers",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-07",
+      "awayProgramId": "ncaa:2026-27:women:usc-trojans",
+      "homeProgramId": "ncaa:2026-27:women:ucla-bruins",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-10",
+      "awayProgramId": "ncaa:2026-27:women:indiana-hoosiers",
+      "homeProgramId": "ncaa:2026-27:women:oregon-ducks",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-10",
+      "awayProgramId": "ncaa:2026-27:women:penn-state-lady-lions",
+      "homeProgramId": "ncaa:2026-27:women:rutgers-scarlet-knights",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-10",
+      "awayProgramId": "ncaa:2026-27:women:washington-huskies",
+      "homeProgramId": "ncaa:2026-27:women:ohio-state-buckeyes",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-11",
+      "awayProgramId": "ncaa:2026-27:women:minnesota-golden-gophers",
+      "homeProgramId": "ncaa:2026-27:women:nebraska-cornhuskers",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-11",
+      "awayProgramId": "ncaa:2026-27:women:purdue-boilermakers",
+      "homeProgramId": "ncaa:2026-27:women:michigan-state-spartans",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-11",
+      "awayProgramId": "ncaa:2026-27:women:ucla-bruins",
+      "homeProgramId": "ncaa:2026-27:women:wisconsin-badgers",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-11",
+      "awayProgramId": "ncaa:2026-27:women:usc-trojans",
+      "homeProgramId": "ncaa:2026-27:women:iowa-hawkeyes",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-12",
+      "awayProgramId": "ncaa:2026-27:women:northwestern-wildcats",
+      "homeProgramId": "ncaa:2026-27:women:michigan-wolverines",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-13",
+      "awayProgramId": "ncaa:2026-27:women:oregon-ducks",
+      "homeProgramId": "ncaa:2026-27:women:illinois-fighting-illini",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-13",
+      "awayProgramId": "ncaa:2026-27:women:washington-huskies",
+      "homeProgramId": "ncaa:2026-27:women:penn-state-lady-lions",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-14",
+      "awayProgramId": "ncaa:2026-27:women:minnesota-golden-gophers",
+      "homeProgramId": "ncaa:2026-27:women:michigan-state-spartans",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-14",
+      "awayProgramId": "ncaa:2026-27:women:nebraska-cornhuskers",
+      "homeProgramId": "ncaa:2026-27:women:maryland-terrapins",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-14",
+      "awayProgramId": "ncaa:2026-27:women:purdue-boilermakers",
+      "homeProgramId": "ncaa:2026-27:women:rutgers-scarlet-knights",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-14",
+      "awayProgramId": "ncaa:2026-27:women:ucla-bruins",
+      "homeProgramId": "ncaa:2026-27:women:iowa-hawkeyes",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-14",
+      "awayProgramId": "ncaa:2026-27:women:wisconsin-badgers",
+      "homeProgramId": "ncaa:2026-27:women:indiana-hoosiers",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-16",
+      "awayProgramId": "ncaa:2026-27:women:oregon-ducks",
+      "homeProgramId": "ncaa:2026-27:women:northwestern-wildcats",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-17",
+      "awayProgramId": "ncaa:2026-27:women:illinois-fighting-illini",
+      "homeProgramId": "ncaa:2026-27:women:maryland-terrapins",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-17",
+      "awayProgramId": "ncaa:2026-27:women:indiana-hoosiers",
+      "homeProgramId": "ncaa:2026-27:women:purdue-boilermakers",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-17",
+      "awayProgramId": "ncaa:2026-27:women:michigan-wolverines",
+      "homeProgramId": "ncaa:2026-27:women:minnesota-golden-gophers",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-17",
+      "awayProgramId": "ncaa:2026-27:women:rutgers-scarlet-knights",
+      "homeProgramId": "ncaa:2026-27:women:washington-huskies",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-17",
+      "awayProgramId": "ncaa:2026-27:women:wisconsin-badgers",
+      "homeProgramId": "ncaa:2026-27:women:nebraska-cornhuskers",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-18",
+      "awayProgramId": "ncaa:2026-27:women:iowa-hawkeyes",
+      "homeProgramId": "ncaa:2026-27:women:penn-state-lady-lions",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-18",
+      "awayProgramId": "ncaa:2026-27:women:michigan-state-spartans",
+      "homeProgramId": "ncaa:2026-27:women:usc-trojans",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-18",
+      "awayProgramId": "ncaa:2026-27:women:ohio-state-buckeyes",
+      "homeProgramId": "ncaa:2026-27:women:ucla-bruins",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-20",
+      "awayProgramId": "ncaa:2026-27:women:michigan-wolverines",
+      "homeProgramId": "ncaa:2026-27:women:wisconsin-badgers",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-20",
+      "awayProgramId": "ncaa:2026-27:women:rutgers-scarlet-knights",
+      "homeProgramId": "ncaa:2026-27:women:oregon-ducks",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-20",
+      "awayProgramId": "ncaa:2026-27:women:washington-huskies",
+      "homeProgramId": "ncaa:2026-27:women:minnesota-golden-gophers",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-21",
+      "awayProgramId": "ncaa:2026-27:women:illinois-fighting-illini",
+      "homeProgramId": "ncaa:2026-27:women:indiana-hoosiers",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-21",
+      "awayProgramId": "ncaa:2026-27:women:maryland-terrapins",
+      "homeProgramId": "ncaa:2026-27:women:northwestern-wildcats",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-21",
+      "awayProgramId": "ncaa:2026-27:women:michigan-state-spartans",
+      "homeProgramId": "ncaa:2026-27:women:ucla-bruins",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-21",
+      "awayProgramId": "ncaa:2026-27:women:ohio-state-buckeyes",
+      "homeProgramId": "ncaa:2026-27:women:usc-trojans",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-21",
+      "awayProgramId": "ncaa:2026-27:women:penn-state-lady-lions",
+      "homeProgramId": "ncaa:2026-27:women:nebraska-cornhuskers",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-21",
+      "awayProgramId": "ncaa:2026-27:women:purdue-boilermakers",
+      "homeProgramId": "ncaa:2026-27:women:iowa-hawkeyes",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-24",
+      "awayProgramId": "ncaa:2026-27:women:indiana-hoosiers",
+      "homeProgramId": "ncaa:2026-27:women:michigan-wolverines",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-24",
+      "awayProgramId": "ncaa:2026-27:women:nebraska-cornhuskers",
+      "homeProgramId": "ncaa:2026-27:women:rutgers-scarlet-knights",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-24",
+      "awayProgramId": "ncaa:2026-27:women:purdue-boilermakers",
+      "homeProgramId": "ncaa:2026-27:women:ohio-state-buckeyes",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-25",
+      "awayProgramId": "ncaa:2026-27:women:maryland-terrapins",
+      "homeProgramId": "ncaa:2026-27:women:iowa-hawkeyes",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-25",
+      "awayProgramId": "ncaa:2026-27:women:minnesota-golden-gophers",
+      "homeProgramId": "ncaa:2026-27:women:northwestern-wildcats",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-25",
+      "awayProgramId": "ncaa:2026-27:women:oregon-ducks",
+      "homeProgramId": "ncaa:2026-27:women:washington-huskies",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-25",
+      "awayProgramId": "ncaa:2026-27:women:penn-state-lady-lions",
+      "homeProgramId": "ncaa:2026-27:women:illinois-fighting-illini",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-25",
+      "awayProgramId": "ncaa:2026-27:women:ucla-bruins",
+      "homeProgramId": "ncaa:2026-27:women:usc-trojans",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-25",
+      "awayProgramId": "ncaa:2026-27:women:wisconsin-badgers",
+      "homeProgramId": "ncaa:2026-27:women:michigan-state-spartans",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-27",
+      "awayProgramId": "ncaa:2026-27:women:nebraska-cornhuskers",
+      "homeProgramId": "ncaa:2026-27:women:indiana-hoosiers",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-28",
+      "awayProgramId": "ncaa:2026-27:women:illinois-fighting-illini",
+      "homeProgramId": "ncaa:2026-27:women:minnesota-golden-gophers",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-28",
+      "awayProgramId": "ncaa:2026-27:women:iowa-hawkeyes",
+      "homeProgramId": "ncaa:2026-27:women:ohio-state-buckeyes",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-28",
+      "awayProgramId": "ncaa:2026-27:women:michigan-wolverines",
+      "homeProgramId": "ncaa:2026-27:women:michigan-state-spartans",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-28",
+      "awayProgramId": "ncaa:2026-27:women:northwestern-wildcats",
+      "homeProgramId": "ncaa:2026-27:women:purdue-boilermakers",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-28",
+      "awayProgramId": "ncaa:2026-27:women:rutgers-scarlet-knights",
+      "homeProgramId": "ncaa:2026-27:women:maryland-terrapins",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-28",
+      "awayProgramId": "ncaa:2026-27:women:ucla-bruins",
+      "homeProgramId": "ncaa:2026-27:women:washington-huskies",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-28",
+      "awayProgramId": "ncaa:2026-27:women:usc-trojans",
+      "homeProgramId": "ncaa:2026-27:women:oregon-ducks",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-28",
+      "awayProgramId": "ncaa:2026-27:women:wisconsin-badgers",
+      "homeProgramId": "ncaa:2026-27:women:penn-state-lady-lions",
+      "sourceUrl": "https://www.bigten.org/news/2026/9/16/big-ten-announces-2026-27-womens-basketball-conference-slate.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    }
+  ]
+}

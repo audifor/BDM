@@ -49,7 +49,9 @@ During implementation:
 - do not delete tests merely to make the suite pass;
 - add tests for new behavior where the milestone requires them;
 - keep Domain/Engine free of React, Zustand and Tauri imports;
-- do not push.
+- do not push by default. Push only when the repository owner explicitly requests publication in the active task.
+- an explicit owner request may authorize non-destructive publication of named backup, development, and integration branches, pull request creation or updates, and CI queries. It does not authorize force pushes, direct pushes to `main`, automatic remote branch deletion, rewriting published history, publishing secrets, or editing other worktrees.
+- do not merge into `main` without completed validation and the owner's approval.
 
 Definition of Done, unless the milestone explicitly narrows it:
 - `npm test`

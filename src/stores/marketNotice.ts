@@ -9,7 +9,7 @@ export interface MarketNotice {
 }
 
 const REFUSAL_TEXT: Readonly<Record<string, string>> = Object.freeze({
-  FINANCIAL_BLOCK: 'Finance rechaza la operación: no hay margen salarial autorizado suficiente (una autorización no es dinero en caja, y la caja no sustituye a la autorización).',
+  FINANCIAL_BLOCK: 'Finance rechaza la operación: falta autorización o capacidad económica para su partida. El margen salarial, las compensaciones y la caja se comprueban por separado.',
   STALE_PLAN_OR_PROPOSAL: 'La propuesta ya no está vigente; vuelve a evaluar al jugador.',
   PLAYER_NOT_FREE_AGENT: 'El jugador ya no es agente libre.',
   NO_EXECUTION_OWNER: 'Nadie tiene autoridad para ejecutar esta operación.',

@@ -28,7 +28,7 @@ export function applicableSupportingRoles(): readonly StaffRoleId[] {
   return Object.keys(STAFF_ROLE_REGISTRY).filter((role): role is StaffRoleId => role !== 'headCoach' && isStaffRoleApplicableToEcosystem(role as StaffRoleId, 'fibaLike')).sort()
 }
 
-function generateStaffPerson(id: StaffPerson['id'], marketRole: StaffRoleId, qualityIndex: number): StaffPerson {
+export function generateStaffPerson(id: StaffPerson['id'], marketRole: StaffRoleId, qualityIndex: number): StaffPerson {
   const random = new SeededRandomSource(hashStringToSeed(`staff-sandbox-person:${id}`))
   const definition = STAFF_ROLE_REGISTRY[marketRole]
   const quality = QUALITY_BASES[qualityIndex]!

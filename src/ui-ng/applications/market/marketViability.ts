@@ -1,6 +1,7 @@
 import { evaluateTeamGameplayFinancialDecision, getCategoryAuthorizedHeadroom, getOrganizationFinancialAuthorization, isCategoryAuthorized, type FinancialReasonCode } from '@/domain/finance'
 import type { TeamId } from '@/domain/ids'
 import type { GameWorld } from '@/domain/world'
+import { salaryRulesInForce } from '@/engine/salary'
 import { marketMinorUnitsToMajor } from './marketFinancialSummary'
 
 /**
@@ -61,7 +62,7 @@ export function buildMarketViability(world: GameWorld, teamId: TeamId, proposal:
   const headroom = authorized ? getCategoryAuthorizedHeadroom(authorization, 'PLAYER_SALARY') : undefined
   const reservedMinor = authorization.reservedMinorUnits
   const marginMinor = headroom === undefined ? null : headroom.authorizedMinorUnits - headroom.committedMinorUnits - reservedMinor
-  const rules = world.salaryRulesBySeasonId[world.currentSeasonId]
+  const rules = salaryRulesInForce(world, teamId, world.currentDate)[0]
   const salaryCap: MarketViability['salaryCap'] = rules === undefined ? 'UNKNOWN' : rules.capAccounting === undefined || rules.capAccounting === 'NOT_APPLICABLE' ? 'NOT_APPLICABLE' : 'APPLICABLE'
   const base = {
     currencyCode,

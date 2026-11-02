@@ -128,3 +128,68 @@
  .market-workspace .market-negotiations__details summary {grid-template-columns:minmax(110px,1fr) 80px 16px;}
  .market-workspace .market-negotiations__sum {display:none;}
 }
+
+/* F6 immersive operation room: people and the next real decision lead the view. */
+.market-workspace .market-negotiations {display:grid;gap:14px;min-width:0;}
+.market-workspace .market-negotiations__head {display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 2px;}
+.market-workspace .market-negotiations__head>div {display:grid;gap:3px;}
+.market-workspace .market-negotiations__head strong {font:800 14px var(--cs-font-display);letter-spacing:.08em;color:var(--cs-orange);}
+.market-workspace .market-negotiations__head span {font-size:12px;color:var(--cs-text3);}
+.market-workspace .market-negotiations__head select {max-width:180px;}
+.market-workspace .market-operation-layout {display:grid;grid-template-columns:minmax(205px,260px) minmax(0,1fr);gap:14px;align-items:start;min-width:0;}
+.market-workspace .market-operation-list {display:grid;gap:7px;align-content:start;max-height:calc(100vh - 240px);overflow:auto;padding-right:3px;}
+.market-workspace .market-operation-list button {display:grid;gap:5px;text-align:left;padding:12px;border:1px solid var(--cs-line2);border-radius:10px;background:var(--cs-s1);color:var(--cs-text);cursor:pointer;}
+.market-workspace .market-operation-list button:hover,.market-workspace .market-operation-list button.is-selected {border-color:var(--cs-orange);background:var(--cs-s2);}
+.market-workspace .market-operation-list button:focus-visible,.market-workspace .market-operation-dossier button:focus-visible,.market-workspace .market-operation-dossier__history summary:focus-visible,.market-workspace .market-operation-empty button:focus-visible {outline:2px solid var(--cs-orange);outline-offset:2px;}
+.market-workspace .market-operation-list button strong {font:700 14px var(--cs-font-display);}
+.market-workspace .market-operation-list button span {font-size:12px;color:var(--cs-orange);}
+.market-workspace .market-operation-list button small {font-size:11px;color:var(--cs-text3);}
+.market-workspace .market-operation-dossier {display:grid;gap:12px;min-width:0;}
+.market-workspace .market-operation-dossier__header {display:flex;align-items:flex-start;justify-content:space-between;gap:14px;padding:18px 20px;border:1px solid var(--cs-line2);border-radius:12px;background:linear-gradient(110deg,var(--cs-s1),var(--cs-s2));}
+.market-workspace .market-operation-dossier__header>div {min-width:0;}
+.market-workspace .market-operation-dossier__header>div>span {font:700 10px var(--cs-font-display);letter-spacing:.1em;color:var(--cs-orange);}
+.market-workspace .market-operation-dossier__header h2 {margin:5px 0;color:var(--cs-text);font:800 24px var(--cs-font-display);}
+.market-workspace .market-operation-dossier__header p {max-width:800px;margin:0;color:var(--cs-text2);font-size:13px;line-height:1.5;}
+.market-workspace .market-operation-dossier__stage {flex:none;padding:7px 10px;border:1px solid color-mix(in srgb,var(--cs-orange) 42%,transparent);border-radius:999px;background:color-mix(in srgb,var(--cs-orange) 12%,transparent);color:var(--cs-orange);font:700 11px var(--cs-font-display);}
+.market-workspace .market-operation-dossier__stage.is-closed {border-color:var(--cs-line2);background:var(--cs-s2);color:var(--cs-text3);}
+.market-workspace .market-operation-dossier__grid {display:grid;grid-template-columns:minmax(220px,.8fr) minmax(0,1.2fr);gap:10px;}
+.market-workspace .market-operation-dossier__panel {min-width:0;padding:14px;border:1px solid var(--cs-line2);border-radius:11px;background:var(--cs-s1);}
+.market-workspace .market-operation-dossier__panel h3 {margin:0 0 10px;color:var(--cs-text);font:700 15px var(--cs-font-display);}
+.market-workspace .market-operation-dossier__panel dl {display:grid;gap:8px;margin:0;}
+.market-workspace .market-operation-dossier__panel dl>div {display:grid;gap:3px;}
+.market-workspace .market-operation-dossier__panel dt {color:var(--cs-text3);font-size:10px;text-transform:uppercase;letter-spacing:.06em;}
+.market-workspace .market-operation-dossier__panel dd {margin:0;color:var(--cs-text);font-size:12px;font-weight:650;overflow-wrap:anywhere;}
+.market-workspace .market-operation-dossier__proposal {grid-row:span 2;}
+.market-workspace .market-operation-dossier__comparison {display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;margin-bottom:9px;}
+.market-workspace .market-operation-dossier__term {display:grid;gap:6px;padding:12px;border:1px solid var(--cs-line);border-radius:9px;background:var(--cs-s2);}
+.market-workspace .market-operation-dossier__term span {font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--cs-text3);}
+.market-workspace .market-operation-dossier__term strong {font:700 16px var(--cs-font-display);color:var(--cs-text);}
+.market-workspace .market-operation-dossier__term small {font-size:11px;color:var(--cs-text2);}
+.market-workspace .market-operation-dossier__response,.market-workspace .market-operation-dossier__known,.market-workspace .market-operation-dossier__promise,.market-workspace .market-operation-dossier__model-note,.market-workspace .market-operation-dossier__empty {margin:8px 0;padding:9px 10px;border-radius:8px;background:var(--cs-s2);color:var(--cs-text2);font-size:12px;line-height:1.45;}
+.market-workspace .market-operation-dossier__response {border-left:3px solid var(--cs-orange);}
+.market-workspace .market-operation-dossier__promise {border-left:3px solid var(--cs-green,#48a878);}
+.market-workspace .market-operation-dossier__model-note {font-size:11px;color:var(--cs-text3);}
+.market-workspace .market-operation-dossier__decision {border-color:color-mix(in srgb,var(--cs-orange) 45%,var(--cs-line2));}
+.market-workspace .market-operation-dossier__controls {display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));align-items:end;gap:9px;}
+.market-workspace .market-operation-dossier__controls p,.market-workspace .market-operation-dossier__controls details {grid-column:1/-1;margin:0;color:var(--cs-text2);font-size:12px;line-height:1.45;}
+.market-workspace .market-operation-dossier__controls label {display:grid;gap:4px;color:var(--cs-text3);font-size:11px;}
+.market-workspace .market-operation-dossier__controls button,.market-workspace .market-operation-empty button {min-height:38px;padding:8px 12px;border:1px solid var(--cs-line2);border-radius:8px;background:var(--cs-s2);color:var(--cs-text);font:700 12px var(--cs-font-display);cursor:pointer;}
+.market-workspace .market-operation-dossier__controls button:hover,.market-workspace .market-operation-empty button:hover {border-color:var(--cs-orange);color:var(--cs-orange);}
+.market-workspace .market-operation-dossier__controls button:disabled {cursor:not-allowed;opacity:.55;}
+.market-workspace .market-operation-dossier__controls input,.market-workspace .market-operation-dossier__controls select {min-width:0;width:100%;}
+.market-workspace .market-operation-dossier__history {grid-column:1/-1;border:1px solid var(--cs-line2);border-radius:10px;background:var(--cs-s1);color:var(--cs-text2);}
+.market-workspace .market-operation-dossier__history summary {padding:11px 13px;cursor:pointer;color:var(--cs-text);font:700 12px var(--cs-font-display);}
+.market-workspace .market-operation-dossier__history ol {display:grid;gap:0;margin:0;padding:0 14px 10px 38px;}
+.market-workspace .market-operation-dossier__history li {padding:7px 0 7px 5px;border-left:1px solid var(--cs-line2);font-size:12px;}
+.market-workspace .market-operation-dossier__history li::marker {color:var(--cs-orange);}
+.market-workspace .market-operation-dossier__history time {display:block;margin-bottom:3px;color:var(--cs-text3);font-size:10px;}
+.market-workspace .market-operation-dossier__history p {padding:0 13px;font-size:12px;}
+.market-workspace .market-operation-dossier__technical {display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:8px;margin:0;padding:0 13px 13px;}
+.market-workspace .market-operation-dossier__technical>div {display:grid;gap:3px;}
+.market-workspace .market-operation-dossier__technical dt {color:var(--cs-text3);font-size:10px;}
+.market-workspace .market-operation-dossier__technical dd {margin:0;font-size:11px;overflow-wrap:anywhere;}
+.market-workspace .market-operation-empty {display:grid;justify-items:start;gap:8px;padding:24px;border:1px solid var(--cs-line2);border-radius:12px;background:var(--cs-s1);}
+.market-workspace .market-operation-empty h2 {margin:0;color:var(--cs-text);font:700 19px var(--cs-font-display);}
+.market-workspace .market-operation-empty p {max-width:620px;margin:0 0 4px;color:var(--cs-text2);font-size:13px;line-height:1.5;}
+@media(max-width:900px){.market-workspace .market-operation-layout {grid-template-columns:minmax(150px,205px) minmax(0,1fr);}.market-workspace .market-operation-dossier__grid {grid-template-columns:1fr;}.market-workspace .market-operation-dossier__proposal {grid-row:auto;}}
+@media(max-width:650px){.market-workspace .market-operation-layout {grid-template-columns:1fr;}.market-workspace .market-operation-list {grid-template-columns:repeat(auto-fit,minmax(180px,1fr));max-height:240px;}.market-workspace .market-operation-dossier__header {display:grid;}.market-workspace .market-operation-dossier__header h2 {font-size:20px;}}

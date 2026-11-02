@@ -5,7 +5,7 @@ import '@testing-library/jest-dom/vitest'
 import { createF3Day0, f3AdvanceDay, f3Store, f3World } from '@/app/game/testSupport/PlayableF3Support'
 import { f3PlayTransfer, f3TransferCandidates, f3TransferFor } from '@/app/game/testSupport/PlayableF3TransferSupport'
 import type { PlayerId } from '@/domain/ids'
-import { getFreeAgents, type GameWorld } from '@/domain/world'
+import { getFreeAgents, updateGameWorld, type GameWorld } from '@/domain/world'
 import { getUserTeam } from '@/engine/calendar'
 import { initializeFreeAgentMarketTruth } from '@/engine/market'
 import { assessSellerAskingFee } from '@/engine/transfer'
@@ -105,6 +105,25 @@ describe('F3 adendo · Market: buscar a cualquier jugador y contactar con su clu
 })
 
 describe('F3 adendo · Market: oferta a medida a un agente libre', () => {
+  it('follows a pending contact and lets the calendar deliver its real response without another confirmation', () => {
+    f3Store().replaceWorld(day0)
+    const team = getUserTeam(day0)!
+    const free = getFreeAgents(day0).find((player) => willing(player.id) && day0.playerRepresentations.some((item) => item.playerId === player.id))!
+    f3Store().contactFreeAgentDirectly(team.id, free.id)
+    window.history.replaceState({}, '', '/?ui=ng&app=market&marketTab=operations')
+    render(<MarketWorkspace initialTab="operations" />)
+    expect(screen.getByTestId('market-operation-dossier')).toHaveAttribute('data-operation-status', 'CONTACTED')
+    expect(screen.getByText(/El mundo está esperando una respuesta del contacto/)).toBeInTheDocument()
+    expect(screen.getByText('Tú')).toBeInTheDocument()
+
+    f3AdvanceDay()
+    cleanup()
+    render(<MarketWorkspace initialTab="operations" />)
+    expect(screen.getByText(/Hay disposición para negociar/)).toBeInTheDocument()
+    expect(screen.getByRole('form', { name: 'Oferta a medida' })).toBeInTheDocument()
+    expect(Object.values(f3World().negotiationsById).find((item) => item.playerId === free.id)?.contactResponse?.outcome).toBe('OPEN_TO_TALKS')
+  })
+
   it('after the contact answer the manager writes salary, years and role; the offer is exactly what he typed and the answer comes from the real engine', () => {
     f3Store().replaceWorld(day0)
     const team = getUserTeam(day0)!
@@ -123,6 +142,53 @@ describe('F3 adendo · Market: oferta a medida a un agente libre', () => {
     const offered = f3World().negotiationsById[negotiation.id]!
     expect(useGameStore.getState().marketNotice?.text ?? '').not.toMatch(/Operación no realizada|bloqueada|rechaza/)
     expect(offered).toMatchObject({ status: 'OPEN', salary: 123_000, years: 3, role: 'STARTER' })
+    expect(screen.getByText(/No consta una expectativa de rol del jugador/)).toBeInTheDocument()
+  })
+
+  it('compares a real counteroffer and lets the manager revise all supported terms in place', () => {
+    f3Store().replaceWorld(day0)
+    const team = getUserTeam(day0)!
+    const free = getFreeAgents(day0).find((player) => willing(player.id) && day0.playerRepresentations.some((item) => item.playerId === player.id))!
+    const expected = day0.marketRealityByPlayerId[free.id]!
+    f3Store().contactFreeAgentDirectly(team.id, free.id)
+    f3AdvanceDay()
+    const negotiation = Object.values(f3World().negotiationsById).find((item) => item.playerId === free.id)!
+    f3Store().submitCustomFreeAgentOffer(team.id, negotiation.id, { salary: 1, years: 1 })
+    f3AdvanceDay()
+    const counter = f3World().negotiationsById[negotiation.id]!
+    expect(counter.status).toBe('COUNTERED')
+
+    window.history.replaceState({}, '', '/?ui=ng&app=market&marketTab=operations')
+    render(<MarketWorkspace initialTab="operations" />)
+    const dossier = screen.getByTestId('market-operation-dossier')
+    expect(within(dossier).getByText('Nuestra última propuesta')).toBeInTheDocument()
+    expect(within(dossier).getByText('Solicitud recibida')).toBeInTheDocument()
+    fireEvent.change(within(dossier).getByLabelText(`Salario revisado ${negotiation.id}`), { target: { value: String(expected.expectedSalary) } })
+    fireEvent.change(within(dossier).getByLabelText(`Duración revisada ${negotiation.id}`), { target: { value: String(expected.expectedYears) } })
+    fireEvent.change(within(dossier).getByLabelText(`Rol revisado ${negotiation.id}`), { target: { value: 'ROTATION' } })
+    fireEvent.click(within(dossier).getByRole('button', { name: 'Enviar oferta revisada' }))
+    expect(f3World().negotiationsById[negotiation.id]).toMatchObject({ status: 'OPEN', salary: expected.expectedSalary, years: expected.expectedYears, role: 'ROTATION' })
+  })
+
+  it('shows a known rejection as closed and does not invent a reason', () => {
+    const candidate = getFreeAgents(day0).find((player) => willing(player.id))!
+    const world = updateGameWorld(day0, { playerRepresentations: day0.playerRepresentations.filter((item) => item.playerId !== candidate.id) })
+    f3Store().replaceWorld(world)
+    const team = getUserTeam(world)!
+    f3Store().contactFreeAgentDirectly(team.id, candidate.id)
+    f3AdvanceDay()
+    const contact = Object.values(f3World().negotiationsById).find((item) => item.playerId === candidate.id)!
+    expect(contact.contactResponse?.outcome).toBe('OPEN_TO_TALKS')
+    f3Store().submitCustomFreeAgentOffer(team.id, contact.id, { salary: 1, years: 1 })
+    f3AdvanceDay()
+    expect(f3World().negotiationsById[contact.id]!.status).toBe('REJECTED')
+
+    window.history.replaceState({}, '', '/?ui=ng&app=market&marketTab=operations')
+    render(<MarketWorkspace initialTab="operations" />)
+    const dossier = screen.getByTestId('market-operation-dossier')
+    expect(dossier).toHaveAttribute('data-operation-status', 'REJECTED')
+    expect(within(dossier).getByText(/La oferta fue rechazada/)).toBeInTheDocument()
+    expect(within(dossier).getByText(/Rechaz. la oferta el/)).toBeInTheDocument()
   })
 })
 

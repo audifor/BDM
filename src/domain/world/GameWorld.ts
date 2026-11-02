@@ -41,6 +41,7 @@ import type {
 import type { Player } from '@/domain/player'
 import { createPlayerRepertoire, type PlayerRepertoire } from '@/domain/player/PlayerRepertoire'
 import { calculateSeasonStandings, type Season, type SeasonHistoryRecord } from '@/domain/season'
+import { ncaa2027TournamentWinner } from '@/domain/season/Ncaa2027TournamentCompletion'
 import type { Team } from '@/domain/team'
 import { createOrganization, createOrganizationSection, type Organization, type OrganizationSection } from '@/domain/organization'
 import { createOrganizationControl, createOrganizationOwnership, type OrganizationControl, type OrganizationOwnership } from '@/domain/ownership/OrganizationOwnership'
@@ -1230,6 +1231,7 @@ function buildGameWorldUpdate(world: GameWorld, patch: Partial<CreateGameWorldIn
     if (value === undefined) continue
     delete remainingPatch[inputKey]
     if (inputKey === 'financialTransactions') assertFinancialTransactionsAppendOnly(world, value as readonly FinancialTransaction[])
+    if (inputKey === 'fiscalPeriods') assertFiscalPeriodClosuresImmutable(world, value as readonly FiscalPeriod[])
     if (inputKey === 'developmentStimulusEvents') {
       // Historical evidence is already canonical and immutable. Validate only replacements/new records.
       const events = (value as readonly DevelopmentStimulusEvent[]).map((event) =>
@@ -3039,6 +3041,19 @@ function validCurrentContractRosterEffect(world: GameWorld, contract: PlayerCont
     && transaction.playerId === contract.playerId && transaction.fromTeamId === teamId
     && transaction.occurredOn >= contract.term.startsOn && transaction.contractId !== undefined
     && world.contractsById[transaction.contractId]?.playerId === contract.playerId)
+    || Object.values(world.playerTransactionsById).some((transaction) => {
+      if (transaction.kind !== 'contractExpired' || transaction.playerId !== contract.playerId || transaction.fromTeamId !== teamId
+        || transaction.contractId === undefined || transaction.occurredOn > world.currentDate) return false
+      let expired: PlayerContract | undefined = world.contractsById[transaction.contractId]
+      if (expired === undefined || expired.playerId !== contract.playerId || expired.teamId !== teamId || expired.term.expiresOn !== transaction.occurredOn) return false
+      const seen = new Set<string>()
+      while (expired !== undefined && !seen.has(expired.id)) {
+        if (expired.id === contract.id) return true
+        seen.add(expired.id)
+        expired = expired.predecessorContractId === undefined ? undefined : world.contractsById[expired.predecessorContractId]
+      }
+      return false
+    })
 }
 
 function releaseTransactionCoversContract(world: GameWorld, rootContractId: ContractId, targetContractId: ContractId, releasedOn: GameDate): boolean {
@@ -3222,12 +3237,22 @@ function validateSeasonHistory(world: GameWorld, history: SeasonHistoryRecord): 
     teams.add(line.teamId); positions.add(line.position)
   }
   if (history.championSource === 'postseason') {
-    const formatVariant = season.worldCompetitionFormat?.variants.find((variant) => variant.isRealVariant) ?? season.worldCompetitionFormat?.variants[0]
-    const finalNode = formatVariant?.nodes.find((node) => node.role === 'FINAL')
-    const winsRequired = finalNode?.contest?.winsRequired ?? 1
-    const finalGames = Object.values(world.games).filter((game) => game.seasonId === season.id && game.competitionStageKey === finalNode?.key && game.status === 'completed')
-    const wins = finalGames.filter((game) => game.result !== null && (game.homeTeamId === history.championTeamId ? game.result.homeScore > game.result.awayScore : game.awayTeamId === history.championTeamId && game.result.awayScore > game.result.homeScore)).length
-    if (finalNode === undefined || wins < winsRequired) throw new GameWorldValidationError(`Season history ${history.seasonId} champion has not won the final`)
+    const ncaa2027Winner = ncaa2027TournamentWinner(world, history.seasonId)
+    if (ncaa2027Winner !== undefined) {
+      // NCAA 2027 is staged into canonical Games without pretending that its
+      // simulated conference/national brackets are a source-certified B04 format.
+      // This checks ALL n-1 or 75 fixtures and the actual final's victor.
+      if (ncaa2027Winner === null || ncaa2027Winner !== history.championTeamId) {
+        throw new GameWorldValidationError(`Season history ${history.seasonId} NCAA champion has not won the complete bracket`)
+      }
+    } else {
+      const formatVariant = season.worldCompetitionFormat?.variants.find((variant) => variant.isRealVariant) ?? season.worldCompetitionFormat?.variants[0]
+      const finalNode = formatVariant?.nodes.find((node) => node.role === 'FINAL')
+      const winsRequired = finalNode?.contest?.winsRequired ?? 1
+      const finalGames = Object.values(world.games).filter((game) => game.seasonId === season.id && game.competitionStageKey === finalNode?.key && game.status === 'completed')
+      const wins = finalGames.filter((game) => game.result !== null && (game.homeTeamId === history.championTeamId ? game.result.homeScore > game.result.awayScore : game.awayTeamId === history.championTeamId && game.result.awayScore > game.result.homeScore)).length
+      if (finalNode === undefined || wins < winsRequired) throw new GameWorldValidationError(`Season history ${history.seasonId} champion has not won the final`)
+    }
   } else if (history.finalStandings.find((line) => line.position === 1)?.teamId !== history.championTeamId) {
     throw new GameWorldValidationError(`Season history ${history.seasonId} champion must be first without a completed postseason`)
   }
@@ -3892,6 +3917,20 @@ function assertFinancialTransactionsAppendOnly(world: GameWorld, proposed: reado
     const next = nextById.get(String(existing.id))
     if (next === undefined) throw new GameWorldValidationError(`Financial transaction ${existing.id} cannot be removed from the ledger`)
     if (next !== existing && JSON.stringify(next) !== JSON.stringify(existing)) throw new GameWorldValidationError(`Financial transaction ${existing.id} is immutable`)
+  }
+  const closed = Object.values(world.fiscalPeriodsById).filter(period => period.status === 'CLOSED')
+  for (const transaction of nextById.values()) {
+    if (world.financialTransactionsById[transaction.id] !== undefined) continue
+    if (closed.some(period => period.organizationId === transaction.organizationId && period.startsOn <= transaction.effectiveOn && transaction.effectiveOn <= period.endsOn)) throw new GameWorldValidationError(`Financial transaction ${transaction.id} cannot be added to a closed fiscal period`)
+  }
+}
+
+function assertFiscalPeriodClosuresImmutable(world: GameWorld, proposed: readonly FiscalPeriod[]): void {
+  const nextById = new Map(proposed.map(period => [period.id, period]))
+  for (const existing of Object.values(world.fiscalPeriodsById)) {
+    const next = nextById.get(existing.id)
+    if (existing.status !== 'CLOSED' && next?.status !== 'CLOSED') continue
+    if (next === undefined || existing.status === 'CLOSED' && next.status !== 'CLOSED' || JSON.stringify({ ...existing, status: 'CLOSED' }) !== JSON.stringify({ ...next, status: 'CLOSED' })) throw new GameWorldValidationError(`Fiscal period ${existing.id} closing is immutable`)
   }
 }
 

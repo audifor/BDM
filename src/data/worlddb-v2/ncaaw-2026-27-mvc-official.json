@@ -1,0 +1,888 @@
+{
+  "season": "2026-27",
+  "conferenceId": "missouri-valley-conference",
+  "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+  "sourceQuality": "CONFERENCE_OFFICIAL",
+  "fixtures": [
+    {
+      "gender": "women",
+      "date": "2026-12-18",
+      "awayProgramId": "ncaa:2026-27:women:evansville-purple-aces",
+      "homeProgramId": "ncaa:2026-27:women:drake-bulldogs",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-18",
+      "awayProgramId": "ncaa:2026-27:women:murray-state-racers",
+      "homeProgramId": "ncaa:2026-27:women:indiana-state-sycamores",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-20",
+      "awayProgramId": "ncaa:2026-27:women:bradley-braves",
+      "homeProgramId": "ncaa:2026-27:women:murray-state-racers",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-20",
+      "awayProgramId": "ncaa:2026-27:women:evansville-purple-aces",
+      "homeProgramId": "ncaa:2026-27:women:northern-iowa-panthers",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-20",
+      "awayProgramId": "ncaa:2026-27:women:indiana-state-sycamores",
+      "homeProgramId": "ncaa:2026-27:women:uic-flames",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-20",
+      "awayProgramId": "ncaa:2026-27:women:southern-illinois-salukis",
+      "homeProgramId": "ncaa:2026-27:women:drake-bulldogs",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-20",
+      "awayProgramId": "ncaa:2026-27:women:valparaiso-beacons",
+      "homeProgramId": "ncaa:2026-27:women:illinois-state-redbirds",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-22",
+      "awayProgramId": "ncaa:2026-27:women:bradley-braves",
+      "homeProgramId": "ncaa:2026-27:women:belmont-bruins",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-22",
+      "awayProgramId": "ncaa:2026-27:women:southern-illinois-salukis",
+      "homeProgramId": "ncaa:2026-27:women:northern-iowa-panthers",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-22",
+      "awayProgramId": "ncaa:2026-27:women:valparaiso-beacons",
+      "homeProgramId": "ncaa:2026-27:women:uic-flames",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-29",
+      "awayProgramId": "ncaa:2026-27:women:belmont-bruins",
+      "homeProgramId": "ncaa:2026-27:women:illinois-state-redbirds",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-29",
+      "awayProgramId": "ncaa:2026-27:women:evansville-purple-aces",
+      "homeProgramId": "ncaa:2026-27:women:uic-flames",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-29",
+      "awayProgramId": "ncaa:2026-27:women:indiana-state-sycamores",
+      "homeProgramId": "ncaa:2026-27:women:valparaiso-beacons",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-29",
+      "awayProgramId": "ncaa:2026-27:women:murray-state-racers",
+      "homeProgramId": "ncaa:2026-27:women:southern-illinois-salukis",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-30",
+      "awayProgramId": "ncaa:2026-27:women:drake-bulldogs",
+      "homeProgramId": "ncaa:2026-27:women:bradley-braves",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-31",
+      "awayProgramId": "ncaa:2026-27:women:uic-flames",
+      "homeProgramId": "ncaa:2026-27:women:belmont-bruins",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-31",
+      "awayProgramId": "ncaa:2026-27:women:illinois-state-redbirds",
+      "homeProgramId": "ncaa:2026-27:women:murray-state-racers",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-31",
+      "awayProgramId": "ncaa:2026-27:women:northern-iowa-panthers",
+      "homeProgramId": "ncaa:2026-27:women:indiana-state-sycamores",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-31",
+      "awayProgramId": "ncaa:2026-27:women:southern-illinois-salukis",
+      "homeProgramId": "ncaa:2026-27:women:evansville-purple-aces",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-01",
+      "awayProgramId": "ncaa:2026-27:women:valparaiso-beacons",
+      "homeProgramId": "ncaa:2026-27:women:bradley-braves",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-03",
+      "awayProgramId": "ncaa:2026-27:women:belmont-bruins",
+      "homeProgramId": "ncaa:2026-27:women:evansville-purple-aces",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-03",
+      "awayProgramId": "ncaa:2026-27:women:drake-bulldogs",
+      "homeProgramId": "ncaa:2026-27:women:indiana-state-sycamores",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-03",
+      "awayProgramId": "ncaa:2026-27:women:uic-flames",
+      "homeProgramId": "ncaa:2026-27:women:murray-state-racers",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-03",
+      "awayProgramId": "ncaa:2026-27:women:illinois-state-redbirds",
+      "homeProgramId": "ncaa:2026-27:women:southern-illinois-salukis",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-03",
+      "awayProgramId": "ncaa:2026-27:women:northern-iowa-panthers",
+      "homeProgramId": "ncaa:2026-27:women:valparaiso-beacons",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-07",
+      "awayProgramId": "ncaa:2026-27:women:bradley-braves",
+      "homeProgramId": "ncaa:2026-27:women:indiana-state-sycamores",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-07",
+      "awayProgramId": "ncaa:2026-27:women:drake-bulldogs",
+      "homeProgramId": "ncaa:2026-27:women:illinois-state-redbirds",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-07",
+      "awayProgramId": "ncaa:2026-27:women:northern-iowa-panthers",
+      "homeProgramId": "ncaa:2026-27:women:uic-flames",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-07",
+      "awayProgramId": "ncaa:2026-27:women:southern-illinois-salukis",
+      "homeProgramId": "ncaa:2026-27:women:belmont-bruins",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-07",
+      "awayProgramId": "ncaa:2026-27:women:valparaiso-beacons",
+      "homeProgramId": "ncaa:2026-27:women:murray-state-racers",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-09",
+      "awayProgramId": "ncaa:2026-27:women:bradley-braves",
+      "homeProgramId": "ncaa:2026-27:women:evansville-purple-aces",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-09",
+      "awayProgramId": "ncaa:2026-27:women:drake-bulldogs",
+      "homeProgramId": "ncaa:2026-27:women:uic-flames",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-09",
+      "awayProgramId": "ncaa:2026-27:women:indiana-state-sycamores",
+      "homeProgramId": "ncaa:2026-27:women:belmont-bruins",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-09",
+      "awayProgramId": "ncaa:2026-27:women:northern-iowa-panthers",
+      "homeProgramId": "ncaa:2026-27:women:illinois-state-redbirds",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-09",
+      "awayProgramId": "ncaa:2026-27:women:valparaiso-beacons",
+      "homeProgramId": "ncaa:2026-27:women:southern-illinois-salukis",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-11",
+      "awayProgramId": "ncaa:2026-27:women:evansville-purple-aces",
+      "homeProgramId": "ncaa:2026-27:women:murray-state-racers",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-12",
+      "awayProgramId": "ncaa:2026-27:women:uic-flames",
+      "homeProgramId": "ncaa:2026-27:women:illinois-state-redbirds",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-14",
+      "awayProgramId": "ncaa:2026-27:women:belmont-bruins",
+      "homeProgramId": "ncaa:2026-27:women:northern-iowa-panthers",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-14",
+      "awayProgramId": "ncaa:2026-27:women:murray-state-racers",
+      "homeProgramId": "ncaa:2026-27:women:drake-bulldogs",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-14",
+      "awayProgramId": "ncaa:2026-27:women:southern-illinois-salukis",
+      "homeProgramId": "ncaa:2026-27:women:bradley-braves",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-14",
+      "awayProgramId": "ncaa:2026-27:women:valparaiso-beacons",
+      "homeProgramId": "ncaa:2026-27:women:evansville-purple-aces",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-15",
+      "awayProgramId": "ncaa:2026-27:women:illinois-state-redbirds",
+      "homeProgramId": "ncaa:2026-27:women:indiana-state-sycamores",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-16",
+      "awayProgramId": "ncaa:2026-27:women:belmont-bruins",
+      "homeProgramId": "ncaa:2026-27:women:drake-bulldogs",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-16",
+      "awayProgramId": "ncaa:2026-27:women:bradley-braves",
+      "homeProgramId": "ncaa:2026-27:women:uic-flames",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-16",
+      "awayProgramId": "ncaa:2026-27:women:murray-state-racers",
+      "homeProgramId": "ncaa:2026-27:women:northern-iowa-panthers",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-17",
+      "awayProgramId": "ncaa:2026-27:women:illinois-state-redbirds",
+      "homeProgramId": "ncaa:2026-27:women:evansville-purple-aces",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-17",
+      "awayProgramId": "ncaa:2026-27:women:indiana-state-sycamores",
+      "homeProgramId": "ncaa:2026-27:women:southern-illinois-salukis",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-19",
+      "awayProgramId": "ncaa:2026-27:women:drake-bulldogs",
+      "homeProgramId": "ncaa:2026-27:women:valparaiso-beacons",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-19",
+      "awayProgramId": "ncaa:2026-27:women:northern-iowa-panthers",
+      "homeProgramId": "ncaa:2026-27:women:bradley-braves",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-21",
+      "awayProgramId": "ncaa:2026-27:women:evansville-purple-aces",
+      "homeProgramId": "ncaa:2026-27:women:belmont-bruins",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-22",
+      "awayProgramId": "ncaa:2026-27:women:uic-flames",
+      "homeProgramId": "ncaa:2026-27:women:northern-iowa-panthers",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-22",
+      "awayProgramId": "ncaa:2026-27:women:illinois-state-redbirds",
+      "homeProgramId": "ncaa:2026-27:women:bradley-braves",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-22",
+      "awayProgramId": "ncaa:2026-27:women:indiana-state-sycamores",
+      "homeProgramId": "ncaa:2026-27:women:drake-bulldogs",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-22",
+      "awayProgramId": "ncaa:2026-27:women:murray-state-racers",
+      "homeProgramId": "ncaa:2026-27:women:valparaiso-beacons",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-23",
+      "awayProgramId": "ncaa:2026-27:women:belmont-bruins",
+      "homeProgramId": "ncaa:2026-27:women:southern-illinois-salukis",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-24",
+      "awayProgramId": "ncaa:2026-27:women:bradley-braves",
+      "homeProgramId": "ncaa:2026-27:women:valparaiso-beacons",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-24",
+      "awayProgramId": "ncaa:2026-27:women:uic-flames",
+      "homeProgramId": "ncaa:2026-27:women:drake-bulldogs",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-24",
+      "awayProgramId": "ncaa:2026-27:women:indiana-state-sycamores",
+      "homeProgramId": "ncaa:2026-27:women:northern-iowa-panthers",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-24",
+      "awayProgramId": "ncaa:2026-27:women:murray-state-racers",
+      "homeProgramId": "ncaa:2026-27:women:illinois-state-redbirds",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-25",
+      "awayProgramId": "ncaa:2026-27:women:evansville-purple-aces",
+      "homeProgramId": "ncaa:2026-27:women:southern-illinois-salukis",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-28",
+      "awayProgramId": "ncaa:2026-27:women:illinois-state-redbirds",
+      "homeProgramId": "ncaa:2026-27:women:drake-bulldogs",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-28",
+      "awayProgramId": "ncaa:2026-27:women:indiana-state-sycamores",
+      "homeProgramId": "ncaa:2026-27:women:evansville-purple-aces",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-28",
+      "awayProgramId": "ncaa:2026-27:women:murray-state-racers",
+      "homeProgramId": "ncaa:2026-27:women:bradley-braves",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-28",
+      "awayProgramId": "ncaa:2026-27:women:southern-illinois-salukis",
+      "homeProgramId": "ncaa:2026-27:women:uic-flames",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-28",
+      "awayProgramId": "ncaa:2026-27:women:valparaiso-beacons",
+      "homeProgramId": "ncaa:2026-27:women:belmont-bruins",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-30",
+      "awayProgramId": "ncaa:2026-27:women:belmont-bruins",
+      "homeProgramId": "ncaa:2026-27:women:murray-state-racers",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-30",
+      "awayProgramId": "ncaa:2026-27:women:evansville-purple-aces",
+      "homeProgramId": "ncaa:2026-27:women:bradley-braves",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-30",
+      "awayProgramId": "ncaa:2026-27:women:uic-flames",
+      "homeProgramId": "ncaa:2026-27:women:indiana-state-sycamores",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-31",
+      "awayProgramId": "ncaa:2026-27:women:drake-bulldogs",
+      "homeProgramId": "ncaa:2026-27:women:northern-iowa-panthers",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-31",
+      "awayProgramId": "ncaa:2026-27:women:southern-illinois-salukis",
+      "homeProgramId": "ncaa:2026-27:women:illinois-state-redbirds",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-04",
+      "awayProgramId": "ncaa:2026-27:women:belmont-bruins",
+      "homeProgramId": "ncaa:2026-27:women:indiana-state-sycamores",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-04",
+      "awayProgramId": "ncaa:2026-27:women:evansville-purple-aces",
+      "homeProgramId": "ncaa:2026-27:women:valparaiso-beacons",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-04",
+      "awayProgramId": "ncaa:2026-27:women:illinois-state-redbirds",
+      "homeProgramId": "ncaa:2026-27:women:uic-flames",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-05",
+      "awayProgramId": "ncaa:2026-27:women:drake-bulldogs",
+      "homeProgramId": "ncaa:2026-27:women:southern-illinois-salukis",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-05",
+      "awayProgramId": "ncaa:2026-27:women:northern-iowa-panthers",
+      "homeProgramId": "ncaa:2026-27:women:murray-state-racers",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-07",
+      "awayProgramId": "ncaa:2026-27:women:belmont-bruins",
+      "homeProgramId": "ncaa:2026-27:women:bradley-braves",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-07",
+      "awayProgramId": "ncaa:2026-27:women:drake-bulldogs",
+      "homeProgramId": "ncaa:2026-27:women:murray-state-racers",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-07",
+      "awayProgramId": "ncaa:2026-27:women:evansville-purple-aces",
+      "homeProgramId": "ncaa:2026-27:women:illinois-state-redbirds",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-07",
+      "awayProgramId": "ncaa:2026-27:women:northern-iowa-panthers",
+      "homeProgramId": "ncaa:2026-27:women:southern-illinois-salukis",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-07",
+      "awayProgramId": "ncaa:2026-27:women:valparaiso-beacons",
+      "homeProgramId": "ncaa:2026-27:women:indiana-state-sycamores",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-11",
+      "awayProgramId": "ncaa:2026-27:women:drake-bulldogs",
+      "homeProgramId": "ncaa:2026-27:women:belmont-bruins",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-11",
+      "awayProgramId": "ncaa:2026-27:women:northern-iowa-panthers",
+      "homeProgramId": "ncaa:2026-27:women:evansville-purple-aces",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-12",
+      "awayProgramId": "ncaa:2026-27:women:illinois-state-redbirds",
+      "homeProgramId": "ncaa:2026-27:women:valparaiso-beacons",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-12",
+      "awayProgramId": "ncaa:2026-27:women:indiana-state-sycamores",
+      "homeProgramId": "ncaa:2026-27:women:bradley-braves",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-12",
+      "awayProgramId": "ncaa:2026-27:women:murray-state-racers",
+      "homeProgramId": "ncaa:2026-27:women:uic-flames",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-13",
+      "awayProgramId": "ncaa:2026-27:women:drake-bulldogs",
+      "homeProgramId": "ncaa:2026-27:women:evansville-purple-aces",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-13",
+      "awayProgramId": "ncaa:2026-27:women:northern-iowa-panthers",
+      "homeProgramId": "ncaa:2026-27:women:belmont-bruins",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-14",
+      "awayProgramId": "ncaa:2026-27:women:bradley-braves",
+      "homeProgramId": "ncaa:2026-27:women:southern-illinois-salukis",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-14",
+      "awayProgramId": "ncaa:2026-27:women:uic-flames",
+      "homeProgramId": "ncaa:2026-27:women:valparaiso-beacons",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-14",
+      "awayProgramId": "ncaa:2026-27:women:indiana-state-sycamores",
+      "homeProgramId": "ncaa:2026-27:women:illinois-state-redbirds",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-18",
+      "awayProgramId": "ncaa:2026-27:women:uic-flames",
+      "homeProgramId": "ncaa:2026-27:women:evansville-purple-aces",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-18",
+      "awayProgramId": "ncaa:2026-27:women:illinois-state-redbirds",
+      "homeProgramId": "ncaa:2026-27:women:belmont-bruins",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-19",
+      "awayProgramId": "ncaa:2026-27:women:bradley-braves",
+      "homeProgramId": "ncaa:2026-27:women:drake-bulldogs",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-19",
+      "awayProgramId": "ncaa:2026-27:women:southern-illinois-salukis",
+      "homeProgramId": "ncaa:2026-27:women:murray-state-racers",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-19",
+      "awayProgramId": "ncaa:2026-27:women:valparaiso-beacons",
+      "homeProgramId": "ncaa:2026-27:women:northern-iowa-panthers",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-21",
+      "awayProgramId": "ncaa:2026-27:women:bradley-braves",
+      "homeProgramId": "ncaa:2026-27:women:northern-iowa-panthers",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-21",
+      "awayProgramId": "ncaa:2026-27:women:evansville-purple-aces",
+      "homeProgramId": "ncaa:2026-27:women:indiana-state-sycamores",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-21",
+      "awayProgramId": "ncaa:2026-27:women:uic-flames",
+      "homeProgramId": "ncaa:2026-27:women:southern-illinois-salukis",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-21",
+      "awayProgramId": "ncaa:2026-27:women:murray-state-racers",
+      "homeProgramId": "ncaa:2026-27:women:belmont-bruins",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-21",
+      "awayProgramId": "ncaa:2026-27:women:valparaiso-beacons",
+      "homeProgramId": "ncaa:2026-27:women:drake-bulldogs",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-25",
+      "awayProgramId": "ncaa:2026-27:women:belmont-bruins",
+      "homeProgramId": "ncaa:2026-27:women:valparaiso-beacons",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-25",
+      "awayProgramId": "ncaa:2026-27:women:uic-flames",
+      "homeProgramId": "ncaa:2026-27:women:bradley-braves",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-25",
+      "awayProgramId": "ncaa:2026-27:women:illinois-state-redbirds",
+      "homeProgramId": "ncaa:2026-27:women:northern-iowa-panthers",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-25",
+      "awayProgramId": "ncaa:2026-27:women:murray-state-racers",
+      "homeProgramId": "ncaa:2026-27:women:evansville-purple-aces",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-25",
+      "awayProgramId": "ncaa:2026-27:women:southern-illinois-salukis",
+      "homeProgramId": "ncaa:2026-27:women:indiana-state-sycamores",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-27",
+      "awayProgramId": "ncaa:2026-27:women:belmont-bruins",
+      "homeProgramId": "ncaa:2026-27:women:uic-flames",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-27",
+      "awayProgramId": "ncaa:2026-27:women:bradley-braves",
+      "homeProgramId": "ncaa:2026-27:women:illinois-state-redbirds",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-27",
+      "awayProgramId": "ncaa:2026-27:women:indiana-state-sycamores",
+      "homeProgramId": "ncaa:2026-27:women:murray-state-racers",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-27",
+      "awayProgramId": "ncaa:2026-27:women:northern-iowa-panthers",
+      "homeProgramId": "ncaa:2026-27:women:drake-bulldogs",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-27",
+      "awayProgramId": "ncaa:2026-27:women:southern-illinois-salukis",
+      "homeProgramId": "ncaa:2026-27:women:valparaiso-beacons",
+      "sourceUrl": "https://mvc-sports.com/news/2026/9/16/missouri-valley-conference-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    }
+  ]
+}

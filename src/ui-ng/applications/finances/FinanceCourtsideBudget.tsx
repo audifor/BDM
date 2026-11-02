@@ -1,9 +1,9 @@
-import { createFinancialPlanningPeriod, getActiveApprovedBudget, getBudgetComparison } from '@/domain/finance'
+import { getActiveApprovedBudget, getBudgetComparison } from '@/domain/finance'
 import type { GameWorld } from '@/domain/world'
+import { financeReportingPeriod } from './financeWorkspaceModel'
 
 export function FinanceCourtsideBudget({ world, organizationId }: { readonly world: GameWorld; readonly organizationId: string }) {
-  const year = world.currentDate.slice(0, 4)
-  const period = createFinancialPlanningPeriod({ kind: 'DATE_RANGE', startsOn: year + '-01-01', endsOn: year + '-12-31' })
+  const period = financeReportingPeriod(world, organizationId)
   const budget = getActiveApprovedBudget(world, organizationId, period, world.currentDate)
   if (!budget) return <div className="fc-budget-empty">Sin presupuesto aprobado para este periodo.</div>
   const expenses = getBudgetComparison(world, budget.id, world.currentDate).filter((entry) => entry.direction === 'EXPENSE')

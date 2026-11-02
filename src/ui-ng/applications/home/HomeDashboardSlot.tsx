@@ -18,7 +18,7 @@ import {
   standingsZoneForPosition,
 } from '@/ui-ng/applications/competition/standingsZones'
 import { StandingsZoneLegend } from '@/ui-ng/applications/competition/StandingsZoneLegend'
-import { financeMoney } from '@/ui-ng/applications/finances/financeWorkspaceModel'
+import { financeMoney, financeReportingPeriod } from '@/ui-ng/applications/finances/financeWorkspaceModel'
 import {
   homeDashboardModuleLabel,
   type HomeDashboardModuleId,
@@ -379,7 +379,7 @@ function FinancesModule({ context }: { readonly context: HomeDashboardSlotContex
   const organizationId = context.world.teams[context.teamId]?.organizationId
   if (organizationId === undefined) return <p className="ng-canon__empty">Sin organización financiera asignada.</p>
   const asOf = context.world.currentDate
-  const startsOn = `${asOf.slice(0, 4)}-01-01`
+  const startsOn = financeReportingPeriod(context.world, organizationId).startsOn
   const health = getFinancialHealthSnapshot(context.world, organizationId, asOf, startsOn)
   const cash = getCashAccountBalances(context.world, organizationId, asOf)
   const recognizedCurrencies = new Set([...Object.values(context.world.revenueRecognitionsById), ...Object.values(context.world.expenseRecognitionsById)].filter((item) => item.organizationId === organizationId && item.recognizedOn >= startsOn && item.recognizedOn <= asOf).map((item) => item.amount.currencyCode))
@@ -399,6 +399,7 @@ function FinancesModule({ context }: { readonly context: HomeDashboardSlotContex
           .reduce((sum, charge) => sum + charge.amount, 0)
   const status =
     rules === undefined ? undefined : calculateTeamSalaryStatus(rules, calculateTeamPayroll(contracts, context.world.currentDate, deadMoney))
+  const noCap = rules !== undefined && (rules.capAccounting === undefined || rules.capAccounting === 'NOT_APPLICABLE')
 
   return (
     <div className="home-finances">
@@ -407,8 +408,8 @@ function FinancesModule({ context }: { readonly context: HomeDashboardSlotContex
           <NgMetric key={`${row.currencyCode}-cash`} label={`Caja ${row.currencyCode}`} value={cash.some((account) => account.currencyCode === row.currencyCode) ? financeMoney(row.cashMinorUnits, row.currencyCode) : 'Sin datos de caja'} />,
           <NgMetric key={`${row.currencyCode}-result`} label={`Resultado operativo ${row.currencyCode}`} value={recognizedCurrencies.has(row.currencyCode) ? financeMoney(row.operatingResultMinorUnits, row.currencyCode) : 'Sin reconocimientos'} />,
         ])}
-        <NgMetric label="Cargo Salary Cap" value={status === undefined ? 'Sin reglas' : formatMoney(status.payroll.totalCapHit)} />
-        <NgMetric label="Espacio Salary Cap" value={status === undefined ? 'Sin reglas' : formatMoney(status.capSpace)} />
+        <NgMetric label="Cargo Salary Cap" value={status === undefined ? 'Sin reglas' : noCap ? 'No aplica' : formatMoney(status.payroll.totalCapHit)} />
+        <NgMetric label="Espacio Salary Cap" value={status === undefined ? 'Sin reglas' : noCap ? 'No aplica' : formatMoney(status.capSpace)} />
       </dl>
       {health.byCurrency.length === 0 && <p className="ng-canon__empty">Sin hechos financieros de la organización.</p>}
     </div>

@@ -220,7 +220,8 @@ export function progressAiTrainingPlanning(world: GameWorld): AiTrainingPlanning
   const planned = updateGameWorldBatch(world, (initial, update) => {
     let next = initial
     for (const team of Object.values(world.teams).sort((a, b) => a.id.localeCompare(b.id))) {
-      if (team.id === userTeamId) continue
+      const delegatedPlanning = resolveDelegatedResponsibility(next, team.id, 'createTeamTrainingPlan')
+      if (team.id === userTeamId && delegatedPlanning === undefined) continue
       const weekStart = addDays(next.currentDate, 1)
       const weekEnd = addDays(next.currentDate, PLANNING_HORIZON_DAYS)
       const teamSessions = indexes.sessionsByTeamId.get(team.id) ?? []
@@ -244,9 +245,8 @@ export function progressAiTrainingPlanning(world: GameWorld): AiTrainingPlanning
         selected.push(date)
       }
 
-      const resolvedStaff = resolveDelegatedResponsibility(next, team.id, 'createTeamTrainingPlan')
-      const employment = resolvedStaff === undefined ? undefined : next.staffEmploymentByStaffId[resolvedStaff.staffId]
-      const staff = employment?.status === 'employed' && employment.teamId === team.id ? resolvedStaff : undefined
+      const employment = delegatedPlanning === undefined ? undefined : next.staffEmploymentByStaffId[delegatedPlanning.staffId]
+      const staff = employment?.status === 'employed' && (employment.teamId === undefined || employment.teamId === team.id) ? delegatedPlanning : undefined
       const sessionIds: string[] = []
       for (const date of selected) {
         const dayAfterGame = Object.values(next.games).some((game) => game.status === 'completed' && game.date === addDays(date, -1) && (game.homeTeamId === team.id || game.awayTeamId === team.id))

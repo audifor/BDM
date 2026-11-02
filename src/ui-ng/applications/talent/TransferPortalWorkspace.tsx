@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { getUserTeam } from '@/engine/calendar'
 import type { BasketballPosition } from '@/domain/primitives'
 import { canRecruitTransferPlayer } from '@/engine/eligibility'
-import { resolveGameCapabilities } from '@/ui/gameContext'
+import { resolveClubActiveSeasons, resolveGameCapabilities } from '@/ui/gameContext'
 import { useGameStore } from '@/stores/gameStore'
 import { NgHoloShell } from '@/ui-ng/workspace/NgHoloShell'
 import { navigateToPlayer, navigateToRecruitingPlayer } from '@/ui-ng/workspace/workspaceApps'
@@ -56,8 +56,9 @@ export function TransferPortalWorkspace() {
   const model = useMemo(() => {
     if (world === null) return null
     const team = getUserTeam(world)
-    const competition = team === undefined ? undefined : Object.values(world.competitions).find((item) => item.participantTeamIds.includes(team.id) && world.ecosystems[item.ecosystemId]?.kind === 'ncaaLike')
-    const cycle = Object.values(world.recruitingCyclesById).find((item) => item.sourceSeasonId === world.currentSeasonId && item.ecosystemId === competition?.ecosystemId && item.status === 'open')
+    const activeNcaaSeason = resolveClubActiveSeasons(world).find((season) => world.ecosystems[world.competitions[season.competitionId]!.ecosystemId]?.kind === 'ncaaLike')
+    const competition = activeNcaaSeason === undefined ? undefined : world.competitions[activeNcaaSeason.competitionId]
+    const cycle = activeNcaaSeason === undefined ? undefined : Object.values(world.recruitingCyclesById).find((item) => item.sourceSeasonId === activeNcaaSeason.id && item.ecosystemId === competition?.ecosystemId && item.status === 'open')
     const eligibilityByPlayer = new Map<string, typeof world.collegeEligibilityAssessmentsById[string]>()
     if (team !== undefined) {
       for (const assessment of Object.values(world.collegeEligibilityAssessmentsById).filter((item) => item.teamId === team.id).sort((a, b) => a.assessedOn.localeCompare(b.assessedOn))) eligibilityByPlayer.set(assessment.playerId, assessment)

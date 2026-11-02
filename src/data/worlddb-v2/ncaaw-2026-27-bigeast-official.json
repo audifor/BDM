@@ -1,0 +1,888 @@
+{
+  "season": "2026-27",
+  "conferenceId": "big-east-conference",
+  "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+  "sourceQuality": "CONFERENCE_OFFICIAL",
+  "fixtures": [
+    {
+      "gender": "women",
+      "date": "2026-11-20",
+      "awayProgramId": "ncaa:2026-27:women:seton-hall-pirates",
+      "homeProgramId": "ncaa:2026-27:women:uconn-huskies",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-03",
+      "awayProgramId": "ncaa:2026-27:women:depaul-blue-demons",
+      "homeProgramId": "ncaa:2026-27:women:villanova-wildcats",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-04",
+      "awayProgramId": "ncaa:2026-27:women:marquette-golden-eagles",
+      "homeProgramId": "ncaa:2026-27:women:xavier-musketeers",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-04",
+      "awayProgramId": "ncaa:2026-27:women:providence-friars",
+      "homeProgramId": "ncaa:2026-27:women:st-john-s-red-storm",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-04",
+      "awayProgramId": "ncaa:2026-27:women:seton-hall-pirates",
+      "homeProgramId": "ncaa:2026-27:women:butler-bulldogs",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-06",
+      "awayProgramId": "ncaa:2026-27:women:butler-bulldogs",
+      "homeProgramId": "ncaa:2026-27:women:marquette-golden-eagles",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-06",
+      "awayProgramId": "ncaa:2026-27:women:depaul-blue-demons",
+      "homeProgramId": "ncaa:2026-27:women:georgetown-hoyas",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-06",
+      "awayProgramId": "ncaa:2026-27:women:st-john-s-red-storm",
+      "homeProgramId": "ncaa:2026-27:women:xavier-musketeers",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-10",
+      "awayProgramId": "ncaa:2026-27:women:butler-bulldogs",
+      "homeProgramId": "ncaa:2026-27:women:depaul-blue-demons",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-10",
+      "awayProgramId": "ncaa:2026-27:women:georgetown-hoyas",
+      "homeProgramId": "ncaa:2026-27:women:st-john-s-red-storm",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-10",
+      "awayProgramId": "ncaa:2026-27:women:seton-hall-pirates",
+      "homeProgramId": "ncaa:2026-27:women:providence-friars",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-10",
+      "awayProgramId": "ncaa:2026-27:women:villanova-wildcats",
+      "homeProgramId": "ncaa:2026-27:women:marquette-golden-eagles",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-16",
+      "awayProgramId": "ncaa:2026-27:women:creighton-bluejays",
+      "homeProgramId": "ncaa:2026-27:women:uconn-huskies",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-20",
+      "awayProgramId": "ncaa:2026-27:women:creighton-bluejays",
+      "homeProgramId": "ncaa:2026-27:women:depaul-blue-demons",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-20",
+      "awayProgramId": "ncaa:2026-27:women:st-john-s-red-storm",
+      "homeProgramId": "ncaa:2026-27:women:marquette-golden-eagles",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-20",
+      "awayProgramId": "ncaa:2026-27:women:villanova-wildcats",
+      "homeProgramId": "ncaa:2026-27:women:providence-friars",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-20",
+      "awayProgramId": "ncaa:2026-27:women:xavier-musketeers",
+      "homeProgramId": "ncaa:2026-27:women:georgetown-hoyas",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-22",
+      "awayProgramId": "ncaa:2026-27:women:butler-bulldogs",
+      "homeProgramId": "ncaa:2026-27:women:creighton-bluejays",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-23",
+      "awayProgramId": "ncaa:2026-27:women:providence-friars",
+      "homeProgramId": "ncaa:2026-27:women:georgetown-hoyas",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-23",
+      "awayProgramId": "ncaa:2026-27:women:uconn-huskies",
+      "homeProgramId": "ncaa:2026-27:women:villanova-wildcats",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-23",
+      "awayProgramId": "ncaa:2026-27:women:xavier-musketeers",
+      "homeProgramId": "ncaa:2026-27:women:seton-hall-pirates",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-30",
+      "awayProgramId": "ncaa:2026-27:women:creighton-bluejays",
+      "homeProgramId": "ncaa:2026-27:women:seton-hall-pirates",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-30",
+      "awayProgramId": "ncaa:2026-27:women:georgetown-hoyas",
+      "homeProgramId": "ncaa:2026-27:women:villanova-wildcats",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-30",
+      "awayProgramId": "ncaa:2026-27:women:st-john-s-red-storm",
+      "homeProgramId": "ncaa:2026-27:women:butler-bulldogs",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-31",
+      "awayProgramId": "ncaa:2026-27:women:marquette-golden-eagles",
+      "homeProgramId": "ncaa:2026-27:women:providence-friars",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2026-12-31",
+      "awayProgramId": "ncaa:2026-27:women:uconn-huskies",
+      "homeProgramId": "ncaa:2026-27:women:xavier-musketeers",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-02",
+      "awayProgramId": "ncaa:2026-27:women:creighton-bluejays",
+      "homeProgramId": "ncaa:2026-27:women:georgetown-hoyas",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-02",
+      "awayProgramId": "ncaa:2026-27:women:villanova-wildcats",
+      "homeProgramId": "ncaa:2026-27:women:st-john-s-red-storm",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-03",
+      "awayProgramId": "ncaa:2026-27:women:providence-friars",
+      "homeProgramId": "ncaa:2026-27:women:xavier-musketeers",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-03",
+      "awayProgramId": "ncaa:2026-27:women:seton-hall-pirates",
+      "homeProgramId": "ncaa:2026-27:women:marquette-golden-eagles",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-03",
+      "awayProgramId": "ncaa:2026-27:women:uconn-huskies",
+      "homeProgramId": "ncaa:2026-27:women:depaul-blue-demons",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-06",
+      "awayProgramId": "ncaa:2026-27:women:providence-friars",
+      "homeProgramId": "ncaa:2026-27:women:butler-bulldogs",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-07",
+      "awayProgramId": "ncaa:2026-27:women:depaul-blue-demons",
+      "homeProgramId": "ncaa:2026-27:women:seton-hall-pirates",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-07",
+      "awayProgramId": "ncaa:2026-27:women:georgetown-hoyas",
+      "homeProgramId": "ncaa:2026-27:women:uconn-huskies",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-07",
+      "awayProgramId": "ncaa:2026-27:women:villanova-wildcats",
+      "homeProgramId": "ncaa:2026-27:women:creighton-bluejays",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-07",
+      "awayProgramId": "ncaa:2026-27:women:xavier-musketeers",
+      "homeProgramId": "ncaa:2026-27:women:st-john-s-red-storm",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-10",
+      "awayProgramId": "ncaa:2026-27:women:butler-bulldogs",
+      "homeProgramId": "ncaa:2026-27:women:seton-hall-pirates",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-10",
+      "awayProgramId": "ncaa:2026-27:women:marquette-golden-eagles",
+      "homeProgramId": "ncaa:2026-27:women:depaul-blue-demons",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-10",
+      "awayProgramId": "ncaa:2026-27:women:st-john-s-red-storm",
+      "homeProgramId": "ncaa:2026-27:women:providence-friars",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-10",
+      "awayProgramId": "ncaa:2026-27:women:uconn-huskies",
+      "homeProgramId": "ncaa:2026-27:women:creighton-bluejays",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-10",
+      "awayProgramId": "ncaa:2026-27:women:xavier-musketeers",
+      "homeProgramId": "ncaa:2026-27:women:villanova-wildcats",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-13",
+      "awayProgramId": "ncaa:2026-27:women:butler-bulldogs",
+      "homeProgramId": "ncaa:2026-27:women:villanova-wildcats",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-13",
+      "awayProgramId": "ncaa:2026-27:women:depaul-blue-demons",
+      "homeProgramId": "ncaa:2026-27:women:xavier-musketeers",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-13",
+      "awayProgramId": "ncaa:2026-27:women:marquette-golden-eagles",
+      "homeProgramId": "ncaa:2026-27:women:uconn-huskies",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-13",
+      "awayProgramId": "ncaa:2026-27:women:seton-hall-pirates",
+      "homeProgramId": "ncaa:2026-27:women:georgetown-hoyas",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-14",
+      "awayProgramId": "ncaa:2026-27:women:st-john-s-red-storm",
+      "homeProgramId": "ncaa:2026-27:women:creighton-bluejays",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-16",
+      "awayProgramId": "ncaa:2026-27:women:xavier-musketeers",
+      "homeProgramId": "ncaa:2026-27:women:butler-bulldogs",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-17",
+      "awayProgramId": "ncaa:2026-27:women:creighton-bluejays",
+      "homeProgramId": "ncaa:2026-27:women:providence-friars",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-17",
+      "awayProgramId": "ncaa:2026-27:women:depaul-blue-demons",
+      "homeProgramId": "ncaa:2026-27:women:st-john-s-red-storm",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-17",
+      "awayProgramId": "ncaa:2026-27:women:georgetown-hoyas",
+      "homeProgramId": "ncaa:2026-27:women:marquette-golden-eagles",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-18",
+      "awayProgramId": "ncaa:2026-27:women:uconn-huskies",
+      "homeProgramId": "ncaa:2026-27:women:seton-hall-pirates",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-20",
+      "awayProgramId": "ncaa:2026-27:women:marquette-golden-eagles",
+      "homeProgramId": "ncaa:2026-27:women:butler-bulldogs",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-20",
+      "awayProgramId": "ncaa:2026-27:women:providence-friars",
+      "homeProgramId": "ncaa:2026-27:women:depaul-blue-demons",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-20",
+      "awayProgramId": "ncaa:2026-27:women:villanova-wildcats",
+      "homeProgramId": "ncaa:2026-27:women:georgetown-hoyas",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-20",
+      "awayProgramId": "ncaa:2026-27:women:xavier-musketeers",
+      "homeProgramId": "ncaa:2026-27:women:creighton-bluejays",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-23",
+      "awayProgramId": "ncaa:2026-27:women:georgetown-hoyas",
+      "homeProgramId": "ncaa:2026-27:women:depaul-blue-demons",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-23",
+      "awayProgramId": "ncaa:2026-27:women:marquette-golden-eagles",
+      "homeProgramId": "ncaa:2026-27:women:seton-hall-pirates",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-23",
+      "awayProgramId": "ncaa:2026-27:women:providence-friars",
+      "homeProgramId": "ncaa:2026-27:women:villanova-wildcats",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-24",
+      "awayProgramId": "ncaa:2026-27:women:creighton-bluejays",
+      "homeProgramId": "ncaa:2026-27:women:butler-bulldogs",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-24",
+      "awayProgramId": "ncaa:2026-27:women:uconn-huskies",
+      "homeProgramId": "ncaa:2026-27:women:st-john-s-red-storm",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-27",
+      "awayProgramId": "ncaa:2026-27:women:butler-bulldogs",
+      "homeProgramId": "ncaa:2026-27:women:providence-friars",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-27",
+      "awayProgramId": "ncaa:2026-27:women:seton-hall-pirates",
+      "homeProgramId": "ncaa:2026-27:women:xavier-musketeers",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-28",
+      "awayProgramId": "ncaa:2026-27:women:creighton-bluejays",
+      "homeProgramId": "ncaa:2026-27:women:marquette-golden-eagles",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-28",
+      "awayProgramId": "ncaa:2026-27:women:depaul-blue-demons",
+      "homeProgramId": "ncaa:2026-27:women:uconn-huskies",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-28",
+      "awayProgramId": "ncaa:2026-27:women:st-john-s-red-storm",
+      "homeProgramId": "ncaa:2026-27:women:villanova-wildcats",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-30",
+      "awayProgramId": "ncaa:2026-27:women:butler-bulldogs",
+      "homeProgramId": "ncaa:2026-27:women:georgetown-hoyas",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-31",
+      "awayProgramId": "ncaa:2026-27:women:marquette-golden-eagles",
+      "homeProgramId": "ncaa:2026-27:women:st-john-s-red-storm",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-31",
+      "awayProgramId": "ncaa:2026-27:women:providence-friars",
+      "homeProgramId": "ncaa:2026-27:women:uconn-huskies",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-31",
+      "awayProgramId": "ncaa:2026-27:women:seton-hall-pirates",
+      "homeProgramId": "ncaa:2026-27:women:creighton-bluejays",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-31",
+      "awayProgramId": "ncaa:2026-27:women:villanova-wildcats",
+      "homeProgramId": "ncaa:2026-27:women:xavier-musketeers",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-03",
+      "awayProgramId": "ncaa:2026-27:women:georgetown-hoyas",
+      "homeProgramId": "ncaa:2026-27:women:providence-friars",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-03",
+      "awayProgramId": "ncaa:2026-27:women:xavier-musketeers",
+      "homeProgramId": "ncaa:2026-27:women:marquette-golden-eagles",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-04",
+      "awayProgramId": "ncaa:2026-27:women:st-john-s-red-storm",
+      "homeProgramId": "ncaa:2026-27:women:seton-hall-pirates",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-04",
+      "awayProgramId": "ncaa:2026-27:women:uconn-huskies",
+      "homeProgramId": "ncaa:2026-27:women:butler-bulldogs",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-04",
+      "awayProgramId": "ncaa:2026-27:women:villanova-wildcats",
+      "homeProgramId": "ncaa:2026-27:women:depaul-blue-demons",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-06",
+      "awayProgramId": "ncaa:2026-27:women:georgetown-hoyas",
+      "homeProgramId": "ncaa:2026-27:women:creighton-bluejays",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-06",
+      "awayProgramId": "ncaa:2026-27:women:xavier-musketeers",
+      "homeProgramId": "ncaa:2026-27:women:providence-friars",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-07",
+      "awayProgramId": "ncaa:2026-27:women:seton-hall-pirates",
+      "homeProgramId": "ncaa:2026-27:women:villanova-wildcats",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-07",
+      "awayProgramId": "ncaa:2026-27:women:st-john-s-red-storm",
+      "homeProgramId": "ncaa:2026-27:women:depaul-blue-demons",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-07",
+      "awayProgramId": "ncaa:2026-27:women:uconn-huskies",
+      "homeProgramId": "ncaa:2026-27:women:marquette-golden-eagles",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-10",
+      "awayProgramId": "ncaa:2026-27:women:butler-bulldogs",
+      "homeProgramId": "ncaa:2026-27:women:xavier-musketeers",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-10",
+      "awayProgramId": "ncaa:2026-27:women:depaul-blue-demons",
+      "homeProgramId": "ncaa:2026-27:women:creighton-bluejays",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-10",
+      "awayProgramId": "ncaa:2026-27:women:marquette-golden-eagles",
+      "homeProgramId": "ncaa:2026-27:women:georgetown-hoyas",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-10",
+      "awayProgramId": "ncaa:2026-27:women:villanova-wildcats",
+      "homeProgramId": "ncaa:2026-27:women:uconn-huskies",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-11",
+      "awayProgramId": "ncaa:2026-27:women:providence-friars",
+      "homeProgramId": "ncaa:2026-27:women:seton-hall-pirates",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-13",
+      "awayProgramId": "ncaa:2026-27:women:villanova-wildcats",
+      "homeProgramId": "ncaa:2026-27:women:butler-bulldogs",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-13",
+      "awayProgramId": "ncaa:2026-27:women:xavier-musketeers",
+      "homeProgramId": "ncaa:2026-27:women:uconn-huskies",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-14",
+      "awayProgramId": "ncaa:2026-27:women:creighton-bluejays",
+      "homeProgramId": "ncaa:2026-27:women:st-john-s-red-storm",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-14",
+      "awayProgramId": "ncaa:2026-27:women:depaul-blue-demons",
+      "homeProgramId": "ncaa:2026-27:women:providence-friars",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-14",
+      "awayProgramId": "ncaa:2026-27:women:georgetown-hoyas",
+      "homeProgramId": "ncaa:2026-27:women:seton-hall-pirates",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-17",
+      "awayProgramId": "ncaa:2026-27:women:seton-hall-pirates",
+      "homeProgramId": "ncaa:2026-27:women:depaul-blue-demons",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-18",
+      "awayProgramId": "ncaa:2026-27:women:butler-bulldogs",
+      "homeProgramId": "ncaa:2026-27:women:st-john-s-red-storm",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-18",
+      "awayProgramId": "ncaa:2026-27:women:marquette-golden-eagles",
+      "homeProgramId": "ncaa:2026-27:women:villanova-wildcats",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-18",
+      "awayProgramId": "ncaa:2026-27:women:providence-friars",
+      "homeProgramId": "ncaa:2026-27:women:creighton-bluejays",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-18",
+      "awayProgramId": "ncaa:2026-27:women:uconn-huskies",
+      "homeProgramId": "ncaa:2026-27:women:georgetown-hoyas",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-21",
+      "awayProgramId": "ncaa:2026-27:women:creighton-bluejays",
+      "homeProgramId": "ncaa:2026-27:women:villanova-wildcats",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-21",
+      "awayProgramId": "ncaa:2026-27:women:depaul-blue-demons",
+      "homeProgramId": "ncaa:2026-27:women:butler-bulldogs",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-21",
+      "awayProgramId": "ncaa:2026-27:women:georgetown-hoyas",
+      "homeProgramId": "ncaa:2026-27:women:xavier-musketeers",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-21",
+      "awayProgramId": "ncaa:2026-27:women:providence-friars",
+      "homeProgramId": "ncaa:2026-27:women:marquette-golden-eagles",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-21",
+      "awayProgramId": "ncaa:2026-27:women:st-john-s-red-storm",
+      "homeProgramId": "ncaa:2026-27:women:uconn-huskies",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-24",
+      "awayProgramId": "ncaa:2026-27:women:creighton-bluejays",
+      "homeProgramId": "ncaa:2026-27:women:xavier-musketeers",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-24",
+      "awayProgramId": "ncaa:2026-27:women:depaul-blue-demons",
+      "homeProgramId": "ncaa:2026-27:women:marquette-golden-eagles",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-24",
+      "awayProgramId": "ncaa:2026-27:women:georgetown-hoyas",
+      "homeProgramId": "ncaa:2026-27:women:butler-bulldogs",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-24",
+      "awayProgramId": "ncaa:2026-27:women:seton-hall-pirates",
+      "homeProgramId": "ncaa:2026-27:women:st-john-s-red-storm",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-25",
+      "awayProgramId": "ncaa:2026-27:women:uconn-huskies",
+      "homeProgramId": "ncaa:2026-27:women:providence-friars",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-27",
+      "awayProgramId": "ncaa:2026-27:women:marquette-golden-eagles",
+      "homeProgramId": "ncaa:2026-27:women:creighton-bluejays",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-27",
+      "awayProgramId": "ncaa:2026-27:women:st-john-s-red-storm",
+      "homeProgramId": "ncaa:2026-27:women:georgetown-hoyas",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-27",
+      "awayProgramId": "ncaa:2026-27:women:villanova-wildcats",
+      "homeProgramId": "ncaa:2026-27:women:seton-hall-pirates",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-28",
+      "awayProgramId": "ncaa:2026-27:women:butler-bulldogs",
+      "homeProgramId": "ncaa:2026-27:women:uconn-huskies",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-28",
+      "awayProgramId": "ncaa:2026-27:women:xavier-musketeers",
+      "homeProgramId": "ncaa:2026-27:women:depaul-blue-demons",
+      "sourceUrl": "https://www.bigeast.com/news/2026/9/17/big-east-announces-2026-27-womens-basketball-conference-schedule.aspx",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    }
+  ]
+}

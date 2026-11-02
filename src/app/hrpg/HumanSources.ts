@@ -140,9 +140,25 @@ export function readHumanFact(world: GameWorld, source: HumanSource): HumanFact 
     const memory = world.memoriesById[source.id]
     if (!memory || (!memory.tags.includes('promise') && !memory.tags.includes('hrpg')) || !['coach', 'player', 'staff'].includes(memory.owner.kind)) return undefined
     const isPromise = memory.tags.includes('promise')
+    const isRolePromiseReview = memory.tags.includes('rolePromiseReview')
+    let participants: HumanActor[] = [{ kind: memory.owner.kind as HumanActor['kind'], id: memory.owner.id }]
+    if (isRolePromiseReview) {
+      const promise = world.rolePromisesById[String(memory.context.rolePromiseId)]
+      const playerId = String(memory.context.playerId)
+      const coachId = typeof memory.context.coachId === 'string' ? memory.context.coachId : undefined
+      const coachIsReferenced = coachId !== undefined && (memory.owner.kind === 'coach' && memory.owner.id === coachId
+        || memory.entityRefs.some(ref => ref.kind === 'coach' && ref.id === coachId))
+      if (!promise || promise.id !== memory.context.rolePromiseId || promise.playerId !== playerId || !world.players[playerId as never] ||
+        (coachId !== undefined && (!world.coaches[coachId as never] || !coachIsReferenced))) return undefined
+      participants = [player(playerId), ...(coachId === undefined ? [] : [coach(coachId)])]
+    }
+    const rolePromiseTitle = isRolePromiseReview
+      ? `Revision ${String(memory.context.reviewStage) === 'midseason' ? 'provisional durante la temporada' : 'de temporada'} [${String(memory.context.reviewStatus)}]: compromiso ${String(memory.context.role)}; ${String(memory.context.starts)} titularidades, ${String(memory.context.appearances)} apariciones y ${Math.max(0, Number(memory.context.measuredGames) - Number(memory.context.appearances))} DNP acreditados en ${String(memory.context.measuredGames)} partidos con acta completa; ${((Number(memory.context.regulationTimeShareBps) || 0) / 100).toFixed(1)}% del tiempo reglamentario acumulado. ${String(memory.context.rationale)}`
+      : undefined
     fact = { source, occurredOn: memory.occurredOn, topic: isPromise ? 'rememberedCommitment' : 'humanRecollection',
-      participants: [{ kind: memory.owner.kind as HumanActor['kind'], id: memory.owner.id }], public: false,
-      title: isPromise ? `A remembered professional commitment: ${memory.type}` : `A remembered personal response: ${String(memory.context.actionId)}`,
+      participants, public: false,
+      title: rolePromiseTitle ?? (isRolePromiseReview ? `Role promise review: ${String(memory.context.reviewStatus)}`
+        : isPromise ? `A remembered professional commitment: ${memory.type}` : `A remembered personal response: ${String(memory.context.actionId)}`),
       stage: memory.tags.includes('broken') ? 'crisis' : memory.tags.some(tag => ['fulfilled', 'remedied', 'cancelled'].includes(tag)) ? 'resolution'
         : memory.tags.includes('aftermath') ? 'aftermath' : 'development',
       ...(isPromise && memory.sourceId ? { causalKey: memory.sourceId } : typeof memory.context.causalKey === 'string' ? { causalKey: memory.context.causalKey } : {}) }

@@ -1,0 +1,30 @@
+name: BDM New Game league selector
+
+on:
+  push:
+    branches:
+      - feature/newgame-two-step-league-selector-01
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: bdm-newgame-league-selector
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Typecheck and production frontend bundle
+        run: npm run build
+      - name: Startup UI, per-league resolution and Save V4 smoke
+        run: npx vitest run src/ui/startup/BootstrapApp.test.tsx src/app/game/NewGameLeagueDetail.test.ts src/app/game/WorldDbNewGameCatalog.test.ts src/app/worldSim/worldSim.test.ts src/save/GameWorldSaveV4.test.ts --maxWorkers=2 --testTimeout=60000

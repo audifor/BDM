@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { getCashAccountBalances, getExpenseRecognitionsBetween, getFinanceProposals, getFinancialHealthSnapshot, getRevenueRecognitionsBetween } from '@/domain/finance'
 import type { GameWorld } from '@/domain/world'
+import { financeReportingPeriod } from './financeWorkspaceModel'
 
 type FinanceDestination = 'cash' | 'budget' | 'payroll' | 'forecast' | 'debt' | 'ai' | 'cap'
 
@@ -13,7 +14,7 @@ interface FinanceOverviewProps {
 
 export function FinanceCourtsideOverview({ world, organizationId, currency, onNavigate }: FinanceOverviewProps) {
   const [chosenCurrency, setChosenCurrency] = useState('')
-  const startsOn = `${world.currentDate.slice(0, 4)}-01-01`
+  const startsOn = financeReportingPeriod(world, organizationId).startsOn
   const health = getFinancialHealthSnapshot(world, organizationId, world.currentDate, startsOn)
   const availableCurrencies = health.byCurrency.map((entry) => entry.currencyCode)
   const activeCurrency = (chosenCurrency && availableCurrencies.some((code) => code === chosenCurrency)) ? chosenCurrency : (currency && availableCurrencies.some((code) => code === currency) ? currency : availableCurrencies[0])
@@ -43,7 +44,7 @@ export function FinanceCourtsideOverview({ world, organizationId, currency, onNa
     {!summary && <div className="fc-overview__no-data">No hay datos financieros del club todavía.</div>}
     <div className="fc-overview__kpis">
       <Kpi label="Dinero disponible" value={cashRecorded ? money(summary!.unrestrictedCashMinorUnits) : 'Sin datos'} note="Caja sin restricciones" primary />
-      <Kpi label="Resultado esta temporada" value={resultRecorded ? money(summary!.operatingResultMinorUnits) : 'Sin datos'} tone={summary && resultRecorded && summary.operatingResultMinorUnits < 0 ? 'negative' : 'default'} />
+      <Kpi label="Resultado del ejercicio" value={resultRecorded ? money(summary!.operatingResultMinorUnits) : 'Sin datos'} tone={summary && resultRecorded && summary.operatingResultMinorUnits < 0 ? 'negative' : 'default'} />
       <Kpi label="Pendiente de cobrar" value={summary ? money(summary.shortTermReceivablesMinorUnits) : 'Sin datos'} note="Próximos 30 días" />
       <Kpi label="Pendiente de pagar" value={summary ? money(summary.shortTermPayablesMinorUnits) : 'Sin datos'} note="Próximos 30 días" />
     </div>

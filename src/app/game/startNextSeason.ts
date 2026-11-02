@@ -6,7 +6,9 @@ import type { CompetitionCalendarPolicy, Season } from '@/domain/season'
 import { createCompetition } from '@/domain/competition'
 import type { WorldCompetitionFormatDocument } from '@/domain/competition'
 import { updateGameWorld, type GameWorld } from '@/domain/world'
-import { generateNcaaLikeSchedule, generateRoundRobinSchedule } from '@/engine/competition/schedule'
+import { generateNcaaConfiguredSchedule, generateNcaaLikeSchedule, generateRoundRobinSchedule } from '@/engine/competition/schedule'
+import { matrixRoundCount } from '@/engine/competition/schedule/MatrixScheduleGenerator'
+import { generateGLeagueTipOffGames } from '@/engine/competition/GLeagueTipOff'
 import { materializeTradeWindows } from '@/engine/competition'
 import { getSeasonHistoryRecord, isSeasonComplete } from '@/engine/season'
 import { reconcileExpiredPlayerContracts } from '@/engine/market'
@@ -111,7 +113,11 @@ export function startNextSeasonTransitionFor(world: GameWorld, seasonId: Season[
   const nextIds = nextSeasonIds(world, linkedEditions.length + 1)
   const nextParticipants = buildNextCompetitionParticipants(world, primary.id)
   const primaryRoundCount = regularSeasonRoundCount(world, primary, nextParticipants.length)
-  const nextPrimaryCalendar = primary.calendarPolicy === undefined ? undefined : rollForwardCalendar(primary.calendarPolicy, editionIds, primaryRoundCount)
+  const gleagueTwoPhase = primary.worldCompetitionFormat?.variants[0]?.nodes.some(
+    node => node.role === 'REGULAR_SEASON' && node.pairing?.payload.bdm_gleague_two_phase_v1 === true,
+  ) ?? false
+  const nextPrimaryCalendar = primary.calendarPolicy === undefined ? undefined
+    : rollForwardCalendar(primary.calendarPolicy, editionIds, gleagueTwoPhase ? undefined : primaryRoundCount)
   const nextPrimary = createSeason({
     id: nextIds[0]!,
     competitionId: primary.competitionId,
@@ -123,6 +129,7 @@ export function startNextSeasonTransitionFor(world: GameWorld, seasonId: Season[
       conferenceMembershipSnapshot: (primary.conferenceMembershipSnapshot ?? world.conferenceMemberships.filter((membership) => membership.seasonId === primary.id))
         .map((membership) => ({ ...membership, seasonId: nextIds[0]! })),
     }),
+    ...(primary.ncaaSchedulePolicy === undefined ? {} : { ncaaSchedulePolicy: primary.ncaaSchedulePolicy }),
     ...(primary.worldCompetitionFormat === undefined ? {} : { worldCompetitionFormat: rollForwardFormat(primary.worldCompetitionFormat, editionIds, nextSeasonLabel(primary)) }),
     ...(nextPrimaryCalendar === undefined ? {} : { calendarPolicy: nextPrimaryCalendar }),
   })
@@ -156,12 +163,13 @@ export function startNextSeasonTransitionFor(world: GameWorld, seasonId: Season[
   const regularSeasonNodeKey = nextPrimary.worldCompetitionFormat?.variants.find((variant) => variant.isRealVariant)?.nodes.find((node) => node.role === 'REGULAR_SEASON')?.key
     ?? nextPrimary.worldCompetitionFormat?.variants[0]?.nodes.find((node) => node.role === 'REGULAR_SEASON')?.key
   const schedule = staged.ecosystems[staged.competitions[nextPrimary.competitionId]!.ecosystemId]!.kind === 'ncaaLike'
-    ? generateNcaaLikeSchedule(staged, nextPrimary.id)
+    ? nextPrimary.ncaaSchedulePolicy === undefined ? generateNcaaLikeSchedule(staged, nextPrimary.id) : generateNcaaConfiguredSchedule(staged, nextPrimary.id, nextPrimary.ncaaSchedulePolicy)
     : generateRoundRobinSchedule({ world: staged, seasonId: nextPrimary.id, ...(regularSeasonNodeKey === undefined ? {} : { competitionStageKey: regularSeasonNodeKey }) })
   // Rollover creates a future season without moving the world clock. Contract expiry is a
   // daily lifecycle event, so evaluating it at the successor start date would release players
   // whose contracts expire between today and that future date before the clock reaches expiry.
-  const reconciled = reconcileExpiredPlayerContracts(updateGameWorld(staged, { games: [...Object.values(staged.games), ...schedule] }), staged.currentDate)
+  const tipoffSchedule = generateGLeagueTipOffGames(staged, nextPrimary.id)
+  const reconciled = reconcileExpiredPlayerContracts(updateGameWorld(staged, { games: [...Object.values(staged.games), ...schedule, ...tipoffSchedule] }), staged.currentDate)
   const repair = repairWorldAtLifecycleBoundary(reconciled)
   let next = repair.world
   const ecosystem = next.ecosystems[next.competitions[nextPrimary.competitionId]!.ecosystemId]!
@@ -189,7 +197,7 @@ export function startNextSeasonTransitionFor(world: GameWorld, seasonId: Season[
     targetSeasonId: nextPrimary.id,
     competitionId: primary.competitionId,
     participantDerivation: hasTierResolution ? 'promotionRelegationResolution' : primary.participantTeamIds === undefined ? 'competitionConfiguration' : 'seasonSnapshot',
-    schedule: { kind: 'generated', fixtureCount: schedule.length },
+    schedule: { kind: 'generated', fixtureCount: schedule.length + tipoffSchedule.length },
     linkedCompetitionSeasonIds: nextLinkedSeasons.map((season) => String(season.id)),
     annualHooksExecuted: Object.freeze(annualHooksExecuted),
     diagnostics: Object.freeze([]),
@@ -302,6 +310,15 @@ function rollForwardCalendar(calendar: CompetitionCalendarPolicy, editionIds: Re
 
 function regularSeasonRoundCount(world: GameWorld, season: Season, participantCount: number): number {
   const meetingsPerPair = world.competitions[season.competitionId]!.rules.schedule.meetingsPerPair
+  const variant = season.worldCompetitionFormat?.variants.find(v => v.isRealVariant) ?? season.worldCompetitionFormat?.variants[0]
+  const node = variant?.nodes.find(n => n.role === 'REGULAR_SEASON')
+  if (node?.pairing?.type === 'FIXED_SCHEDULE' && node.pairing.payload.bdm_generated_matrix_v1 === true) {
+    const target = node.pairing.payload.games_per_team
+    if (typeof target !== 'number') throw new RangeError('Invalid generated matrix games_per_team')
+    return matrixRoundCount(participantCount, target)
+  }
+  const scope = variant?.nodes.find(n => n.role === 'REGULAR_SEASON')?.opponentScope
+  if (scope?.type === 'SAME_GROUP' && typeof scope.payload.generated_group_count === 'number') participantCount = Math.ceil(participantCount / scope.payload.generated_group_count)
   return (participantCount - 1 + participantCount % 2) * meetingsPerPair
 }
 

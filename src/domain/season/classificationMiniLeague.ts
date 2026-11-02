@@ -13,7 +13,7 @@ export interface ClassificationResult {
  * A terminal unresolved draw requires an external draw authority; provisional
  * display order by ID is never used to qualify teams from a completed stage.
  */
-export function rankClassificationMiniLeague(entries: readonly FinalStandingLine[], results: readonly ClassificationResult[], final: boolean): FinalStandingLine[] {
+export function rankClassificationMiniLeague(entries: readonly FinalStandingLine[], results: readonly ClassificationResult[], final: boolean, deterministicDraw = false): FinalStandingLine[] {
   const split = (rows: readonly FinalStandingLine[], value: (r: FinalStandingLine) => number) => {
     const groups = new Map<number, FinalStandingLine[]>()
     for (const row of rows) { const key = value(row); groups.set(key, [...(groups.get(key) ?? []), row]) }
@@ -39,7 +39,7 @@ export function rankClassificationMiniLeague(entries: readonly FinalStandingLine
       const groups = split(rows, value)
       if (groups.length > 1) return groups.flatMap(rankTied)
     }
-    if (final) throw Error('Classification draw authority required for tied teams: ' + [...ids].sort().join(', '))
+    if (final && !deterministicDraw) throw Error('Classification draw authority required for tied teams: ' + [...ids].sort().join(', '))
     return [...rows].sort((a, b) => a.teamId.localeCompare(b.teamId))
   }
   return split(entries, r => 2 * r.wins + r.losses).flatMap(rankTied).map((r, i) => ({ ...r, position: i + 1 }))

@@ -1,0 +1,2282 @@
+{
+  "schemaVersion": 2,
+  "division": "NCAA Division I",
+  "gender": "women",
+  "season": "2026-27",
+  "conferenceId": "america-east-conference",
+  "sourceQuality": "SECONDARY_DIRECTORY_NOT_OFFICIALLY_VERIFIED",
+  "coverageStatus": "SOURCE_PUBLISHED_FIXTURES_PARTIAL_UNTIL_OFFICIAL_CONFERENCE_VERIFIED",
+  "note": "Every published D1 vs D1 fixture from current member school source pages, without fictional games. Includes nonconference/interconference games. Some 2026-27 opponents and additional games can remain unpublished. Do NOT treat as a full official schedule.",
+  "memberCount": 9,
+  "memberProgramIds": [
+    "ncaa:2026-27:women:binghamton-bearcats",
+    "ncaa:2026-27:women:bryant-bulldogs",
+    "ncaa:2026-27:women:maine-black-bears",
+    "ncaa:2026-27:women:new-hampshire-wildcats",
+    "ncaa:2026-27:women:njit-highlanders",
+    "ncaa:2026-27:women:ualbany-great-danes",
+    "ncaa:2026-27:women:umass-lowell-river-hawks",
+    "ncaa:2026-27:women:umbc-retrievers",
+    "ncaa:2026-27:women:vermont-catamounts"
+  ],
+  "sourcePages": [
+    "https://www.ncaawomensbasketball.com/womens-college-basketball/team/binghamton-bearcats",
+    "https://www.ncaawomensbasketball.com/womens-college-basketball/team/bryant-bulldogs",
+    "https://www.ncaawomensbasketball.com/womens-college-basketball/team/maine-black-bears",
+    "https://www.ncaawomensbasketball.com/womens-college-basketball/team/new-hampshire-wildcats",
+    "https://www.ncaawomensbasketball.com/womens-college-basketball/team/njit-highlanders",
+    "https://www.ncaawomensbasketball.com/womens-college-basketball/team/ualbany-great-danes",
+    "https://www.ncaawomensbasketball.com/womens-college-basketball/team/umass-lowell-river-hawks",
+    "https://www.ncaawomensbasketball.com/womens-college-basketball/team/umbc-retrievers",
+    "https://www.ncaawomensbasketball.com/womens-college-basketball/team/vermont-catamounts"
+  ],
+  "coverage": [
+    {
+      "id": "ncaa:2026-27:women:binghamton-bearcats",
+      "listedGames": 24,
+      "inUniverseGames": 24
+    },
+    {
+      "id": "ncaa:2026-27:women:bryant-bulldogs",
+      "listedGames": 28,
+      "inUniverseGames": 27
+    },
+    {
+      "id": "ncaa:2026-27:women:maine-black-bears",
+      "listedGames": 29,
+      "inUniverseGames": 29
+    },
+    {
+      "id": "ncaa:2026-27:women:new-hampshire-wildcats",
+      "listedGames": 30,
+      "inUniverseGames": 28
+    },
+    {
+      "id": "ncaa:2026-27:women:njit-highlanders",
+      "listedGames": 29,
+      "inUniverseGames": 29
+    },
+    {
+      "id": "ncaa:2026-27:women:ualbany-great-danes",
+      "listedGames": 31,
+      "inUniverseGames": 30
+    },
+    {
+      "id": "ncaa:2026-27:women:umass-lowell-river-hawks",
+      "listedGames": 30,
+      "inUniverseGames": 29
+    },
+    {
+      "id": "ncaa:2026-27:women:umbc-retrievers",
+      "listedGames": 28,
+      "inUniverseGames": 26
+    },
+    {
+      "id": "ncaa:2026-27:women:vermont-catamounts",
+      "listedGames": 23,
+      "inUniverseGames": 23
+    }
+  ],
+  "fixtureCount": 173,
+  "nonD1OrUnmatched": [
+    {
+      "origin": "ncaa:2026-27:women:bryant-bulldogs",
+      "issue": "opponent_not_in_d1",
+      "date": "2026-11-02",
+      "homeId": "ncaa:2026-27:women:bryant-bulldogs",
+      "awayId": "ncaa:2026-27:women:mit-engineers"
+    },
+    {
+      "origin": "ncaa:2026-27:women:new-hampshire-wildcats",
+      "issue": "opponent_not_in_d1",
+      "date": "2026-11-02",
+      "homeId": "ncaa:2026-27:women:new-hampshire-wildcats",
+      "awayId": "ncaa:2026-27:women:new-england-college-pilgrims"
+    },
+    {
+      "origin": "ncaa:2026-27:women:new-hampshire-wildcats",
+      "issue": "opponent_not_in_d1",
+      "date": "2026-12-03",
+      "homeId": "ncaa:2026-27:women:new-hampshire-wildcats",
+      "awayId": "ncaa:2026-27:women:vermont-state-johnson-badgers"
+    },
+    {
+      "origin": "ncaa:2026-27:women:ualbany-great-danes",
+      "issue": "opponent_not_in_d1",
+      "date": "2026-11-25",
+      "homeId": "ncaa:2026-27:women:ualbany-great-danes",
+      "awayId": "ncaa:2026-27:women:union-garnet-chargers"
+    },
+    {
+      "origin": "ncaa:2026-27:women:umass-lowell-river-hawks",
+      "issue": "opponent_not_in_d1",
+      "date": "2026-11-02",
+      "homeId": "ncaa:2026-27:women:umass-lowell-river-hawks",
+      "awayId": "ncaa:2026-27:women:saint-anselm-hawks"
+    },
+    {
+      "origin": "ncaa:2026-27:women:umbc-retrievers",
+      "issue": "opponent_not_in_d1",
+      "date": "2026-11-02",
+      "homeId": "ncaa:2026-27:women:umbc-retrievers",
+      "awayId": "ncaa:2026-27:women:stevenson-mustangs"
+    },
+    {
+      "origin": "ncaa:2026-27:women:umbc-retrievers",
+      "issue": "opponent_not_in_d1",
+      "date": "2026-12-12",
+      "homeId": "ncaa:2026-27:women:umbc-retrievers",
+      "awayId": "ncaa:2026-27:women:notre-dame-md-gators"
+    }
+  ],
+  "fixtures": [
+    {
+      "gameId": "401913784",
+      "gender": "women",
+      "date": "2026-11-02",
+      "homeProgramId": "ncaa:2026-27:women:njit-highlanders",
+      "awayProgramId": "ncaa:2026-27:women:rider-broncs",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/rider-broncs-vs-njit-highlanders-401913784",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:njit-highlanders"
+      ]
+    },
+    {
+      "gameId": "401913797",
+      "gender": "women",
+      "date": "2026-11-02",
+      "homeProgramId": "ncaa:2026-27:women:northeastern-huskies",
+      "awayProgramId": "ncaa:2026-27:women:ualbany-great-danes",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/ualbany-great-danes-vs-northeastern-huskies-401913797",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:ualbany-great-danes"
+      ]
+    },
+    {
+      "gameId": "401913755",
+      "gender": "women",
+      "date": "2026-11-05",
+      "homeProgramId": "ncaa:2026-27:women:bryant-bulldogs",
+      "awayProgramId": "ncaa:2026-27:women:marist-red-foxes",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/marist-red-foxes-vs-bryant-bulldogs-401913755",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:bryant-bulldogs"
+      ]
+    },
+    {
+      "gameId": "401913763",
+      "gender": "women",
+      "date": "2026-11-05",
+      "homeProgramId": "ncaa:2026-27:women:maine-black-bears",
+      "awayProgramId": "ncaa:2026-27:women:siena-saints",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/siena-saints-vs-maine-black-bears-401913763",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:maine-black-bears"
+      ]
+    },
+    {
+      "gameId": "401913773",
+      "gender": "women",
+      "date": "2026-11-05",
+      "homeProgramId": "ncaa:2026-27:women:new-hampshire-wildcats",
+      "awayProgramId": "ncaa:2026-27:women:canisius-golden-griffins",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/canisius-golden-griffins-vs-new-hampshire-wildcats-401913773",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:new-hampshire-wildcats"
+      ]
+    },
+    {
+      "gameId": "401913785",
+      "gender": "women",
+      "date": "2026-11-05",
+      "homeProgramId": "ncaa:2026-27:women:njit-highlanders",
+      "awayProgramId": "ncaa:2026-27:women:merrimack-warriors",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/merrimack-warriors-vs-njit-highlanders-401913785",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:njit-highlanders"
+      ]
+    },
+    {
+      "gameId": "401913798",
+      "gender": "women",
+      "date": "2026-11-05",
+      "homeProgramId": "ncaa:2026-27:women:ualbany-great-danes",
+      "awayProgramId": "ncaa:2026-27:women:manhattan-jaspers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/manhattan-jaspers-vs-ualbany-great-danes-401913798",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:ualbany-great-danes"
+      ]
+    },
+    {
+      "gameId": "401913811",
+      "gender": "women",
+      "date": "2026-11-05",
+      "homeProgramId": "ncaa:2026-27:women:umass-lowell-river-hawks",
+      "awayProgramId": "ncaa:2026-27:women:niagara-purple-eagles",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/niagara-purple-eagles-vs-umass-lowell-river-hawks-401913811",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:umass-lowell-river-hawks"
+      ]
+    },
+    {
+      "gameId": "401916036",
+      "gender": "women",
+      "date": "2026-11-05",
+      "homeProgramId": "ncaa:2026-27:women:umbc-retrievers",
+      "awayProgramId": "ncaa:2026-27:women:mount-st-mary-s-mountaineers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/mount-st-mary-s-mountaineers-vs-umbc-retrievers-401916036",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:umbc-retrievers"
+      ]
+    },
+    {
+      "gameId": "401916211",
+      "gender": "women",
+      "date": "2026-11-05",
+      "homeProgramId": "ncaa:2026-27:women:vermont-catamounts",
+      "awayProgramId": "ncaa:2026-27:women:quinnipiac-bobcats",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/quinnipiac-bobcats-vs-vermont-catamounts-401916211",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:vermont-catamounts"
+      ]
+    },
+    {
+      "gameId": "401915642",
+      "gender": "women",
+      "date": "2026-11-06",
+      "homeProgramId": "ncaa:2026-27:women:fairfield-stags",
+      "awayProgramId": "ncaa:2026-27:women:binghamton-bearcats",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/binghamton-bearcats-vs-fairfield-stags-401915642",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:binghamton-bearcats"
+      ]
+    },
+    {
+      "gameId": "401913756",
+      "gender": "women",
+      "date": "2026-11-08",
+      "homeProgramId": "ncaa:2026-27:women:manhattan-jaspers",
+      "awayProgramId": "ncaa:2026-27:women:bryant-bulldogs",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/bryant-bulldogs-vs-manhattan-jaspers-401913756",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:bryant-bulldogs"
+      ]
+    },
+    {
+      "gameId": "401913764",
+      "gender": "women",
+      "date": "2026-11-08",
+      "homeProgramId": "ncaa:2026-27:women:merrimack-warriors",
+      "awayProgramId": "ncaa:2026-27:women:maine-black-bears",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/maine-black-bears-vs-merrimack-warriors-401913764",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:maine-black-bears"
+      ]
+    },
+    {
+      "gameId": "401913774",
+      "gender": "women",
+      "date": "2026-11-08",
+      "homeProgramId": "ncaa:2026-27:women:niagara-purple-eagles",
+      "awayProgramId": "ncaa:2026-27:women:new-hampshire-wildcats",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/new-hampshire-wildcats-vs-niagara-purple-eagles-401913774",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:new-hampshire-wildcats"
+      ]
+    },
+    {
+      "gameId": "401913786",
+      "gender": "women",
+      "date": "2026-11-08",
+      "homeProgramId": "ncaa:2026-27:women:marist-red-foxes",
+      "awayProgramId": "ncaa:2026-27:women:njit-highlanders",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/njit-highlanders-vs-marist-red-foxes-401913786",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:njit-highlanders"
+      ]
+    },
+    {
+      "gameId": "401913799",
+      "gender": "women",
+      "date": "2026-11-08",
+      "homeProgramId": "ncaa:2026-27:women:mount-st-mary-s-mountaineers",
+      "awayProgramId": "ncaa:2026-27:women:ualbany-great-danes",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/ualbany-great-danes-vs-mount-st-mary-s-mountaineers-401913799",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:ualbany-great-danes"
+      ]
+    },
+    {
+      "gameId": "401913812",
+      "gender": "women",
+      "date": "2026-11-08",
+      "homeProgramId": "ncaa:2026-27:women:canisius-golden-griffins",
+      "awayProgramId": "ncaa:2026-27:women:umass-lowell-river-hawks",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/umass-lowell-river-hawks-vs-canisius-golden-griffins-401913812",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:umass-lowell-river-hawks"
+      ]
+    },
+    {
+      "gameId": "401915643",
+      "gender": "women",
+      "date": "2026-11-08",
+      "homeProgramId": "ncaa:2026-27:women:fairfield-stags",
+      "awayProgramId": "ncaa:2026-27:women:vermont-catamounts",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/vermont-catamounts-vs-fairfield-stags-401915643",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:vermont-catamounts"
+      ]
+    },
+    {
+      "gameId": "401916037",
+      "gender": "women",
+      "date": "2026-11-08",
+      "homeProgramId": "ncaa:2026-27:women:quinnipiac-bobcats",
+      "awayProgramId": "ncaa:2026-27:women:umbc-retrievers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/umbc-retrievers-vs-quinnipiac-bobcats-401916037",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:umbc-retrievers"
+      ]
+    },
+    {
+      "gameId": "401918033",
+      "gender": "women",
+      "date": "2026-11-08",
+      "homeProgramId": "ncaa:2026-27:women:siena-saints",
+      "awayProgramId": "ncaa:2026-27:women:binghamton-bearcats",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/binghamton-bearcats-vs-siena-saints-401918033",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:binghamton-bearcats"
+      ]
+    },
+    {
+      "gameId": "401906033",
+      "gender": "women",
+      "date": "2026-11-11",
+      "homeProgramId": "ncaa:2026-27:women:boston-college-eagles",
+      "awayProgramId": "ncaa:2026-27:women:umass-lowell-river-hawks",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/umass-lowell-river-hawks-vs-boston-college-eagles-401906033",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:umass-lowell-river-hawks"
+      ]
+    },
+    {
+      "gameId": "401913036",
+      "gender": "women",
+      "date": "2026-11-11",
+      "homeProgramId": "ncaa:2026-27:women:providence-friars",
+      "awayProgramId": "ncaa:2026-27:women:bryant-bulldogs",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/bryant-bulldogs-vs-providence-friars-401913036",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:bryant-bulldogs"
+      ]
+    },
+    {
+      "gameId": "401913775",
+      "gender": "women",
+      "date": "2026-11-11",
+      "homeProgramId": "ncaa:2026-27:women:dartmouth-big-green",
+      "awayProgramId": "ncaa:2026-27:women:new-hampshire-wildcats",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/new-hampshire-wildcats-vs-dartmouth-big-green-401913775",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:new-hampshire-wildcats"
+      ]
+    },
+    {
+      "gameId": "401913787",
+      "gender": "women",
+      "date": "2026-11-11",
+      "homeProgramId": "ncaa:2026-27:women:lafayette-leopards",
+      "awayProgramId": "ncaa:2026-27:women:njit-highlanders",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/njit-highlanders-vs-lafayette-leopards-401913787",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:njit-highlanders"
+      ]
+    },
+    {
+      "gameId": "401913800",
+      "gender": "women",
+      "date": "2026-11-11",
+      "homeProgramId": "ncaa:2026-27:women:ole-miss-rebels",
+      "awayProgramId": "ncaa:2026-27:women:ualbany-great-danes",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/ualbany-great-danes-vs-ole-miss-rebels-401913800",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:ualbany-great-danes"
+      ]
+    },
+    {
+      "gameId": "401918903",
+      "gender": "women",
+      "date": "2026-11-11",
+      "homeProgramId": "ncaa:2026-27:women:vermont-catamounts",
+      "awayProgramId": "ncaa:2026-27:women:oregon-ducks",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/oregon-ducks-vs-vermont-catamounts-401918903",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:vermont-catamounts"
+      ]
+    },
+    {
+      "gameId": "401919553",
+      "gender": "women",
+      "date": "2026-11-11",
+      "homeProgramId": "ncaa:2026-27:women:colgate-raiders",
+      "awayProgramId": "ncaa:2026-27:women:binghamton-bearcats",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/binghamton-bearcats-vs-colgate-raiders-401919553",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:binghamton-bearcats"
+      ]
+    },
+    {
+      "gameId": "401913765",
+      "gender": "women",
+      "date": "2026-11-13",
+      "homeProgramId": "ncaa:2026-27:women:maine-black-bears",
+      "awayProgramId": "ncaa:2026-27:women:oregon-ducks",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/oregon-ducks-vs-maine-black-bears-401913765",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:maine-black-bears"
+      ]
+    },
+    {
+      "gameId": "401916038",
+      "gender": "women",
+      "date": "2026-11-13",
+      "homeProgramId": "ncaa:2026-27:women:umbc-retrievers",
+      "awayProgramId": "ncaa:2026-27:women:morgan-state-lady-bears",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/morgan-state-lady-bears-vs-umbc-retrievers-401916038",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:umbc-retrievers"
+      ]
+    },
+    {
+      "gameId": "401911768",
+      "gender": "women",
+      "date": "2026-11-14",
+      "homeProgramId": "ncaa:2026-27:women:st-bonaventure-bonnies",
+      "awayProgramId": "ncaa:2026-27:women:binghamton-bearcats",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/binghamton-bearcats-vs-st-bonaventure-bonnies-401911768",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:binghamton-bearcats"
+      ]
+    },
+    {
+      "gameId": "401913776",
+      "gender": "women",
+      "date": "2026-11-14",
+      "homeProgramId": "ncaa:2026-27:women:new-hampshire-wildcats",
+      "awayProgramId": "ncaa:2026-27:women:colgate-raiders",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/colgate-raiders-vs-new-hampshire-wildcats-401913776",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:new-hampshire-wildcats"
+      ]
+    },
+    {
+      "gameId": "401913788",
+      "gender": "women",
+      "date": "2026-11-14",
+      "homeProgramId": "ncaa:2026-27:women:dartmouth-big-green",
+      "awayProgramId": "ncaa:2026-27:women:njit-highlanders",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/njit-highlanders-vs-dartmouth-big-green-401913788",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:njit-highlanders"
+      ]
+    },
+    {
+      "gameId": "401909685",
+      "gender": "women",
+      "date": "2026-11-15",
+      "homeProgramId": "ncaa:2026-27:women:maine-black-bears",
+      "awayProgramId": "ncaa:2026-27:women:brown-bears",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/brown-bears-vs-maine-black-bears-401909685",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:maine-black-bears"
+      ]
+    },
+    {
+      "gameId": "401913813",
+      "gender": "women",
+      "date": "2026-11-15",
+      "homeProgramId": "ncaa:2026-27:women:umass-lowell-river-hawks",
+      "awayProgramId": "ncaa:2026-27:women:west-georgia-wolves",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/west-georgia-wolves-vs-umass-lowell-river-hawks-401913813",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:umass-lowell-river-hawks"
+      ]
+    },
+    {
+      "gameId": "401913007",
+      "gender": "women",
+      "date": "2026-11-16",
+      "homeProgramId": "ncaa:2026-27:women:rutgers-scarlet-knights",
+      "awayProgramId": "ncaa:2026-27:women:ualbany-great-danes",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/ualbany-great-danes-vs-rutgers-scarlet-knights-401913007",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:ualbany-great-danes"
+      ]
+    },
+    {
+      "gameId": "401913757",
+      "gender": "women",
+      "date": "2026-11-16",
+      "homeProgramId": "ncaa:2026-27:women:holy-cross-crusaders",
+      "awayProgramId": "ncaa:2026-27:women:bryant-bulldogs",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/bryant-bulldogs-vs-holy-cross-crusaders-401913757",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:bryant-bulldogs"
+      ]
+    },
+    {
+      "gameId": "401913748",
+      "gender": "women",
+      "date": "2026-11-18",
+      "homeProgramId": "ncaa:2026-27:women:pittsburgh-panthers",
+      "awayProgramId": "ncaa:2026-27:women:umbc-retrievers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/umbc-retrievers-vs-pittsburgh-panthers-401913748",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:umbc-retrievers"
+      ]
+    },
+    {
+      "gameId": "401913777",
+      "gender": "women",
+      "date": "2026-11-18",
+      "homeProgramId": "ncaa:2026-27:women:yale-bulldogs",
+      "awayProgramId": "ncaa:2026-27:women:new-hampshire-wildcats",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/new-hampshire-wildcats-vs-yale-bulldogs-401913777",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:new-hampshire-wildcats"
+      ]
+    },
+    {
+      "gameId": "401913789",
+      "gender": "women",
+      "date": "2026-11-18",
+      "homeProgramId": "ncaa:2026-27:women:njit-highlanders",
+      "awayProgramId": "ncaa:2026-27:women:delaware-state-hornets",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/delaware-state-hornets-vs-njit-highlanders-401913789",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:njit-highlanders"
+      ]
+    },
+    {
+      "gameId": "401913801",
+      "gender": "women",
+      "date": "2026-11-18",
+      "homeProgramId": "ncaa:2026-27:women:ualbany-great-danes",
+      "awayProgramId": "ncaa:2026-27:women:bucknell-bison",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/bucknell-bison-vs-ualbany-great-danes-401913801",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:ualbany-great-danes"
+      ]
+    },
+    {
+      "gameId": "401913814",
+      "gender": "women",
+      "date": "2026-11-18",
+      "homeProgramId": "ncaa:2026-27:women:umass-lowell-river-hawks",
+      "awayProgramId": "ncaa:2026-27:women:central-connecticut-blue-devils",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/central-connecticut-blue-devils-vs-umass-lowell-river-hawks-401913814",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:umass-lowell-river-hawks"
+      ]
+    },
+    {
+      "gameId": "401913866",
+      "gender": "women",
+      "date": "2026-11-18",
+      "homeProgramId": "ncaa:2026-27:women:south-florida-bulls",
+      "awayProgramId": "ncaa:2026-27:women:binghamton-bearcats",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/binghamton-bearcats-vs-south-florida-bulls-401913866",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:binghamton-bearcats"
+      ]
+    },
+    {
+      "gameId": "401913766",
+      "gender": "women",
+      "date": "2026-11-19",
+      "homeProgramId": "ncaa:2026-27:women:maine-black-bears",
+      "awayProgramId": "ncaa:2026-27:women:vcu-rams",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/vcu-rams-vs-maine-black-bears-401913766",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:maine-black-bears"
+      ]
+    },
+    {
+      "gameId": "401920339",
+      "gender": "women",
+      "date": "2026-11-19",
+      "homeProgramId": "ncaa:2026-27:women:vermont-catamounts",
+      "awayProgramId": "ncaa:2026-27:women:high-point-panthers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/high-point-panthers-vs-vermont-catamounts-401920339",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:vermont-catamounts"
+      ]
+    },
+    {
+      "gameId": "401909687",
+      "gender": "women",
+      "date": "2026-11-21",
+      "homeProgramId": "ncaa:2026-27:women:brown-bears",
+      "awayProgramId": "ncaa:2026-27:women:umbc-retrievers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/umbc-retrievers-vs-brown-bears-401909687",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:umbc-retrievers"
+      ]
+    },
+    {
+      "gameId": "401913758",
+      "gender": "women",
+      "date": "2026-11-21",
+      "homeProgramId": "ncaa:2026-27:women:northeastern-huskies",
+      "awayProgramId": "ncaa:2026-27:women:bryant-bulldogs",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/bryant-bulldogs-vs-northeastern-huskies-401913758",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:bryant-bulldogs"
+      ]
+    },
+    {
+      "gameId": "401913790",
+      "gender": "women",
+      "date": "2026-11-21",
+      "homeProgramId": "ncaa:2026-27:women:marquette-golden-eagles",
+      "awayProgramId": "ncaa:2026-27:women:njit-highlanders",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/njit-highlanders-vs-marquette-golden-eagles-401913790",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:njit-highlanders"
+      ]
+    },
+    {
+      "gameId": "401913802",
+      "gender": "women",
+      "date": "2026-11-21",
+      "homeProgramId": "ncaa:2026-27:women:ualbany-great-danes",
+      "awayProgramId": "ncaa:2026-27:women:cornell-big-red",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/cornell-big-red-vs-ualbany-great-danes-401913802",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:ualbany-great-danes"
+      ]
+    },
+    {
+      "gameId": "401913767",
+      "gender": "women",
+      "date": "2026-11-22",
+      "homeProgramId": "ncaa:2026-27:women:maine-black-bears",
+      "awayProgramId": "ncaa:2026-27:women:pennsylvania-quakers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/pennsylvania-quakers-vs-maine-black-bears-401913767",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:maine-black-bears"
+      ]
+    },
+    {
+      "gameId": "401913778",
+      "gender": "women",
+      "date": "2026-11-22",
+      "homeProgramId": "ncaa:2026-27:women:boston-university-terriers",
+      "awayProgramId": "ncaa:2026-27:women:new-hampshire-wildcats",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/new-hampshire-wildcats-vs-boston-university-terriers-401913778",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:new-hampshire-wildcats"
+      ]
+    },
+    {
+      "gameId": "401913815",
+      "gender": "women",
+      "date": "2026-11-22",
+      "homeProgramId": "ncaa:2026-27:women:merrimack-warriors",
+      "awayProgramId": "ncaa:2026-27:women:umass-lowell-river-hawks",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/umass-lowell-river-hawks-vs-merrimack-warriors-401913815",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:umass-lowell-river-hawks"
+      ]
+    },
+    {
+      "gameId": "401916101",
+      "gender": "women",
+      "date": "2026-11-23",
+      "homeProgramId": "ncaa:2026-27:women:marist-red-foxes",
+      "awayProgramId": "ncaa:2026-27:women:binghamton-bearcats",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/binghamton-bearcats-vs-marist-red-foxes-401916101",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:binghamton-bearcats"
+      ]
+    },
+    {
+      "gameId": "401913039",
+      "gender": "women",
+      "date": "2026-11-24",
+      "homeProgramId": "ncaa:2026-27:women:providence-friars",
+      "awayProgramId": "ncaa:2026-27:women:new-hampshire-wildcats",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/new-hampshire-wildcats-vs-providence-friars-401913039",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:new-hampshire-wildcats"
+      ]
+    },
+    {
+      "gameId": "401913759",
+      "gender": "women",
+      "date": "2026-11-24",
+      "homeProgramId": "ncaa:2026-27:women:bryant-bulldogs",
+      "awayProgramId": "ncaa:2026-27:women:stonehill-skyhawks",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/stonehill-skyhawks-vs-bryant-bulldogs-401913759",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:bryant-bulldogs"
+      ]
+    },
+    {
+      "gameId": "401913791",
+      "gender": "women",
+      "date": "2026-11-25",
+      "homeProgramId": "ncaa:2026-27:women:saint-peter-s-peacocks",
+      "awayProgramId": "ncaa:2026-27:women:njit-highlanders",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/njit-highlanders-vs-saint-peter-s-peacocks-401913791",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:njit-highlanders"
+      ]
+    },
+    {
+      "gameId": "401913040",
+      "gender": "women",
+      "date": "2026-11-27",
+      "homeProgramId": "ncaa:2026-27:women:providence-friars",
+      "awayProgramId": "ncaa:2026-27:women:binghamton-bearcats",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/binghamton-bearcats-vs-providence-friars-401913040",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:binghamton-bearcats"
+      ]
+    },
+    {
+      "gameId": "401915670",
+      "gender": "women",
+      "date": "2026-11-27",
+      "homeProgramId": "ncaa:2026-27:women:iona-gaels",
+      "awayProgramId": "ncaa:2026-27:women:umbc-retrievers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/umbc-retrievers-vs-iona-gaels-401915670",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:umbc-retrievers"
+      ]
+    },
+    {
+      "gameId": "401915877",
+      "gender": "women",
+      "date": "2026-11-27",
+      "homeProgramId": "ncaa:2026-27:women:kentucky-wildcats",
+      "awayProgramId": "ncaa:2026-27:women:maine-black-bears",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/maine-black-bears-vs-kentucky-wildcats-401915877",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:maine-black-bears"
+      ]
+    },
+    {
+      "gameId": "401921081",
+      "gender": "women",
+      "date": "2026-11-27",
+      "homeProgramId": "ncaa:2026-27:women:george-mason-patriots",
+      "awayProgramId": "ncaa:2026-27:women:vermont-catamounts",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/vermont-catamounts-vs-george-mason-patriots-401921081",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:vermont-catamounts"
+      ]
+    },
+    {
+      "gameId": "401913816",
+      "gender": "women",
+      "date": "2026-11-28",
+      "homeProgramId": "ncaa:2026-27:women:umass-lowell-river-hawks",
+      "awayProgramId": "ncaa:2026-27:women:new-haven-chargers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/new-haven-chargers-vs-umass-lowell-river-hawks-401913816",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:umass-lowell-river-hawks"
+      ]
+    },
+    {
+      "gameId": "401915879",
+      "gender": "women",
+      "date": "2026-11-28",
+      "homeProgramId": "ncaa:2026-27:women:maine-black-bears",
+      "awayProgramId": "ncaa:2026-27:women:tulane-green-wave",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/tulane-green-wave-vs-maine-black-bears-401915879",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:maine-black-bears"
+      ]
+    },
+    {
+      "gameId": "401913760",
+      "gender": "women",
+      "date": "2026-11-29",
+      "homeProgramId": "ncaa:2026-27:women:bryant-bulldogs",
+      "awayProgramId": "ncaa:2026-27:women:boston-university-terriers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/boston-university-terriers-vs-bryant-bulldogs-401913760",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:bryant-bulldogs"
+      ]
+    },
+    {
+      "gameId": "401913779",
+      "gender": "women",
+      "date": "2026-11-29",
+      "homeProgramId": "ncaa:2026-27:women:central-connecticut-blue-devils",
+      "awayProgramId": "ncaa:2026-27:women:new-hampshire-wildcats",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/new-hampshire-wildcats-vs-central-connecticut-blue-devils-401913779",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:new-hampshire-wildcats"
+      ]
+    },
+    {
+      "gameId": "401913804",
+      "gender": "women",
+      "date": "2026-11-29",
+      "homeProgramId": "ncaa:2026-27:women:ualbany-great-danes",
+      "awayProgramId": "ncaa:2026-27:women:stonehill-skyhawks",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/stonehill-skyhawks-vs-ualbany-great-danes-401913804",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:ualbany-great-danes"
+      ]
+    },
+    {
+      "gameId": "401913768",
+      "gender": "women",
+      "date": "2026-12-02",
+      "homeProgramId": "ncaa:2026-27:women:michigan-state-spartans",
+      "awayProgramId": "ncaa:2026-27:women:maine-black-bears",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/maine-black-bears-vs-michigan-state-spartans-401913768",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:maine-black-bears"
+      ]
+    },
+    {
+      "gameId": "401913792",
+      "gender": "women",
+      "date": "2026-12-02",
+      "homeProgramId": "ncaa:2026-27:women:njit-highlanders",
+      "awayProgramId": "ncaa:2026-27:women:monmouth-hawks",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/monmouth-hawks-vs-njit-highlanders-401913792",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:njit-highlanders"
+      ]
+    },
+    {
+      "gameId": "401913817",
+      "gender": "women",
+      "date": "2026-12-02",
+      "homeProgramId": "ncaa:2026-27:women:umass-lowell-river-hawks",
+      "awayProgramId": "ncaa:2026-27:women:boston-university-terriers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/boston-university-terriers-vs-umass-lowell-river-hawks-401913817",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:umass-lowell-river-hawks"
+      ]
+    },
+    {
+      "gameId": "401919495",
+      "gender": "women",
+      "date": "2026-12-02",
+      "homeProgramId": "ncaa:2026-27:women:army-black-knights",
+      "awayProgramId": "ncaa:2026-27:women:binghamton-bearcats",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/binghamton-bearcats-vs-army-black-knights-401919495",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:binghamton-bearcats"
+      ]
+    },
+    {
+      "gameId": "401916039",
+      "gender": "women",
+      "date": "2026-12-03",
+      "homeProgramId": "ncaa:2026-27:women:navy-midshipmen",
+      "awayProgramId": "ncaa:2026-27:women:umbc-retrievers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/umbc-retrievers-vs-navy-midshipmen-401916039",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:umbc-retrievers"
+      ]
+    },
+    {
+      "gameId": "401913793",
+      "gender": "women",
+      "date": "2026-12-05",
+      "homeProgramId": "ncaa:2026-27:women:manhattan-jaspers",
+      "awayProgramId": "ncaa:2026-27:women:njit-highlanders",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/njit-highlanders-vs-manhattan-jaspers-401913793",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:njit-highlanders"
+      ]
+    },
+    {
+      "gameId": "401913805",
+      "gender": "women",
+      "date": "2026-12-05",
+      "homeProgramId": "ncaa:2026-27:women:siena-saints",
+      "awayProgramId": "ncaa:2026-27:women:ualbany-great-danes",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/ualbany-great-danes-vs-siena-saints-401913805",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:ualbany-great-danes"
+      ]
+    },
+    {
+      "gameId": "401913818",
+      "gender": "women",
+      "date": "2026-12-05",
+      "homeProgramId": "ncaa:2026-27:women:stonehill-skyhawks",
+      "awayProgramId": "ncaa:2026-27:women:umass-lowell-river-hawks",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/umass-lowell-river-hawks-vs-stonehill-skyhawks-401913818",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:umass-lowell-river-hawks"
+      ]
+    },
+    {
+      "gameId": "401913769",
+      "gender": "women",
+      "date": "2026-12-06",
+      "homeProgramId": "ncaa:2026-27:women:maine-black-bears",
+      "awayProgramId": "ncaa:2026-27:women:quinnipiac-bobcats",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/quinnipiac-bobcats-vs-maine-black-bears-401913769",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:maine-black-bears"
+      ]
+    },
+    {
+      "gameId": "401913781",
+      "gender": "women",
+      "date": "2026-12-06",
+      "homeProgramId": "ncaa:2026-27:women:new-haven-chargers",
+      "awayProgramId": "ncaa:2026-27:women:new-hampshire-wildcats",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/new-hampshire-wildcats-vs-new-haven-chargers-401913781",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:new-hampshire-wildcats"
+      ]
+    },
+    {
+      "gameId": "401916040",
+      "gender": "women",
+      "date": "2026-12-07",
+      "homeProgramId": "ncaa:2026-27:women:umbc-retrievers",
+      "awayProgramId": "ncaa:2026-27:women:coppin-state-eagles",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/coppin-state-eagles-vs-umbc-retrievers-401916040",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:umbc-retrievers"
+      ]
+    },
+    {
+      "gameId": "401913761",
+      "gender": "women",
+      "date": "2026-12-08",
+      "homeProgramId": "ncaa:2026-27:women:bryant-bulldogs",
+      "awayProgramId": "ncaa:2026-27:women:merrimack-warriors",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/merrimack-warriors-vs-bryant-bulldogs-401913761",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:bryant-bulldogs"
+      ]
+    },
+    {
+      "gameId": "401913806",
+      "gender": "women",
+      "date": "2026-12-08",
+      "homeProgramId": "ncaa:2026-27:women:ualbany-great-danes",
+      "awayProgramId": "ncaa:2026-27:women:colgate-raiders",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/colgate-raiders-vs-ualbany-great-danes-401913806",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:ualbany-great-danes"
+      ]
+    },
+    {
+      "gameId": "401911666",
+      "gender": "women",
+      "date": "2026-12-09",
+      "homeProgramId": "ncaa:2026-27:women:new-hampshire-wildcats",
+      "awayProgramId": "ncaa:2026-27:women:brown-bears",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/brown-bears-vs-new-hampshire-wildcats-401911666",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:new-hampshire-wildcats"
+      ]
+    },
+    {
+      "gameId": "401913770",
+      "gender": "women",
+      "date": "2026-12-09",
+      "homeProgramId": "ncaa:2026-27:women:maine-black-bears",
+      "awayProgramId": "ncaa:2026-27:women:fairfield-stags",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/fairfield-stags-vs-maine-black-bears-401913770",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:maine-black-bears"
+      ]
+    },
+    {
+      "gameId": "401913794",
+      "gender": "women",
+      "date": "2026-12-09",
+      "homeProgramId": "ncaa:2026-27:women:fairleigh-dickinson-knights",
+      "awayProgramId": "ncaa:2026-27:women:njit-highlanders",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/njit-highlanders-vs-fairleigh-dickinson-knights-401913794",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:njit-highlanders"
+      ]
+    },
+    {
+      "gameId": "401913819",
+      "gender": "women",
+      "date": "2026-12-09",
+      "homeProgramId": "ncaa:2026-27:women:umass-lowell-river-hawks",
+      "awayProgramId": "ncaa:2026-27:women:dartmouth-big-green",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/dartmouth-big-green-vs-umass-lowell-river-hawks-401913819",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:umass-lowell-river-hawks"
+      ]
+    },
+    {
+      "gameId": "401906061",
+      "gender": "women",
+      "date": "2026-12-10",
+      "homeProgramId": "ncaa:2026-27:women:boston-college-eagles",
+      "awayProgramId": "ncaa:2026-27:women:bryant-bulldogs",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/bryant-bulldogs-vs-boston-college-eagles-401906061",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:bryant-bulldogs"
+      ]
+    },
+    {
+      "gameId": "401913043",
+      "gender": "women",
+      "date": "2026-12-12",
+      "homeProgramId": "ncaa:2026-27:women:providence-friars",
+      "awayProgramId": "ncaa:2026-27:women:umass-lowell-river-hawks",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/umass-lowell-river-hawks-vs-providence-friars-401913043",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:umass-lowell-river-hawks"
+      ]
+    },
+    {
+      "gameId": "401913807",
+      "gender": "women",
+      "date": "2026-12-12",
+      "homeProgramId": "ncaa:2026-27:women:hofstra-pride",
+      "awayProgramId": "ncaa:2026-27:women:ualbany-great-danes",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/ualbany-great-danes-vs-hofstra-pride-401913807",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:ualbany-great-danes"
+      ]
+    },
+    {
+      "gameId": "401913762",
+      "gender": "women",
+      "date": "2026-12-13",
+      "homeProgramId": "ncaa:2026-27:women:central-connecticut-blue-devils",
+      "awayProgramId": "ncaa:2026-27:women:bryant-bulldogs",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/bryant-bulldogs-vs-central-connecticut-blue-devils-401913762",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:bryant-bulldogs"
+      ]
+    },
+    {
+      "gameId": "401913771",
+      "gender": "women",
+      "date": "2026-12-13",
+      "homeProgramId": "ncaa:2026-27:women:rhode-island-rams",
+      "awayProgramId": "ncaa:2026-27:women:maine-black-bears",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/maine-black-bears-vs-rhode-island-rams-401913771",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:maine-black-bears"
+      ]
+    },
+    {
+      "gameId": "401913782",
+      "gender": "women",
+      "date": "2026-12-13",
+      "homeProgramId": "ncaa:2026-27:women:vcu-rams",
+      "awayProgramId": "ncaa:2026-27:women:new-hampshire-wildcats",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/new-hampshire-wildcats-vs-vcu-rams-401913782",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:new-hampshire-wildcats"
+      ]
+    },
+    {
+      "gameId": "401913795",
+      "gender": "women",
+      "date": "2026-12-13",
+      "homeProgramId": "ncaa:2026-27:women:njit-highlanders",
+      "awayProgramId": "ncaa:2026-27:women:sacred-heart-pioneers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/sacred-heart-pioneers-vs-njit-highlanders-401913795",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:njit-highlanders"
+      ]
+    },
+    {
+      "gameId": "401913808",
+      "gender": "women",
+      "date": "2026-12-16",
+      "homeProgramId": "ncaa:2026-27:women:south-carolina-gamecocks",
+      "awayProgramId": "ncaa:2026-27:women:ualbany-great-danes",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/ualbany-great-danes-vs-south-carolina-gamecocks-401913808",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:ualbany-great-danes"
+      ]
+    },
+    {
+      "gameId": "401913820",
+      "gender": "women",
+      "date": "2026-12-16",
+      "homeProgramId": "ncaa:2026-27:women:massachusetts-minutewomen",
+      "awayProgramId": "ncaa:2026-27:women:umass-lowell-river-hawks",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/umass-lowell-river-hawks-vs-massachusetts-minutewomen-401913820",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:umass-lowell-river-hawks"
+      ]
+    },
+    {
+      "gameId": "401916042",
+      "gender": "women",
+      "date": "2026-12-18",
+      "homeProgramId": "ncaa:2026-27:women:maryland-terrapins",
+      "awayProgramId": "ncaa:2026-27:women:umbc-retrievers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/umbc-retrievers-vs-maryland-terrapins-401916042",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:umbc-retrievers"
+      ]
+    },
+    {
+      "gameId": "401911774",
+      "gender": "women",
+      "date": "2026-12-19",
+      "homeProgramId": "ncaa:2026-27:women:ualbany-great-danes",
+      "awayProgramId": "ncaa:2026-27:women:st-bonaventure-bonnies",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/st-bonaventure-bonnies-vs-ualbany-great-danes-401911774",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:ualbany-great-danes"
+      ]
+    },
+    {
+      "gameId": "401919520",
+      "gender": "women",
+      "date": "2026-12-19",
+      "homeProgramId": "ncaa:2026-27:women:boston-university-terriers",
+      "awayProgramId": "ncaa:2026-27:women:vermont-catamounts",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/vermont-catamounts-vs-boston-university-terriers-401919520",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:vermont-catamounts"
+      ]
+    },
+    {
+      "gameId": "401911667",
+      "gender": "women",
+      "date": "2026-12-21",
+      "homeProgramId": "ncaa:2026-27:women:bryant-bulldogs",
+      "awayProgramId": "ncaa:2026-27:women:brown-bears",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/brown-bears-vs-bryant-bulldogs-401911667",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:bryant-bulldogs"
+      ]
+    },
+    {
+      "gameId": "401913674",
+      "gender": "women",
+      "date": "2026-12-21",
+      "homeProgramId": "ncaa:2026-27:women:george-washington-revolutionaries",
+      "awayProgramId": "ncaa:2026-27:women:maine-black-bears",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/maine-black-bears-vs-george-washington-revolutionaries-401913674",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:maine-black-bears"
+      ]
+    },
+    {
+      "gameId": "401913809",
+      "gender": "women",
+      "date": "2026-12-21",
+      "homeProgramId": "ncaa:2026-27:women:massachusetts-minutewomen",
+      "awayProgramId": "ncaa:2026-27:women:ualbany-great-danes",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/ualbany-great-danes-vs-massachusetts-minutewomen-401913809",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:ualbany-great-danes"
+      ]
+    },
+    {
+      "gameId": "401916043",
+      "gender": "women",
+      "date": "2026-12-21",
+      "homeProgramId": "ncaa:2026-27:women:umbc-retrievers",
+      "awayProgramId": "ncaa:2026-27:women:american-university-eagles",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/american-university-eagles-vs-umbc-retrievers-401916043",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:umbc-retrievers"
+      ]
+    },
+    {
+      "gameId": "401913821",
+      "gender": "women",
+      "date": "2026-12-22",
+      "homeProgramId": "ncaa:2026-27:women:northeastern-huskies",
+      "awayProgramId": "ncaa:2026-27:women:umass-lowell-river-hawks",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/umass-lowell-river-hawks-vs-northeastern-huskies-401913821",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:umass-lowell-river-hawks"
+      ]
+    },
+    {
+      "gameId": "401913783",
+      "gender": "women",
+      "date": "2026-12-28",
+      "homeProgramId": "ncaa:2026-27:women:new-hampshire-wildcats",
+      "awayProgramId": "ncaa:2026-27:women:stonehill-skyhawks",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/stonehill-skyhawks-vs-new-hampshire-wildcats-401913783",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:new-hampshire-wildcats"
+      ]
+    },
+    {
+      "gameId": "401913796",
+      "gender": "women",
+      "date": "2026-12-28",
+      "homeProgramId": "ncaa:2026-27:women:drexel-dragons",
+      "awayProgramId": "ncaa:2026-27:women:njit-highlanders",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/njit-highlanders-vs-drexel-dragons-401913796",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:njit-highlanders"
+      ]
+    },
+    {
+      "gameId": "401921398",
+      "gender": "women",
+      "date": "2026-12-28",
+      "homeProgramId": "ncaa:2026-27:women:dartmouth-big-green",
+      "awayProgramId": "ncaa:2026-27:women:vermont-catamounts",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/vermont-catamounts-vs-dartmouth-big-green-401921398",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:vermont-catamounts"
+      ]
+    },
+    {
+      "gameId": "401913343",
+      "gender": "women",
+      "date": "2026-12-31",
+      "homeProgramId": "ncaa:2026-27:women:binghamton-bearcats",
+      "awayProgramId": "ncaa:2026-27:women:umbc-retrievers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/umbc-retrievers-vs-binghamton-bearcats-401913343",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:binghamton-bearcats",
+        "ncaa:2026-27:women:umbc-retrievers"
+      ]
+    },
+    {
+      "gameId": "401913344",
+      "gender": "women",
+      "date": "2026-12-31",
+      "homeProgramId": "ncaa:2026-27:women:maine-black-bears",
+      "awayProgramId": "ncaa:2026-27:women:vermont-catamounts",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/vermont-catamounts-vs-maine-black-bears-401913344",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:maine-black-bears",
+        "ncaa:2026-27:women:vermont-catamounts"
+      ]
+    },
+    {
+      "gameId": "401913345",
+      "gender": "women",
+      "date": "2026-12-31",
+      "homeProgramId": "ncaa:2026-27:women:new-hampshire-wildcats",
+      "awayProgramId": "ncaa:2026-27:women:bryant-bulldogs",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/bryant-bulldogs-vs-new-hampshire-wildcats-401913345",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:bryant-bulldogs",
+        "ncaa:2026-27:women:new-hampshire-wildcats"
+      ]
+    },
+    {
+      "gameId": "401913346",
+      "gender": "women",
+      "date": "2026-12-31",
+      "homeProgramId": "ncaa:2026-27:women:umass-lowell-river-hawks",
+      "awayProgramId": "ncaa:2026-27:women:ualbany-great-danes",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/ualbany-great-danes-vs-umass-lowell-river-hawks-401913346",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:ualbany-great-danes",
+        "ncaa:2026-27:women:umass-lowell-river-hawks"
+      ]
+    },
+    {
+      "gameId": "401913347",
+      "gender": "women",
+      "date": "2027-01-02",
+      "homeProgramId": "ncaa:2026-27:women:maine-black-bears",
+      "awayProgramId": "ncaa:2026-27:women:bryant-bulldogs",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/bryant-bulldogs-vs-maine-black-bears-401913347",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:bryant-bulldogs",
+        "ncaa:2026-27:women:maine-black-bears"
+      ]
+    },
+    {
+      "gameId": "401913348",
+      "gender": "women",
+      "date": "2027-01-02",
+      "homeProgramId": "ncaa:2026-27:women:vermont-catamounts",
+      "awayProgramId": "ncaa:2026-27:women:binghamton-bearcats",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/binghamton-bearcats-vs-vermont-catamounts-401913348",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:binghamton-bearcats",
+        "ncaa:2026-27:women:vermont-catamounts"
+      ]
+    },
+    {
+      "gameId": "401913349",
+      "gender": "women",
+      "date": "2027-01-03",
+      "homeProgramId": "ncaa:2026-27:women:umbc-retrievers",
+      "awayProgramId": "ncaa:2026-27:women:njit-highlanders",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/njit-highlanders-vs-umbc-retrievers-401913349",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:njit-highlanders",
+        "ncaa:2026-27:women:umbc-retrievers"
+      ]
+    },
+    {
+      "gameId": "401913350",
+      "gender": "women",
+      "date": "2027-01-03",
+      "homeProgramId": "ncaa:2026-27:women:new-hampshire-wildcats",
+      "awayProgramId": "ncaa:2026-27:women:umass-lowell-river-hawks",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/umass-lowell-river-hawks-vs-new-hampshire-wildcats-401913350",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:new-hampshire-wildcats",
+        "ncaa:2026-27:women:umass-lowell-river-hawks"
+      ]
+    },
+    {
+      "gameId": "401913351",
+      "gender": "women",
+      "date": "2027-01-07",
+      "homeProgramId": "ncaa:2026-27:women:bryant-bulldogs",
+      "awayProgramId": "ncaa:2026-27:women:ualbany-great-danes",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/ualbany-great-danes-vs-bryant-bulldogs-401913351",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:bryant-bulldogs",
+        "ncaa:2026-27:women:ualbany-great-danes"
+      ]
+    },
+    {
+      "gameId": "401913352",
+      "gender": "women",
+      "date": "2027-01-07",
+      "homeProgramId": "ncaa:2026-27:women:njit-highlanders",
+      "awayProgramId": "ncaa:2026-27:women:new-hampshire-wildcats",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/new-hampshire-wildcats-vs-njit-highlanders-401913352",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:new-hampshire-wildcats",
+        "ncaa:2026-27:women:njit-highlanders"
+      ]
+    },
+    {
+      "gameId": "401913353",
+      "gender": "women",
+      "date": "2027-01-07",
+      "homeProgramId": "ncaa:2026-27:women:umass-lowell-river-hawks",
+      "awayProgramId": "ncaa:2026-27:women:vermont-catamounts",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/vermont-catamounts-vs-umass-lowell-river-hawks-401913353",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:umass-lowell-river-hawks",
+        "ncaa:2026-27:women:vermont-catamounts"
+      ]
+    },
+    {
+      "gameId": "401913354",
+      "gender": "women",
+      "date": "2027-01-07",
+      "homeProgramId": "ncaa:2026-27:women:umbc-retrievers",
+      "awayProgramId": "ncaa:2026-27:women:maine-black-bears",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/maine-black-bears-vs-umbc-retrievers-401913354",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:maine-black-bears",
+        "ncaa:2026-27:women:umbc-retrievers"
+      ]
+    },
+    {
+      "gameId": "401913355",
+      "gender": "women",
+      "date": "2027-01-09",
+      "homeProgramId": "ncaa:2026-27:women:bryant-bulldogs",
+      "awayProgramId": "ncaa:2026-27:women:umass-lowell-river-hawks",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/umass-lowell-river-hawks-vs-bryant-bulldogs-401913355",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:bryant-bulldogs",
+        "ncaa:2026-27:women:umass-lowell-river-hawks"
+      ]
+    },
+    {
+      "gameId": "401913356",
+      "gender": "women",
+      "date": "2027-01-09",
+      "homeProgramId": "ncaa:2026-27:women:njit-highlanders",
+      "awayProgramId": "ncaa:2026-27:women:maine-black-bears",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/maine-black-bears-vs-njit-highlanders-401913356",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:maine-black-bears",
+        "ncaa:2026-27:women:njit-highlanders"
+      ]
+    },
+    {
+      "gameId": "401913357",
+      "gender": "women",
+      "date": "2027-01-09",
+      "homeProgramId": "ncaa:2026-27:women:umbc-retrievers",
+      "awayProgramId": "ncaa:2026-27:women:new-hampshire-wildcats",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/new-hampshire-wildcats-vs-umbc-retrievers-401913357",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:new-hampshire-wildcats",
+        "ncaa:2026-27:women:umbc-retrievers"
+      ]
+    },
+    {
+      "gameId": "401913358",
+      "gender": "women",
+      "date": "2027-01-10",
+      "homeProgramId": "ncaa:2026-27:women:ualbany-great-danes",
+      "awayProgramId": "ncaa:2026-27:women:binghamton-bearcats",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/binghamton-bearcats-vs-ualbany-great-danes-401913358",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:binghamton-bearcats",
+        "ncaa:2026-27:women:ualbany-great-danes"
+      ]
+    },
+    {
+      "gameId": "401913359",
+      "gender": "women",
+      "date": "2027-01-14",
+      "homeProgramId": "ncaa:2026-27:women:umbc-retrievers",
+      "awayProgramId": "ncaa:2026-27:women:bryant-bulldogs",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/bryant-bulldogs-vs-umbc-retrievers-401913359",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:bryant-bulldogs",
+        "ncaa:2026-27:women:umbc-retrievers"
+      ]
+    },
+    {
+      "gameId": "401913360",
+      "gender": "women",
+      "date": "2027-01-14",
+      "homeProgramId": "ncaa:2026-27:women:binghamton-bearcats",
+      "awayProgramId": "ncaa:2026-27:women:umass-lowell-river-hawks",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/umass-lowell-river-hawks-vs-binghamton-bearcats-401913360",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:binghamton-bearcats",
+        "ncaa:2026-27:women:umass-lowell-river-hawks"
+      ]
+    },
+    {
+      "gameId": "401913361",
+      "gender": "women",
+      "date": "2027-01-14",
+      "homeProgramId": "ncaa:2026-27:women:ualbany-great-danes",
+      "awayProgramId": "ncaa:2026-27:women:njit-highlanders",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/njit-highlanders-vs-ualbany-great-danes-401913361",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:njit-highlanders",
+        "ncaa:2026-27:women:ualbany-great-danes"
+      ]
+    },
+    {
+      "gameId": "401913362",
+      "gender": "women",
+      "date": "2027-01-14",
+      "homeProgramId": "ncaa:2026-27:women:vermont-catamounts",
+      "awayProgramId": "ncaa:2026-27:women:new-hampshire-wildcats",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/new-hampshire-wildcats-vs-vermont-catamounts-401913362",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:new-hampshire-wildcats",
+        "ncaa:2026-27:women:vermont-catamounts"
+      ]
+    },
+    {
+      "gameId": "401913363",
+      "gender": "women",
+      "date": "2027-01-16",
+      "homeProgramId": "ncaa:2026-27:women:umass-lowell-river-hawks",
+      "awayProgramId": "ncaa:2026-27:women:maine-black-bears",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/maine-black-bears-vs-umass-lowell-river-hawks-401913363",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:maine-black-bears",
+        "ncaa:2026-27:women:umass-lowell-river-hawks"
+      ]
+    },
+    {
+      "gameId": "401913364",
+      "gender": "women",
+      "date": "2027-01-16",
+      "homeProgramId": "ncaa:2026-27:women:binghamton-bearcats",
+      "awayProgramId": "ncaa:2026-27:women:njit-highlanders",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/njit-highlanders-vs-binghamton-bearcats-401913364",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:binghamton-bearcats",
+        "ncaa:2026-27:women:njit-highlanders"
+      ]
+    },
+    {
+      "gameId": "401913365",
+      "gender": "women",
+      "date": "2027-01-16",
+      "homeProgramId": "ncaa:2026-27:women:bryant-bulldogs",
+      "awayProgramId": "ncaa:2026-27:women:vermont-catamounts",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/vermont-catamounts-vs-bryant-bulldogs-401913365",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:bryant-bulldogs",
+        "ncaa:2026-27:women:vermont-catamounts"
+      ]
+    },
+    {
+      "gameId": "401913366",
+      "gender": "women",
+      "date": "2027-01-16",
+      "homeProgramId": "ncaa:2026-27:women:ualbany-great-danes",
+      "awayProgramId": "ncaa:2026-27:women:umbc-retrievers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/umbc-retrievers-vs-ualbany-great-danes-401913366",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:ualbany-great-danes",
+        "ncaa:2026-27:women:umbc-retrievers"
+      ]
+    },
+    {
+      "gameId": "401913367",
+      "gender": "women",
+      "date": "2027-01-21",
+      "homeProgramId": "ncaa:2026-27:women:maine-black-bears",
+      "awayProgramId": "ncaa:2026-27:women:binghamton-bearcats",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/binghamton-bearcats-vs-maine-black-bears-401913367",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:binghamton-bearcats",
+        "ncaa:2026-27:women:maine-black-bears"
+      ]
+    },
+    {
+      "gameId": "401913368",
+      "gender": "women",
+      "date": "2027-01-21",
+      "homeProgramId": "ncaa:2026-27:women:new-hampshire-wildcats",
+      "awayProgramId": "ncaa:2026-27:women:ualbany-great-danes",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/ualbany-great-danes-vs-new-hampshire-wildcats-401913368",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:new-hampshire-wildcats",
+        "ncaa:2026-27:women:ualbany-great-danes"
+      ]
+    },
+    {
+      "gameId": "401913369",
+      "gender": "women",
+      "date": "2027-01-21",
+      "homeProgramId": "ncaa:2026-27:women:njit-highlanders",
+      "awayProgramId": "ncaa:2026-27:women:bryant-bulldogs",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/bryant-bulldogs-vs-njit-highlanders-401913369",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:bryant-bulldogs",
+        "ncaa:2026-27:women:njit-highlanders"
+      ]
+    },
+    {
+      "gameId": "401913370",
+      "gender": "women",
+      "date": "2027-01-21",
+      "homeProgramId": "ncaa:2026-27:women:vermont-catamounts",
+      "awayProgramId": "ncaa:2026-27:women:umbc-retrievers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/umbc-retrievers-vs-vermont-catamounts-401913370",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:umbc-retrievers",
+        "ncaa:2026-27:women:vermont-catamounts"
+      ]
+    },
+    {
+      "gameId": "401913371",
+      "gender": "women",
+      "date": "2027-01-23",
+      "homeProgramId": "ncaa:2026-27:women:maine-black-bears",
+      "awayProgramId": "ncaa:2026-27:women:ualbany-great-danes",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/ualbany-great-danes-vs-maine-black-bears-401913371",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:maine-black-bears",
+        "ncaa:2026-27:women:ualbany-great-danes"
+      ]
+    },
+    {
+      "gameId": "401913372",
+      "gender": "women",
+      "date": "2027-01-23",
+      "homeProgramId": "ncaa:2026-27:women:new-hampshire-wildcats",
+      "awayProgramId": "ncaa:2026-27:women:binghamton-bearcats",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/binghamton-bearcats-vs-new-hampshire-wildcats-401913372",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:binghamton-bearcats",
+        "ncaa:2026-27:women:new-hampshire-wildcats"
+      ]
+    },
+    {
+      "gameId": "401913373",
+      "gender": "women",
+      "date": "2027-01-23",
+      "homeProgramId": "ncaa:2026-27:women:umass-lowell-river-hawks",
+      "awayProgramId": "ncaa:2026-27:women:umbc-retrievers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/umbc-retrievers-vs-umass-lowell-river-hawks-401913373",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:umass-lowell-river-hawks",
+        "ncaa:2026-27:women:umbc-retrievers"
+      ]
+    },
+    {
+      "gameId": "401913374",
+      "gender": "women",
+      "date": "2027-01-23",
+      "homeProgramId": "ncaa:2026-27:women:vermont-catamounts",
+      "awayProgramId": "ncaa:2026-27:women:njit-highlanders",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/njit-highlanders-vs-vermont-catamounts-401913374",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:njit-highlanders",
+        "ncaa:2026-27:women:vermont-catamounts"
+      ]
+    },
+    {
+      "gameId": "401913375",
+      "gender": "women",
+      "date": "2027-01-28",
+      "homeProgramId": "ncaa:2026-27:women:umbc-retrievers",
+      "awayProgramId": "ncaa:2026-27:women:binghamton-bearcats",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/binghamton-bearcats-vs-umbc-retrievers-401913375",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:binghamton-bearcats",
+        "ncaa:2026-27:women:umbc-retrievers"
+      ]
+    },
+    {
+      "gameId": "401913376",
+      "gender": "women",
+      "date": "2027-01-28",
+      "homeProgramId": "ncaa:2026-27:women:bryant-bulldogs",
+      "awayProgramId": "ncaa:2026-27:women:new-hampshire-wildcats",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/new-hampshire-wildcats-vs-bryant-bulldogs-401913376",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:bryant-bulldogs",
+        "ncaa:2026-27:women:new-hampshire-wildcats"
+      ]
+    },
+    {
+      "gameId": "401913377",
+      "gender": "women",
+      "date": "2027-01-28",
+      "homeProgramId": "ncaa:2026-27:women:ualbany-great-danes",
+      "awayProgramId": "ncaa:2026-27:women:umass-lowell-river-hawks",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/umass-lowell-river-hawks-vs-ualbany-great-danes-401913377",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:ualbany-great-danes",
+        "ncaa:2026-27:women:umass-lowell-river-hawks"
+      ]
+    },
+    {
+      "gameId": "401913378",
+      "gender": "women",
+      "date": "2027-01-28",
+      "homeProgramId": "ncaa:2026-27:women:vermont-catamounts",
+      "awayProgramId": "ncaa:2026-27:women:maine-black-bears",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/maine-black-bears-vs-vermont-catamounts-401913378",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:maine-black-bears",
+        "ncaa:2026-27:women:vermont-catamounts"
+      ]
+    },
+    {
+      "gameId": "401913379",
+      "gender": "women",
+      "date": "2027-01-30",
+      "homeProgramId": "ncaa:2026-27:women:new-hampshire-wildcats",
+      "awayProgramId": "ncaa:2026-27:women:maine-black-bears",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/maine-black-bears-vs-new-hampshire-wildcats-401913379",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:maine-black-bears",
+        "ncaa:2026-27:women:new-hampshire-wildcats"
+      ]
+    },
+    {
+      "gameId": "401913380",
+      "gender": "women",
+      "date": "2027-01-30",
+      "homeProgramId": "ncaa:2026-27:women:ualbany-great-danes",
+      "awayProgramId": "ncaa:2026-27:women:vermont-catamounts",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/vermont-catamounts-vs-ualbany-great-danes-401913380",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:ualbany-great-danes",
+        "ncaa:2026-27:women:vermont-catamounts"
+      ]
+    },
+    {
+      "gameId": "401913381",
+      "gender": "women",
+      "date": "2027-01-30",
+      "homeProgramId": "ncaa:2026-27:women:umass-lowell-river-hawks",
+      "awayProgramId": "ncaa:2026-27:women:njit-highlanders",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/njit-highlanders-vs-umass-lowell-river-hawks-401913381",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:njit-highlanders",
+        "ncaa:2026-27:women:umass-lowell-river-hawks"
+      ]
+    },
+    {
+      "gameId": "401913382",
+      "gender": "women",
+      "date": "2027-01-30",
+      "homeProgramId": "ncaa:2026-27:women:binghamton-bearcats",
+      "awayProgramId": "ncaa:2026-27:women:bryant-bulldogs",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/bryant-bulldogs-vs-binghamton-bearcats-401913382",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:binghamton-bearcats",
+        "ncaa:2026-27:women:bryant-bulldogs"
+      ]
+    },
+    {
+      "gameId": "401913383",
+      "gender": "women",
+      "date": "2027-02-04",
+      "homeProgramId": "ncaa:2026-27:women:bryant-bulldogs",
+      "awayProgramId": "ncaa:2026-27:women:umbc-retrievers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/umbc-retrievers-vs-bryant-bulldogs-401913383",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:bryant-bulldogs",
+        "ncaa:2026-27:women:umbc-retrievers"
+      ]
+    },
+    {
+      "gameId": "401913384",
+      "gender": "women",
+      "date": "2027-02-04",
+      "homeProgramId": "ncaa:2026-27:women:maine-black-bears",
+      "awayProgramId": "ncaa:2026-27:women:umass-lowell-river-hawks",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/umass-lowell-river-hawks-vs-maine-black-bears-401913384",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:maine-black-bears",
+        "ncaa:2026-27:women:umass-lowell-river-hawks"
+      ]
+    },
+    {
+      "gameId": "401913385",
+      "gender": "women",
+      "date": "2027-02-04",
+      "homeProgramId": "ncaa:2026-27:women:new-hampshire-wildcats",
+      "awayProgramId": "ncaa:2026-27:women:vermont-catamounts",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/vermont-catamounts-vs-new-hampshire-wildcats-401913385",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:new-hampshire-wildcats",
+        "ncaa:2026-27:women:vermont-catamounts"
+      ]
+    },
+    {
+      "gameId": "401913386",
+      "gender": "women",
+      "date": "2027-02-04",
+      "homeProgramId": "ncaa:2026-27:women:njit-highlanders",
+      "awayProgramId": "ncaa:2026-27:women:ualbany-great-danes",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/ualbany-great-danes-vs-njit-highlanders-401913386",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:njit-highlanders",
+        "ncaa:2026-27:women:ualbany-great-danes"
+      ]
+    },
+    {
+      "gameId": "401913387",
+      "gender": "women",
+      "date": "2027-02-06",
+      "homeProgramId": "ncaa:2026-27:women:umbc-retrievers",
+      "awayProgramId": "ncaa:2026-27:women:ualbany-great-danes",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/ualbany-great-danes-vs-umbc-retrievers-401913387",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:ualbany-great-danes",
+        "ncaa:2026-27:women:umbc-retrievers"
+      ]
+    },
+    {
+      "gameId": "401913388",
+      "gender": "women",
+      "date": "2027-02-06",
+      "homeProgramId": "ncaa:2026-27:women:njit-highlanders",
+      "awayProgramId": "ncaa:2026-27:women:binghamton-bearcats",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/binghamton-bearcats-vs-njit-highlanders-401913388",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:binghamton-bearcats",
+        "ncaa:2026-27:women:njit-highlanders"
+      ]
+    },
+    {
+      "gameId": "401913389",
+      "gender": "women",
+      "date": "2027-02-06",
+      "homeProgramId": "ncaa:2026-27:women:umass-lowell-river-hawks",
+      "awayProgramId": "ncaa:2026-27:women:new-hampshire-wildcats",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/new-hampshire-wildcats-vs-umass-lowell-river-hawks-401913389",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:new-hampshire-wildcats",
+        "ncaa:2026-27:women:umass-lowell-river-hawks"
+      ]
+    },
+    {
+      "gameId": "401913390",
+      "gender": "women",
+      "date": "2027-02-06",
+      "homeProgramId": "ncaa:2026-27:women:vermont-catamounts",
+      "awayProgramId": "ncaa:2026-27:women:bryant-bulldogs",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/bryant-bulldogs-vs-vermont-catamounts-401913390",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:bryant-bulldogs",
+        "ncaa:2026-27:women:vermont-catamounts"
+      ]
+    },
+    {
+      "gameId": "401913391",
+      "gender": "women",
+      "date": "2027-02-11",
+      "homeProgramId": "ncaa:2026-27:women:maine-black-bears",
+      "awayProgramId": "ncaa:2026-27:women:umbc-retrievers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/umbc-retrievers-vs-maine-black-bears-401913391",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:maine-black-bears",
+        "ncaa:2026-27:women:umbc-retrievers"
+      ]
+    },
+    {
+      "gameId": "401913392",
+      "gender": "women",
+      "date": "2027-02-11",
+      "homeProgramId": "ncaa:2026-27:women:binghamton-bearcats",
+      "awayProgramId": "ncaa:2026-27:women:vermont-catamounts",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/vermont-catamounts-vs-binghamton-bearcats-401913392",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:binghamton-bearcats",
+        "ncaa:2026-27:women:vermont-catamounts"
+      ]
+    },
+    {
+      "gameId": "401913393",
+      "gender": "women",
+      "date": "2027-02-11",
+      "homeProgramId": "ncaa:2026-27:women:new-hampshire-wildcats",
+      "awayProgramId": "ncaa:2026-27:women:njit-highlanders",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/njit-highlanders-vs-new-hampshire-wildcats-401913393",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:new-hampshire-wildcats",
+        "ncaa:2026-27:women:njit-highlanders"
+      ]
+    },
+    {
+      "gameId": "401913394",
+      "gender": "women",
+      "date": "2027-02-11",
+      "homeProgramId": "ncaa:2026-27:women:ualbany-great-danes",
+      "awayProgramId": "ncaa:2026-27:women:bryant-bulldogs",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/bryant-bulldogs-vs-ualbany-great-danes-401913394",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:bryant-bulldogs",
+        "ncaa:2026-27:women:ualbany-great-danes"
+      ]
+    },
+    {
+      "gameId": "401913395",
+      "gender": "women",
+      "date": "2027-02-13",
+      "homeProgramId": "ncaa:2026-27:women:maine-black-bears",
+      "awayProgramId": "ncaa:2026-27:women:njit-highlanders",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/njit-highlanders-vs-maine-black-bears-401913395",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:maine-black-bears",
+        "ncaa:2026-27:women:njit-highlanders"
+      ]
+    },
+    {
+      "gameId": "401913396",
+      "gender": "women",
+      "date": "2027-02-13",
+      "homeProgramId": "ncaa:2026-27:women:new-hampshire-wildcats",
+      "awayProgramId": "ncaa:2026-27:women:umbc-retrievers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/umbc-retrievers-vs-new-hampshire-wildcats-401913396",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:new-hampshire-wildcats",
+        "ncaa:2026-27:women:umbc-retrievers"
+      ]
+    },
+    {
+      "gameId": "401913397",
+      "gender": "women",
+      "date": "2027-02-13",
+      "homeProgramId": "ncaa:2026-27:women:umass-lowell-river-hawks",
+      "awayProgramId": "ncaa:2026-27:women:binghamton-bearcats",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/binghamton-bearcats-vs-umass-lowell-river-hawks-401913397",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:binghamton-bearcats",
+        "ncaa:2026-27:women:umass-lowell-river-hawks"
+      ]
+    },
+    {
+      "gameId": "401913398",
+      "gender": "women",
+      "date": "2027-02-13",
+      "homeProgramId": "ncaa:2026-27:women:vermont-catamounts",
+      "awayProgramId": "ncaa:2026-27:women:ualbany-great-danes",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/ualbany-great-danes-vs-vermont-catamounts-401913398",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:ualbany-great-danes",
+        "ncaa:2026-27:women:vermont-catamounts"
+      ]
+    },
+    {
+      "gameId": "401913399",
+      "gender": "women",
+      "date": "2027-02-18",
+      "homeProgramId": "ncaa:2026-27:women:binghamton-bearcats",
+      "awayProgramId": "ncaa:2026-27:women:ualbany-great-danes",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/ualbany-great-danes-vs-binghamton-bearcats-401913399",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:binghamton-bearcats",
+        "ncaa:2026-27:women:ualbany-great-danes"
+      ]
+    },
+    {
+      "gameId": "401913400",
+      "gender": "women",
+      "date": "2027-02-18",
+      "homeProgramId": "ncaa:2026-27:women:bryant-bulldogs",
+      "awayProgramId": "ncaa:2026-27:women:maine-black-bears",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/maine-black-bears-vs-bryant-bulldogs-401913400",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:bryant-bulldogs",
+        "ncaa:2026-27:women:maine-black-bears"
+      ]
+    },
+    {
+      "gameId": "401913401",
+      "gender": "women",
+      "date": "2027-02-18",
+      "homeProgramId": "ncaa:2026-27:women:njit-highlanders",
+      "awayProgramId": "ncaa:2026-27:women:umass-lowell-river-hawks",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/umass-lowell-river-hawks-vs-njit-highlanders-401913401",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:njit-highlanders",
+        "ncaa:2026-27:women:umass-lowell-river-hawks"
+      ]
+    },
+    {
+      "gameId": "401913402",
+      "gender": "women",
+      "date": "2027-02-18",
+      "homeProgramId": "ncaa:2026-27:women:umbc-retrievers",
+      "awayProgramId": "ncaa:2026-27:women:vermont-catamounts",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/vermont-catamounts-vs-umbc-retrievers-401913402",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:umbc-retrievers",
+        "ncaa:2026-27:women:vermont-catamounts"
+      ]
+    },
+    {
+      "gameId": "401913403",
+      "gender": "women",
+      "date": "2027-02-20",
+      "homeProgramId": "ncaa:2026-27:women:maine-black-bears",
+      "awayProgramId": "ncaa:2026-27:women:new-hampshire-wildcats",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/new-hampshire-wildcats-vs-maine-black-bears-401913403",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:maine-black-bears",
+        "ncaa:2026-27:women:new-hampshire-wildcats"
+      ]
+    },
+    {
+      "gameId": "401913404",
+      "gender": "women",
+      "date": "2027-02-20",
+      "homeProgramId": "ncaa:2026-27:women:njit-highlanders",
+      "awayProgramId": "ncaa:2026-27:women:vermont-catamounts",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/vermont-catamounts-vs-njit-highlanders-401913404",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:njit-highlanders",
+        "ncaa:2026-27:women:vermont-catamounts"
+      ]
+    },
+    {
+      "gameId": "401913405",
+      "gender": "women",
+      "date": "2027-02-20",
+      "homeProgramId": "ncaa:2026-27:women:umbc-retrievers",
+      "awayProgramId": "ncaa:2026-27:women:umass-lowell-river-hawks",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/umass-lowell-river-hawks-vs-umbc-retrievers-401913405",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:umass-lowell-river-hawks",
+        "ncaa:2026-27:women:umbc-retrievers"
+      ]
+    },
+    {
+      "gameId": "401913406",
+      "gender": "women",
+      "date": "2027-02-20",
+      "homeProgramId": "ncaa:2026-27:women:bryant-bulldogs",
+      "awayProgramId": "ncaa:2026-27:women:binghamton-bearcats",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/binghamton-bearcats-vs-bryant-bulldogs-401913406",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:binghamton-bearcats",
+        "ncaa:2026-27:women:bryant-bulldogs"
+      ]
+    },
+    {
+      "gameId": "401913407",
+      "gender": "women",
+      "date": "2027-02-25",
+      "homeProgramId": "ncaa:2026-27:women:binghamton-bearcats",
+      "awayProgramId": "ncaa:2026-27:women:maine-black-bears",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/maine-black-bears-vs-binghamton-bearcats-401913407",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:binghamton-bearcats",
+        "ncaa:2026-27:women:maine-black-bears"
+      ]
+    },
+    {
+      "gameId": "401913408",
+      "gender": "women",
+      "date": "2027-02-25",
+      "homeProgramId": "ncaa:2026-27:women:njit-highlanders",
+      "awayProgramId": "ncaa:2026-27:women:umbc-retrievers",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/umbc-retrievers-vs-njit-highlanders-401913408",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:njit-highlanders",
+        "ncaa:2026-27:women:umbc-retrievers"
+      ]
+    },
+    {
+      "gameId": "401913409",
+      "gender": "women",
+      "date": "2027-02-25",
+      "homeProgramId": "ncaa:2026-27:women:ualbany-great-danes",
+      "awayProgramId": "ncaa:2026-27:women:new-hampshire-wildcats",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/new-hampshire-wildcats-vs-ualbany-great-danes-401913409",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:new-hampshire-wildcats",
+        "ncaa:2026-27:women:ualbany-great-danes"
+      ]
+    },
+    {
+      "gameId": "401913410",
+      "gender": "women",
+      "date": "2027-02-25",
+      "homeProgramId": "ncaa:2026-27:women:umass-lowell-river-hawks",
+      "awayProgramId": "ncaa:2026-27:women:bryant-bulldogs",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/bryant-bulldogs-vs-umass-lowell-river-hawks-401913410",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:bryant-bulldogs",
+        "ncaa:2026-27:women:umass-lowell-river-hawks"
+      ]
+    },
+    {
+      "gameId": "401913411",
+      "gender": "women",
+      "date": "2027-02-27",
+      "homeProgramId": "ncaa:2026-27:women:binghamton-bearcats",
+      "awayProgramId": "ncaa:2026-27:women:new-hampshire-wildcats",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/new-hampshire-wildcats-vs-binghamton-bearcats-401913411",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:binghamton-bearcats",
+        "ncaa:2026-27:women:new-hampshire-wildcats"
+      ]
+    },
+    {
+      "gameId": "401913412",
+      "gender": "women",
+      "date": "2027-02-27",
+      "homeProgramId": "ncaa:2026-27:women:bryant-bulldogs",
+      "awayProgramId": "ncaa:2026-27:women:njit-highlanders",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/njit-highlanders-vs-bryant-bulldogs-401913412",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:bryant-bulldogs",
+        "ncaa:2026-27:women:njit-highlanders"
+      ]
+    },
+    {
+      "gameId": "401913413",
+      "gender": "women",
+      "date": "2027-02-27",
+      "homeProgramId": "ncaa:2026-27:women:ualbany-great-danes",
+      "awayProgramId": "ncaa:2026-27:women:maine-black-bears",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/maine-black-bears-vs-ualbany-great-danes-401913413",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:maine-black-bears",
+        "ncaa:2026-27:women:ualbany-great-danes"
+      ]
+    },
+    {
+      "gameId": "401913414",
+      "gender": "women",
+      "date": "2027-02-27",
+      "homeProgramId": "ncaa:2026-27:women:vermont-catamounts",
+      "awayProgramId": "ncaa:2026-27:women:umass-lowell-river-hawks",
+      "sourceUrl": "https://www.ncaawomensbasketball.com/womens-college-basketball/game/umass-lowell-river-hawks-vs-vermont-catamounts-401913414",
+      "evidenceKind": "SECONDARY_DIRECTORY",
+      "listedByTeamIds": [
+        "ncaa:2026-27:women:umass-lowell-river-hawks",
+        "ncaa:2026-27:women:vermont-catamounts"
+      ]
+    }
+  ]
+}

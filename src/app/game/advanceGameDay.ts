@@ -2,6 +2,7 @@ import { withDailyWorldValidation } from './DailyWorldValidation'
 import { advanceCompetitionLifecycles } from './CompetitionLifecycleCoordinator'
 import type { SimulationResolutionContext } from '@/app/worldSim/SimulationResolutionPolicy'
 import { compareGameDates } from '@/domain/date'
+import type { SeasonId } from '@/domain/ids'
 import type { GameWorld } from '@/domain/world'
 import { advanceDayWithTrace, getScheduledGamesToday, type CalendarDayLifecycleResult, type DailyLifecycleDiagnostic } from '@/engine/calendar'
 import { createPreMatchMediaOpportunity } from '@/engine/media'
@@ -32,6 +33,7 @@ import { ensureAiAcceptedPlayerContractSigningDecisions, type PlayerContractSign
 import { executeAcceptedRetentionAgreement, type RetentionSigningResult } from '@/app/contractRetention/RetentionSigningService'
 import { progressStaffPromises } from '@/app/coachLife/StaffProfessionalCommitment'
 import { queueVerifiedPlayerTrainingFeedback } from '@/app/coachLife/PlayerTrainingFeedback'
+import { progressRolePromiseInSeasonReviews, progressRolePromiseSeasonReviews } from '@/app/contractRetention/RolePromiseReviewService'
 import { initializeHumanSimulation, synchronizeHumanSimulationWithResult } from '@/app/hrpg/HumanSimulationService'
 
 export class SimulationAdvanceBlockedError extends Error {
@@ -362,6 +364,21 @@ function* advanceGameDayProcess(world: GameWorld, createSeed: MatchSeedFactory, 
     const integrityFailure = Object.values(current.games).sort((a, b) => a.id.localeCompare(b.id)).find((game) => game.status === 'scheduled' && compareGameDates(game.date, current.currentDate) < 0)
     if (integrityFailure !== undefined) throw Object.assign(new Error(`Scheduled Game ${integrityFailure.id} is in the past after the day transition`), { phaseId: 'SCHEDULE_INTEGRITY', kind: 'INVARIANT_VIOLATION' as const })
     phases.push({ phaseId: 'SCHEDULE_INTEGRITY', order: phases.length + 1, date: current.currentDate, ran: true, worldChanged: false, diagnostics: [], summary: 'No scheduled game remains in the past after the day transition.', elapsedMs: Math.round((performance.now() - integrityStart) * 100) / 100 })
+
+    activePhaseId = 'ROLE_PROMISE_MIDSEASON_REVIEW'
+    const beforeRolePromiseMidseason = current
+    current = progressRolePromiseInSeasonReviews(current, matches.map(game => game.id))
+    phases.push({ phaseId: activePhaseId, order: phases.length + 1, date: current.currentDate,
+      ran: matches.length > 0, worldChanged: current !== beforeRolePromiseMidseason, diagnostics: [],
+      summary: current === beforeRolePromiseMidseason ? 'No provisional sustained-breach review reached its evidence checkpoint.' : 'Recorded provisional role-promise concerns from accumulated match evidence.' })
+
+    activePhaseId = 'ROLE_PROMISE_SEASON_REVIEW'
+    const beforeRolePromiseReview = current
+    const newlyCompletedSeasonIds = Object.keys(current.seasonHistoryBySeasonId).filter(id => beforeCalendar.seasonHistoryBySeasonId[id as never] === undefined)
+    current = progressRolePromiseSeasonReviews(current, newlyCompletedSeasonIds as SeasonId[])
+    phases.push({ phaseId: activePhaseId, order: phases.length + 1, date: current.currentDate,
+      ran: current !== beforeRolePromiseReview, worldChanged: current !== beforeRolePromiseReview, diagnostics: [],
+      summary: current === beforeRolePromiseReview ? 'No sufficiently evidenced RolePromise review reached its season boundary.' : 'Reviewed role promises from completed match evidence at the season boundary.' })
 
     activePhaseId = 'PRE_MATCH_MEDIA'
     const mediaStart = performance.now()

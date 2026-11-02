@@ -72,7 +72,7 @@ function TradesBoard({
   readonly teamId: TeamId
   readonly rules: TradeRules
 }) {
-  const { negotiationId } = useNgWorkspaceNavigation()
+  const { negotiationId, playerId } = useNgWorkspaceNavigation()
   const proposeNegotiation = useGameStore((state) => state.proposeUserTradeNegotiation)
   const startCommitment = useGameStore((state) => state.startUserTradeCommitment)
   const recordCommitmentEvent = useGameStore((state) => state.recordUserTradeCommitmentEvent)
@@ -80,6 +80,7 @@ function TradesBoard({
   const [partnerId, setPartnerId] = useState<TeamId | ''>('')
   const [feedback, setFeedback] = useState<string | null>(null)
   const [loadedNegotiationId, setLoadedNegotiationId] = useState<string | null>(null)
+  const [loadedPlayerTargetId, setLoadedPlayerTargetId] = useState<string | null>(null)
   const teams = useMemo(
     () =>
       Object.values(world.teams).filter((item) =>
@@ -103,6 +104,20 @@ function TradesBoard({
     setLoadedNegotiationId(requestedNegotiation.id)
     setDraft(draftFromNegotiation(requestedNegotiation))
   }, [loadedNegotiationId, requestedNegotiation])
+
+  useEffect(() => {
+    if (playerId === null || playerId === loadedPlayerTargetId || world.players[playerId] === undefined) return
+    const sourceTeam = Object.values(world.teams).find((item) => item.rosterPlayerIds.includes(playerId))
+    if (sourceTeam === undefined || sourceTeam.id === teamId) return
+    setLoadedPlayerTargetId(playerId)
+    const seeded = changeTradeCounterparty(createTradeDraft(world), teamId, sourceTeam.id)
+    setDraft(addTradeMovement(seeded, {
+      asset: { kind: 'player', playerId },
+      fromTeamId: sourceTeam.id,
+      toTeamId: teamId,
+    }))
+    setFeedback(`Player target loaded from ${sourceTeam.name}. Review the canonical checks before proposing.`)
+  }, [loadedPlayerTargetId, playerId, teamId, world])
 
   return (
     <NgHoloShell appLabel="Trades" meta={presentation.allowed ? 'Valid' : 'Needs changes'} region="trades-workspace" teamId={teamId} title="Trade center">

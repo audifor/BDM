@@ -1,0 +1,1107 @@
+{
+  "schemaVersion": 1,
+  "season": "2026-27",
+  "coverage": "ASUN_BOTH_GENDERS_CONFERENCE_REGULAR_SEASONS_FULLY_SOURCED_OTHER_NCAA_GAPS_REMAIN",
+  "notes": "2026-27 NCAA ASUN men's AND women's REGULAR SEASONS fully sourced: 56 real conference games per category, each cross-confirmed by 2 distinct official school schedules on the ASUN conference website. Each of the 16 programs plays seven home and seven away games, two games against every conference rival. The complete NCAA men's and women's seasons, 64 conference tournaments, 76-team national championship selection, and nonconference calendars are not yet certified.",
+  "fixtures": [
+    {
+      "gender": "men",
+      "date": "2027-01-07",
+      "homeProgramId": "ncaa:2026-27:men:jacksonville-dolphins",
+      "awayProgramId": "ncaa:2026-27:men:lipscomb-bisons",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3667",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3668",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-01-07",
+      "homeProgramId": "ncaa:2026-27:men:north-florida-ospreys",
+      "awayProgramId": "ncaa:2026-27:men:bellarmine-knights",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3665",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3669",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-01-09",
+      "homeProgramId": "ncaa:2026-27:men:jacksonville-dolphins",
+      "awayProgramId": "ncaa:2026-27:men:bellarmine-knights",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3665",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3667",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-01-09",
+      "homeProgramId": "ncaa:2026-27:men:north-florida-ospreys",
+      "awayProgramId": "ncaa:2026-27:men:lipscomb-bisons",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3668",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3669",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-01-09",
+      "homeProgramId": "ncaa:2026-27:men:stetson-hatters",
+      "awayProgramId": "ncaa:2026-27:men:florida-gulf-coast-eagles",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3666",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3671",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-01-09",
+      "homeProgramId": "ncaa:2026-27:men:west-florida-argonauts",
+      "awayProgramId": "ncaa:2026-27:men:queens-university-royals",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3670",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3672",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-01-14",
+      "homeProgramId": "ncaa:2026-27:men:bellarmine-knights",
+      "awayProgramId": "ncaa:2026-27:men:florida-gulf-coast-eagles",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3665",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3666",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-01-14",
+      "homeProgramId": "ncaa:2026-27:men:lipscomb-bisons",
+      "awayProgramId": "ncaa:2026-27:men:stetson-hatters",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3668",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3671",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-01-14",
+      "homeProgramId": "ncaa:2026-27:men:queens-university-royals",
+      "awayProgramId": "ncaa:2026-27:men:jacksonville-dolphins",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3667",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3670",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-01-14",
+      "homeProgramId": "ncaa:2026-27:men:west-florida-argonauts",
+      "awayProgramId": "ncaa:2026-27:men:north-florida-ospreys",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3669",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3672",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-01-16",
+      "homeProgramId": "ncaa:2026-27:men:bellarmine-knights",
+      "awayProgramId": "ncaa:2026-27:men:stetson-hatters",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3665",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3671",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-01-16",
+      "homeProgramId": "ncaa:2026-27:men:lipscomb-bisons",
+      "awayProgramId": "ncaa:2026-27:men:florida-gulf-coast-eagles",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3666",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3668",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-01-16",
+      "homeProgramId": "ncaa:2026-27:men:queens-university-royals",
+      "awayProgramId": "ncaa:2026-27:men:north-florida-ospreys",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3669",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3670",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-01-16",
+      "homeProgramId": "ncaa:2026-27:men:west-florida-argonauts",
+      "awayProgramId": "ncaa:2026-27:men:jacksonville-dolphins",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3667",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3672",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-01-21",
+      "homeProgramId": "ncaa:2026-27:men:florida-gulf-coast-eagles",
+      "awayProgramId": "ncaa:2026-27:men:west-florida-argonauts",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3666",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3672",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-01-21",
+      "homeProgramId": "ncaa:2026-27:men:stetson-hatters",
+      "awayProgramId": "ncaa:2026-27:men:queens-university-royals",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3670",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3671",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-01-22",
+      "homeProgramId": "ncaa:2026-27:men:jacksonville-dolphins",
+      "awayProgramId": "ncaa:2026-27:men:north-florida-ospreys",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3667",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3669",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-01-23",
+      "homeProgramId": "ncaa:2026-27:men:florida-gulf-coast-eagles",
+      "awayProgramId": "ncaa:2026-27:men:queens-university-royals",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3666",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3670",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-01-23",
+      "homeProgramId": "ncaa:2026-27:men:lipscomb-bisons",
+      "awayProgramId": "ncaa:2026-27:men:bellarmine-knights",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3665",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3668",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-01-23",
+      "homeProgramId": "ncaa:2026-27:men:stetson-hatters",
+      "awayProgramId": "ncaa:2026-27:men:west-florida-argonauts",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3671",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3672",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-01-28",
+      "homeProgramId": "ncaa:2026-27:men:jacksonville-dolphins",
+      "awayProgramId": "ncaa:2026-27:men:florida-gulf-coast-eagles",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3666",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3667",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-01-28",
+      "homeProgramId": "ncaa:2026-27:men:north-florida-ospreys",
+      "awayProgramId": "ncaa:2026-27:men:stetson-hatters",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3669",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3671",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-01-28",
+      "homeProgramId": "ncaa:2026-27:men:queens-university-royals",
+      "awayProgramId": "ncaa:2026-27:men:bellarmine-knights",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3665",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3670",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-01-28",
+      "homeProgramId": "ncaa:2026-27:men:west-florida-argonauts",
+      "awayProgramId": "ncaa:2026-27:men:lipscomb-bisons",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3668",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3672",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-01-30",
+      "homeProgramId": "ncaa:2026-27:men:jacksonville-dolphins",
+      "awayProgramId": "ncaa:2026-27:men:stetson-hatters",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3667",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3671",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-01-30",
+      "homeProgramId": "ncaa:2026-27:men:north-florida-ospreys",
+      "awayProgramId": "ncaa:2026-27:men:florida-gulf-coast-eagles",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3666",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3669",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-01-30",
+      "homeProgramId": "ncaa:2026-27:men:queens-university-royals",
+      "awayProgramId": "ncaa:2026-27:men:lipscomb-bisons",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3668",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3670",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-01-30",
+      "homeProgramId": "ncaa:2026-27:men:west-florida-argonauts",
+      "awayProgramId": "ncaa:2026-27:men:bellarmine-knights",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3665",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3672",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-02-04",
+      "homeProgramId": "ncaa:2026-27:men:bellarmine-knights",
+      "awayProgramId": "ncaa:2026-27:men:jacksonville-dolphins",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3665",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3667",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-02-04",
+      "homeProgramId": "ncaa:2026-27:men:lipscomb-bisons",
+      "awayProgramId": "ncaa:2026-27:men:north-florida-ospreys",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3668",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3669",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-02-06",
+      "homeProgramId": "ncaa:2026-27:men:bellarmine-knights",
+      "awayProgramId": "ncaa:2026-27:men:north-florida-ospreys",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3665",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3669",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-02-06",
+      "homeProgramId": "ncaa:2026-27:men:florida-gulf-coast-eagles",
+      "awayProgramId": "ncaa:2026-27:men:stetson-hatters",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3666",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3671",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-02-06",
+      "homeProgramId": "ncaa:2026-27:men:lipscomb-bisons",
+      "awayProgramId": "ncaa:2026-27:men:jacksonville-dolphins",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3667",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3668",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-02-06",
+      "homeProgramId": "ncaa:2026-27:men:queens-university-royals",
+      "awayProgramId": "ncaa:2026-27:men:west-florida-argonauts",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3670",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3672",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-02-11",
+      "homeProgramId": "ncaa:2026-27:men:florida-gulf-coast-eagles",
+      "awayProgramId": "ncaa:2026-27:men:lipscomb-bisons",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3666",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3668",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-02-11",
+      "homeProgramId": "ncaa:2026-27:men:jacksonville-dolphins",
+      "awayProgramId": "ncaa:2026-27:men:west-florida-argonauts",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3667",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3672",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-02-11",
+      "homeProgramId": "ncaa:2026-27:men:north-florida-ospreys",
+      "awayProgramId": "ncaa:2026-27:men:queens-university-royals",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3669",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3670",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-02-11",
+      "homeProgramId": "ncaa:2026-27:men:stetson-hatters",
+      "awayProgramId": "ncaa:2026-27:men:bellarmine-knights",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3665",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3671",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-02-13",
+      "homeProgramId": "ncaa:2026-27:men:florida-gulf-coast-eagles",
+      "awayProgramId": "ncaa:2026-27:men:bellarmine-knights",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3665",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3666",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-02-13",
+      "homeProgramId": "ncaa:2026-27:men:jacksonville-dolphins",
+      "awayProgramId": "ncaa:2026-27:men:queens-university-royals",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3667",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3670",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-02-13",
+      "homeProgramId": "ncaa:2026-27:men:north-florida-ospreys",
+      "awayProgramId": "ncaa:2026-27:men:west-florida-argonauts",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3669",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3672",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-02-13",
+      "homeProgramId": "ncaa:2026-27:men:stetson-hatters",
+      "awayProgramId": "ncaa:2026-27:men:lipscomb-bisons",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3668",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3671",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-02-18",
+      "homeProgramId": "ncaa:2026-27:men:queens-university-royals",
+      "awayProgramId": "ncaa:2026-27:men:florida-gulf-coast-eagles",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3666",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3670",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-02-18",
+      "homeProgramId": "ncaa:2026-27:men:west-florida-argonauts",
+      "awayProgramId": "ncaa:2026-27:men:stetson-hatters",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3671",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3672",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-02-19",
+      "homeProgramId": "ncaa:2026-27:men:bellarmine-knights",
+      "awayProgramId": "ncaa:2026-27:men:lipscomb-bisons",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3665",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3668",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-02-19",
+      "homeProgramId": "ncaa:2026-27:men:north-florida-ospreys",
+      "awayProgramId": "ncaa:2026-27:men:jacksonville-dolphins",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3667",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3669",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-02-20",
+      "homeProgramId": "ncaa:2026-27:men:queens-university-royals",
+      "awayProgramId": "ncaa:2026-27:men:stetson-hatters",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3670",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3671",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-02-20",
+      "homeProgramId": "ncaa:2026-27:men:west-florida-argonauts",
+      "awayProgramId": "ncaa:2026-27:men:florida-gulf-coast-eagles",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3666",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3672",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-02-25",
+      "homeProgramId": "ncaa:2026-27:men:bellarmine-knights",
+      "awayProgramId": "ncaa:2026-27:men:west-florida-argonauts",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3665",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3672",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-02-25",
+      "homeProgramId": "ncaa:2026-27:men:florida-gulf-coast-eagles",
+      "awayProgramId": "ncaa:2026-27:men:north-florida-ospreys",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3666",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3669",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-02-25",
+      "homeProgramId": "ncaa:2026-27:men:lipscomb-bisons",
+      "awayProgramId": "ncaa:2026-27:men:queens-university-royals",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3668",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3670",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-02-25",
+      "homeProgramId": "ncaa:2026-27:men:stetson-hatters",
+      "awayProgramId": "ncaa:2026-27:men:jacksonville-dolphins",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3667",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3671",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-02-27",
+      "homeProgramId": "ncaa:2026-27:men:bellarmine-knights",
+      "awayProgramId": "ncaa:2026-27:men:queens-university-royals",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3665",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3670",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-02-27",
+      "homeProgramId": "ncaa:2026-27:men:florida-gulf-coast-eagles",
+      "awayProgramId": "ncaa:2026-27:men:jacksonville-dolphins",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3666",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3667",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-02-27",
+      "homeProgramId": "ncaa:2026-27:men:lipscomb-bisons",
+      "awayProgramId": "ncaa:2026-27:men:west-florida-argonauts",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3668",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3672",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "men",
+      "date": "2027-02-27",
+      "homeProgramId": "ncaa:2026-27:men:stetson-hatters",
+      "awayProgramId": "ncaa:2026-27:men:north-florida-ospreys",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3669",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3671",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-09",
+      "homeProgramId": "ncaa:2026-27:women:bellarmine-knights",
+      "awayProgramId": "ncaa:2026-27:women:lipscomb-bisons",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3654",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3658",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-09",
+      "homeProgramId": "ncaa:2026-27:women:florida-gulf-coast-eagles",
+      "awayProgramId": "ncaa:2026-27:women:stetson-hatters",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3656",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3663",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-09",
+      "homeProgramId": "ncaa:2026-27:women:jacksonville-dolphins",
+      "awayProgramId": "ncaa:2026-27:women:north-florida-ospreys",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3659",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3673",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-09",
+      "homeProgramId": "ncaa:2026-27:women:west-florida-argonauts",
+      "awayProgramId": "ncaa:2026-27:women:queens-university-royals",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3660",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3664",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-14",
+      "homeProgramId": "ncaa:2026-27:women:florida-gulf-coast-eagles",
+      "awayProgramId": "ncaa:2026-27:women:queens-university-royals",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3656",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3660",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-14",
+      "homeProgramId": "ncaa:2026-27:women:jacksonville-dolphins",
+      "awayProgramId": "ncaa:2026-27:women:lipscomb-bisons",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3658",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3673",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-14",
+      "homeProgramId": "ncaa:2026-27:women:north-florida-ospreys",
+      "awayProgramId": "ncaa:2026-27:women:bellarmine-knights",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3654",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3659",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-14",
+      "homeProgramId": "ncaa:2026-27:women:stetson-hatters",
+      "awayProgramId": "ncaa:2026-27:women:west-florida-argonauts",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3663",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3664",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-16",
+      "homeProgramId": "ncaa:2026-27:women:florida-gulf-coast-eagles",
+      "awayProgramId": "ncaa:2026-27:women:west-florida-argonauts",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3656",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3664",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-16",
+      "homeProgramId": "ncaa:2026-27:women:jacksonville-dolphins",
+      "awayProgramId": "ncaa:2026-27:women:bellarmine-knights",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3654",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3673",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-16",
+      "homeProgramId": "ncaa:2026-27:women:north-florida-ospreys",
+      "awayProgramId": "ncaa:2026-27:women:lipscomb-bisons",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3658",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3659",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-16",
+      "homeProgramId": "ncaa:2026-27:women:stetson-hatters",
+      "awayProgramId": "ncaa:2026-27:women:queens-university-royals",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3660",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3663",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-21",
+      "homeProgramId": "ncaa:2026-27:women:bellarmine-knights",
+      "awayProgramId": "ncaa:2026-27:women:florida-gulf-coast-eagles",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3654",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3656",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-21",
+      "homeProgramId": "ncaa:2026-27:women:lipscomb-bisons",
+      "awayProgramId": "ncaa:2026-27:women:stetson-hatters",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3658",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3663",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-21",
+      "homeProgramId": "ncaa:2026-27:women:queens-university-royals",
+      "awayProgramId": "ncaa:2026-27:women:jacksonville-dolphins",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3660",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3673",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-21",
+      "homeProgramId": "ncaa:2026-27:women:west-florida-argonauts",
+      "awayProgramId": "ncaa:2026-27:women:north-florida-ospreys",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3659",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3664",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-23",
+      "homeProgramId": "ncaa:2026-27:women:bellarmine-knights",
+      "awayProgramId": "ncaa:2026-27:women:stetson-hatters",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3654",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3663",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-23",
+      "homeProgramId": "ncaa:2026-27:women:lipscomb-bisons",
+      "awayProgramId": "ncaa:2026-27:women:florida-gulf-coast-eagles",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3656",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3658",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-23",
+      "homeProgramId": "ncaa:2026-27:women:queens-university-royals",
+      "awayProgramId": "ncaa:2026-27:women:north-florida-ospreys",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3659",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3660",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-23",
+      "homeProgramId": "ncaa:2026-27:women:west-florida-argonauts",
+      "awayProgramId": "ncaa:2026-27:women:jacksonville-dolphins",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3664",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3673",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-28",
+      "homeProgramId": "ncaa:2026-27:women:bellarmine-knights",
+      "awayProgramId": "ncaa:2026-27:women:queens-university-royals",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3654",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3660",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-28",
+      "homeProgramId": "ncaa:2026-27:women:jacksonville-dolphins",
+      "awayProgramId": "ncaa:2026-27:women:florida-gulf-coast-eagles",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3656",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3673",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-28",
+      "homeProgramId": "ncaa:2026-27:women:lipscomb-bisons",
+      "awayProgramId": "ncaa:2026-27:women:west-florida-argonauts",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3658",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3664",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-28",
+      "homeProgramId": "ncaa:2026-27:women:north-florida-ospreys",
+      "awayProgramId": "ncaa:2026-27:women:stetson-hatters",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3659",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3663",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-30",
+      "homeProgramId": "ncaa:2026-27:women:bellarmine-knights",
+      "awayProgramId": "ncaa:2026-27:women:west-florida-argonauts",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3654",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3664",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-30",
+      "homeProgramId": "ncaa:2026-27:women:jacksonville-dolphins",
+      "awayProgramId": "ncaa:2026-27:women:stetson-hatters",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3663",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3673",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-30",
+      "homeProgramId": "ncaa:2026-27:women:lipscomb-bisons",
+      "awayProgramId": "ncaa:2026-27:women:queens-university-royals",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3658",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3660",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-01-30",
+      "homeProgramId": "ncaa:2026-27:women:north-florida-ospreys",
+      "awayProgramId": "ncaa:2026-27:women:florida-gulf-coast-eagles",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3656",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3659",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-04",
+      "homeProgramId": "ncaa:2026-27:women:florida-gulf-coast-eagles",
+      "awayProgramId": "ncaa:2026-27:women:lipscomb-bisons",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3656",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3658",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-04",
+      "homeProgramId": "ncaa:2026-27:women:stetson-hatters",
+      "awayProgramId": "ncaa:2026-27:women:bellarmine-knights",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3654",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3663",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-06",
+      "homeProgramId": "ncaa:2026-27:women:florida-gulf-coast-eagles",
+      "awayProgramId": "ncaa:2026-27:women:bellarmine-knights",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3654",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3656",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-06",
+      "homeProgramId": "ncaa:2026-27:women:north-florida-ospreys",
+      "awayProgramId": "ncaa:2026-27:women:jacksonville-dolphins",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3659",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3673",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-06",
+      "homeProgramId": "ncaa:2026-27:women:queens-university-royals",
+      "awayProgramId": "ncaa:2026-27:women:west-florida-argonauts",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3660",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3664",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-06",
+      "homeProgramId": "ncaa:2026-27:women:stetson-hatters",
+      "awayProgramId": "ncaa:2026-27:women:lipscomb-bisons",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3658",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3663",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-11",
+      "homeProgramId": "ncaa:2026-27:women:bellarmine-knights",
+      "awayProgramId": "ncaa:2026-27:women:jacksonville-dolphins",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3654",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3673",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-11",
+      "homeProgramId": "ncaa:2026-27:women:lipscomb-bisons",
+      "awayProgramId": "ncaa:2026-27:women:north-florida-ospreys",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3658",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3659",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-11",
+      "homeProgramId": "ncaa:2026-27:women:queens-university-royals",
+      "awayProgramId": "ncaa:2026-27:women:stetson-hatters",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3660",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3663",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-11",
+      "homeProgramId": "ncaa:2026-27:women:west-florida-argonauts",
+      "awayProgramId": "ncaa:2026-27:women:florida-gulf-coast-eagles",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3656",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3664",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-13",
+      "homeProgramId": "ncaa:2026-27:women:bellarmine-knights",
+      "awayProgramId": "ncaa:2026-27:women:north-florida-ospreys",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3654",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3659",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-13",
+      "homeProgramId": "ncaa:2026-27:women:lipscomb-bisons",
+      "awayProgramId": "ncaa:2026-27:women:jacksonville-dolphins",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3658",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3673",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-13",
+      "homeProgramId": "ncaa:2026-27:women:queens-university-royals",
+      "awayProgramId": "ncaa:2026-27:women:florida-gulf-coast-eagles",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3656",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3660",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-13",
+      "homeProgramId": "ncaa:2026-27:women:west-florida-argonauts",
+      "awayProgramId": "ncaa:2026-27:women:stetson-hatters",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3663",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3664",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-18",
+      "homeProgramId": "ncaa:2026-27:women:jacksonville-dolphins",
+      "awayProgramId": "ncaa:2026-27:women:west-florida-argonauts",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3664",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3673",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-18",
+      "homeProgramId": "ncaa:2026-27:women:north-florida-ospreys",
+      "awayProgramId": "ncaa:2026-27:women:queens-university-royals",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3659",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3660",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-20",
+      "homeProgramId": "ncaa:2026-27:women:jacksonville-dolphins",
+      "awayProgramId": "ncaa:2026-27:women:queens-university-royals",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3660",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3673",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-20",
+      "homeProgramId": "ncaa:2026-27:women:lipscomb-bisons",
+      "awayProgramId": "ncaa:2026-27:women:bellarmine-knights",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3654",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3658",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-20",
+      "homeProgramId": "ncaa:2026-27:women:north-florida-ospreys",
+      "awayProgramId": "ncaa:2026-27:women:west-florida-argonauts",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3659",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3664",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-20",
+      "homeProgramId": "ncaa:2026-27:women:stetson-hatters",
+      "awayProgramId": "ncaa:2026-27:women:florida-gulf-coast-eagles",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3656",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3663",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-25",
+      "homeProgramId": "ncaa:2026-27:women:florida-gulf-coast-eagles",
+      "awayProgramId": "ncaa:2026-27:women:north-florida-ospreys",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3656",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3659",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-25",
+      "homeProgramId": "ncaa:2026-27:women:queens-university-royals",
+      "awayProgramId": "ncaa:2026-27:women:lipscomb-bisons",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3658",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3660",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-25",
+      "homeProgramId": "ncaa:2026-27:women:stetson-hatters",
+      "awayProgramId": "ncaa:2026-27:women:jacksonville-dolphins",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3663",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3673",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-25",
+      "homeProgramId": "ncaa:2026-27:women:west-florida-argonauts",
+      "awayProgramId": "ncaa:2026-27:women:bellarmine-knights",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3654",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3664",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-27",
+      "homeProgramId": "ncaa:2026-27:women:florida-gulf-coast-eagles",
+      "awayProgramId": "ncaa:2026-27:women:jacksonville-dolphins",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3656",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3673",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-27",
+      "homeProgramId": "ncaa:2026-27:women:queens-university-royals",
+      "awayProgramId": "ncaa:2026-27:women:bellarmine-knights",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3654",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3660",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-27",
+      "homeProgramId": "ncaa:2026-27:women:stetson-hatters",
+      "awayProgramId": "ncaa:2026-27:women:north-florida-ospreys",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3659",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3663",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    },
+    {
+      "gender": "women",
+      "date": "2027-02-27",
+      "homeProgramId": "ncaa:2026-27:women:west-florida-argonauts",
+      "awayProgramId": "ncaa:2026-27:women:lipscomb-bisons",
+      "sourceUrl": "https://asunsports.org/schedule.aspx?schedule=3658",
+      "corroboratingSourceUrl": "https://asunsports.org/schedule.aspx?schedule=3664",
+      "evidenceKind": "CONFERENCE_OFFICIAL"
+    }
+  ],
+  "officialScope": {
+    "menAsunConferenceGamesExpected": 56,
+    "menAsunConferenceGamesSourced": 56,
+    "menAsunClubSchedulesCrossVerified": 8,
+    "womenAsunConferenceGamesExpected": 56,
+    "womenAsunConferenceGamesSourced": 56,
+    "womenAsunClubSchedulesCrossVerified": 8,
+    "fixtureEvidencePerGame": 2
+  },
+  "sourceCatalog": [
+    {
+      "gender": "men",
+      "school": "bellarmine",
+      "officialScheduleUrl": "https://asunsports.org/schedule.aspx?schedule=3665"
+    },
+    {
+      "gender": "men",
+      "school": "fgcu",
+      "officialScheduleUrl": "https://asunsports.org/schedule.aspx?schedule=3666"
+    },
+    {
+      "gender": "men",
+      "school": "jacksonville",
+      "officialScheduleUrl": "https://asunsports.org/schedule.aspx?schedule=3667"
+    },
+    {
+      "gender": "men",
+      "school": "lipscomb",
+      "officialScheduleUrl": "https://asunsports.org/schedule.aspx?schedule=3668"
+    },
+    {
+      "gender": "men",
+      "school": "north-florida",
+      "officialScheduleUrl": "https://asunsports.org/schedule.aspx?schedule=3669"
+    },
+    {
+      "gender": "men",
+      "school": "queens",
+      "officialScheduleUrl": "https://asunsports.org/schedule.aspx?schedule=3670"
+    },
+    {
+      "gender": "men",
+      "school": "stetson",
+      "officialScheduleUrl": "https://asunsports.org/schedule.aspx?schedule=3671"
+    },
+    {
+      "gender": "men",
+      "school": "west-florida",
+      "officialScheduleUrl": "https://asunsports.org/schedule.aspx?schedule=3672"
+    },
+    {
+      "gender": "women",
+      "school": "bellarmine",
+      "officialScheduleUrl": "https://asunsports.org/schedule.aspx?schedule=3654"
+    },
+    {
+      "gender": "women",
+      "school": "fgcu",
+      "officialScheduleUrl": "https://asunsports.org/schedule.aspx?schedule=3656"
+    },
+    {
+      "gender": "women",
+      "school": "jacksonville",
+      "officialScheduleUrl": "https://asunsports.org/schedule.aspx?schedule=3673"
+    },
+    {
+      "gender": "women",
+      "school": "lipscomb",
+      "officialScheduleUrl": "https://asunsports.org/schedule.aspx?schedule=3658"
+    },
+    {
+      "gender": "women",
+      "school": "north-florida",
+      "officialScheduleUrl": "https://asunsports.org/schedule.aspx?schedule=3659"
+    },
+    {
+      "gender": "women",
+      "school": "queens",
+      "officialScheduleUrl": "https://asunsports.org/schedule.aspx?schedule=3660"
+    },
+    {
+      "gender": "women",
+      "school": "stetson",
+      "officialScheduleUrl": "https://asunsports.org/schedule.aspx?schedule=3663"
+    },
+    {
+      "gender": "women",
+      "school": "west-florida",
+      "officialScheduleUrl": "https://asunsports.org/schedule.aspx?schedule=3664"
+    }
+  ]
+}

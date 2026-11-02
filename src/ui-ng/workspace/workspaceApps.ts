@@ -97,6 +97,7 @@ export function navigateToTalentApp(app: 'talent' | 'scouting' | 'recruiting' | 
 
 export function navigateToTalentDestination(destination: { readonly app: 'player' | 'scouting' | 'recruiting' | 'portal' | 'draft'; readonly playerId: PlayerId; readonly playerView?: 'scouting' | 'history' | 'contract'; readonly focusPlayerId?: PlayerId }) {
   const url = new URL(window.location.href)
+  url.searchParams.delete('tacticsTab')
   url.searchParams.set('app', destination.app)
   url.searchParams.delete('playerId')
   url.searchParams.delete('playerView')
@@ -134,6 +135,7 @@ export interface NgWorkspaceContext {
   readonly negotiationId?: string
   readonly decisionId?: string
   readonly requestId?: string
+  readonly tacticsTab?: 'board' | 'matchups' | 'rotations' | 'match'
 }
 
 export function parseWorkspaceNegotiationId(value: string | null): string | null {
@@ -212,6 +214,8 @@ export function syncWorkspaceAppQuery(
   if (context.requestId !== undefined && context.requestId !== '') {
     url.searchParams.set('requestId', context.requestId)
   }
+  url.searchParams.delete('tacticsTab')
+  if (app === 'tactics' && context.tacticsTab !== undefined) url.searchParams.set('tacticsTab', context.tacticsTab)
   if (app !== 'market' && app !== 'scouting') url.searchParams.delete('marketTab')
   if (app !== 'recruiting') url.searchParams.delete('focusPlayerId')
   applyHistory(url, method)
@@ -263,6 +267,39 @@ export function navigateToRecruitingPlayer(playerId: PlayerId) {
   clearEntityQuery(url)
   url.searchParams.set('app', 'recruiting')
   url.searchParams.set('playerId', playerId)
+  url.searchParams.set('focusPlayerId', playerId)
+  applyHistory(url, 'push')
+  notifyNgNavigation()
+}
+
+/** Opens the existing Market free-agent contact flow with the selected player already focused. */
+export function navigateToDirectSigningPlayer(playerId: PlayerId) {
+  const url = new URL(window.location.href)
+  url.searchParams.set('app', 'market')
+  url.searchParams.set('marketTab', 'free-agents')
+  url.searchParams.set('marketContract', 'FREE')
+  url.searchParams.set('playerId', playerId)
+  url.searchParams.delete('focusPlayerId')
+  applyHistory(url, 'push')
+  notifyNgNavigation()
+}
+
+/** Opens the canonical two-club Trade Machine with the player as the initial target asset. */
+export function navigateToPlayerTrade(playerId: PlayerId) {
+  const url = new URL(window.location.href)
+  url.searchParams.set('app', 'trades')
+  url.searchParams.set('playerId', playerId)
+  url.searchParams.delete('playerView')
+  url.searchParams.delete('focusPlayerId')
+  applyHistory(url, 'push')
+  notifyNgNavigation()
+}
+
+/** Opens the existing Portal list focused on the selected player. */
+export function navigateToPortalPlayer(playerId: PlayerId) {
+  const url = new URL(window.location.href)
+  url.searchParams.set('app', 'portal')
+  url.searchParams.delete('playerId')
   url.searchParams.set('focusPlayerId', playerId)
   applyHistory(url, 'push')
   notifyNgNavigation()

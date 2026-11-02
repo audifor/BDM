@@ -48,7 +48,7 @@ export interface CompetitionRules {
   readonly format: 'leagueRoundRobin'
   readonly schedule: {
     readonly meetingsPerPair: number
-    readonly homeAwayBalance: 'equal'
+    readonly homeAwayBalance: 'equal' | 'balanced'
   }
   readonly standings: {
     readonly tiebreakers: readonly StandingsTiebreaker[]
@@ -96,8 +96,8 @@ export const defaultLeagueCompetitionRules: CompetitionRules = Object.freeze({
 export function createCompetitionRules(input: CompetitionRules): CompetitionRules {
   if (input.format !== 'leagueRoundRobin') throw new RangeError('Competition format is unsupported')
   if (!Number.isInteger(input.schedule.meetingsPerPair) || input.schedule.meetingsPerPair <= 0) throw new RangeError('Competition meetings per pair must be a positive integer')
-  if (input.schedule.homeAwayBalance !== 'equal') throw new RangeError('Competition home/away balance is unsupported')
-  if (input.schedule.meetingsPerPair % 2 !== 0) throw new RangeError('Equal home/away balance requires an even number of meetings per pair')
+  if (input.schedule.homeAwayBalance !== 'equal' && input.schedule.homeAwayBalance !== 'balanced') throw new RangeError('Competition home/away balance is unsupported')
+  if (input.schedule.homeAwayBalance === 'equal' && input.schedule.meetingsPerPair % 2 !== 0) throw new RangeError('Equal home/away balance requires an even number of meetings per pair')
   if (input.completion !== 'allScheduledGamesCompleted') throw new RangeError('Competition completion rule is unsupported')
   if (input.champion !== 'standingsLeader') throw new RangeError('Competition champion rule is unsupported')
   const retentionWindowDaysBeforeExpiry = input.retentionWindowDaysBeforeExpiry ?? DEFAULT_RETENTION_WINDOW_DAYS_BEFORE_EXPIRY
