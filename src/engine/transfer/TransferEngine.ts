@@ -56,7 +56,7 @@ export function progressPlayerTransferNegotiations(world: GameWorld): GameWorld 
       if (reality === undefined) continue
       const derived = reality.playerWillingness < TRANSFER_PLAYER_WILLINGNESS_THRESHOLD
         ? { outcome: 'REJECTED' as const, respondedOn: withTruth.currentDate, origin: 'PLAYER' as const }
-        : derivePlayerTermsResponse(withTruth, { playerId: transfer.playerId, salary: playerRound.terms.salary, years: playerRound.terms.years, ...(playerRound.terms.role === undefined ? {} : { role: playerRound.terms.role }) }, withTruth.currentDate)
+        : derivePlayerTermsResponse(withTruth, { organizationId: transfer.buyerOrganizationId, playerId: transfer.playerId, salary: playerRound.terms.salary, years: playerRound.terms.years, ...(playerRound.terms.role === undefined ? {} : { role: playerRound.terms.role }) }, withTruth.currentDate)
       if (derived === undefined) continue
       const counterTerms: TransferPlayerTerms | undefined = derived.counterTerms === undefined ? undefined
         : { salary: derived.counterTerms.salary, years: derived.counterTerms.years, ...(derived.counterTerms.role === undefined ? {} : { role: derived.counterTerms.role }) }

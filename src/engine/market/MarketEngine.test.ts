@@ -9,7 +9,7 @@ import { STAFF_PROFESSIONAL_ATTRIBUTE_KEYS } from '@/domain/staff'
 import { updateGameWorld } from '@/domain/world'
 import type { GameWorld } from '@/domain/world'
 import { financingDrawdownForTest, authorizeTeamSalaryForTest } from '@/domain/finance/financeTestFixture'
-import { formalOfferCounterSignalId, initializeMarketAgents, openNegotiation, progressFormalOfferResponses, progressNegotiationContactResponses, receiveMarketSignal, createNegotiationContact as createContactInEngine } from './MarketEngine'
+import { derivePlayerTermsResponse, formalOfferCounterSignalId, initializeMarketAgents, openNegotiation, progressFormalOfferResponses, progressNegotiationContactResponses, receiveMarketSignal, createNegotiationContact as createContactInEngine } from './MarketEngine'
 
 /**
  * The clubs these flow tests negotiate with are funded through the canonical opening authority, because
@@ -133,17 +133,17 @@ describe('Wave 4 market core',()=>{  it('creates deterministic agencies, shared 
     expect(counter.offerSubmittedOn).toBe(opened.offerSubmittedOn)
     expect(counter).not.toHaveProperty('agentFee')
   })
-  it('responds to due OPEN offers once, accepts salary terms, and preserves the exact agreed offer',()=>{
+  it('responds to due OPEN offers once, accepts sufficient guaranteed terms, and preserves the exact agreement',()=>{
     const setup=userContactFixture()
     const initialized=initializeMarketAgents(setup.world)
-    const opened=openNegotiation(initialized,openInput(setup))
-    const reality={...opened.marketRealityByPlayerId[setup.playerId]!,expectedSalary:600_000,expectedYears:4}
-    const due=updateGameWorld(opened,{currentDate:addDays(opened.currentDate,1),marketReality:[...Object.values(opened.marketRealityByPlayerId).filter(item=>item.playerId!==setup.playerId),reality]})
+    const reality=initialized.marketRealityByPlayerId[setup.playerId]!
+    const opened=openNegotiation(initialized,{...openInput(setup),salary:reality.expectedSalary,years:reality.expectedYears})
+    const due=updateGameWorld(opened,{currentDate:addDays(opened.currentDate,1)})
     expect(progressFormalOfferResponses(opened)).toBe(opened)
     const accepted=progressFormalOfferResponses(due)
     const agreement=accepted.negotiationsById[setup.contact.id]!
-    expect(agreement).toMatchObject({status:'ACCEPTED',salary:650_000,years:2,playerResponse:{outcome:'ACCEPTED',respondedOn:due.currentDate,origin:'PLAYER'},round:0})
-    expect(agreement.roundHistory).toEqual([{round:0,offer:{salary:650_000,years:2},submittedOn:opened.currentDate,submittedBy:{kind:'USER'},playerResponse:agreement.playerResponse}])
+    expect(agreement).toMatchObject({status:'ACCEPTED',salary:reality.expectedSalary,years:reality.expectedYears,playerResponse:{outcome:'ACCEPTED',respondedOn:due.currentDate,origin:'PLAYER'},round:0})
+    expect(agreement.roundHistory).toEqual([{round:0,offer:{salary:reality.expectedSalary,years:reality.expectedYears},submittedOn:opened.currentDate,submittedBy:{kind:'USER'},playerResponse:agreement.playerResponse}])
     expect(progressFormalOfferResponses(accepted)).toBe(accepted)
     expect(progressFormalOfferResponses(due)).toEqual(accepted)
     expect(accepted.contractsById).toBe(due.contractsById)
@@ -151,38 +151,90 @@ describe('Wave 4 market core',()=>{  it('creates deterministic agencies, shared 
     expect(accepted.teams[setup.team.id]!.rosterPlayerIds).toEqual(due.teams[setup.team.id]!.rosterPlayerIds)
     expect(accepted.governanceRequestsById).toBe(due.governanceRequestsById)
   })
-  it('uses the canonical agent counter, records its round and date, and reveals only the counter salary',()=>{
+  it('uses the canonical agent counter, records its round and date, and reveals the counter terms',()=>{
     const setup=userContactFixture()
     const initialized=initializeMarketAgents(setup.world)
     const currentRepresentation=initialized.playerRepresentations.find(item=>item.playerId===setup.playerId)!
     const offerAgent=Object.values(initialized.agentsById).find(item=>item.id!==currentRepresentation.agentId)!
-    const opened=openNegotiation(initialized,{...openInput(setup),agentId:offerAgent.id})
+    const opened=openNegotiation(initialized,{...openInput(setup),salary:1,years:1,agentId:offerAgent.id})
     const changedRepresentation=updateGameWorld(opened,{playerRepresentations:opened.playerRepresentations.map(item=>item.playerId===setup.playerId?{...item,agentId:currentRepresentation.agentId}:item)})
-    const reality={...changedRepresentation.marketRealityByPlayerId[setup.playerId]!,expectedSalary:2_000_000,expectedYears:5}
-    const due=updateGameWorld(changedRepresentation,{currentDate:addDays(changedRepresentation.currentDate,1),marketReality:[...Object.values(changedRepresentation.marketRealityByPlayerId).filter(item=>item.playerId!==setup.playerId),reality]})
+    const reality=changedRepresentation.marketRealityByPlayerId[setup.playerId]!
+    const due=updateGameWorld(changedRepresentation,{currentDate:addDays(changedRepresentation.currentDate,1)})
     const first=progressFormalOfferResponses(due)
     const repeated=progressFormalOfferResponses(due)
     const countered=first.negotiationsById[setup.contact.id]!
-    expect(countered).toMatchObject({status:'COUNTERED',round:1,years:2,playerResponse:{outcome:'COUNTERED',respondedOn:due.currentDate,origin:'AGENT',counterTerms:{salary:countered.salary,years:2}}})
+    expect(countered).toMatchObject({status:'COUNTERED',round:1,years:reality.expectedYears,playerResponse:{outcome:'COUNTERED',respondedOn:due.currentDate,origin:'AGENT',counterTerms:{salary:countered.salary,years:reality.expectedYears}}})
     expect(countered.salary).toBe(Math.max(agentCounter(opened.negotiationsById[setup.contact.id]!,offerAgent).salary??0,reality.expectedSalary))
-    expect(countered.roundHistory?.[0]).toMatchObject({round:0,offer:{salary:650_000,years:2},playerResponse:{outcome:'COUNTERED',origin:'AGENT',counterTerms:{salary:countered.salary,years:2}}})
+    expect(countered.roundHistory?.[0]).toMatchObject({round:0,offer:{salary:1,years:1},playerResponse:{outcome:'COUNTERED',origin:'AGENT',counterTerms:{salary:countered.salary,years:reality.expectedYears}}})
     expect(countered).not.toHaveProperty('role')
     expect(countered).not.toHaveProperty('agentFee')
-    expect(first.marketSignalsById[formalOfferCounterSignalId(setup.contact.id,0)]).toMatchObject({organizationId:setup.team.organizationId,playerId:setup.playerId,source:'AGENT',expectedSalary:countered.salary,occurredOn:due.currentDate})
-    expect(first.marketSignalsById[formalOfferCounterSignalId(setup.contact.id,0)]).not.toHaveProperty('expectedYears')
-    expect(Object.values(first.marketKnowledge).find(item=>item.organizationId===setup.team.organizationId&&item.playerId===setup.playerId)).toMatchObject({expectedSalary:countered.salary,source:'AGENT'})
+    expect(first.marketSignalsById[formalOfferCounterSignalId(setup.contact.id,0)]).toMatchObject({organizationId:setup.team.organizationId,playerId:setup.playerId,source:'AGENT',expectedSalary:countered.salary,expectedYears:reality.expectedYears,occurredOn:due.currentDate})
+    expect(Object.values(first.marketKnowledge).find(item=>item.organizationId===setup.team.organizationId&&item.playerId===setup.playerId)).toMatchObject({expectedSalary:countered.salary,expectedYears:reality.expectedYears,source:'AGENT'})
     expect(Object.values(first.marketKnowledge).find(item=>item.organizationId===setup.source.organizationId&&item.playerId===setup.playerId)).toBeUndefined()
     expect(first.marketSignalsById).toEqual(repeated.marketSignalsById)
     expect(first.negotiationsById).toEqual(repeated.negotiationsById)
     expect(progressFormalOfferResponses(first)).toBe(first)
   })
+  it('weighs annual salary and contract length together and produces a term-sensitive counter',()=>{
+    const setup=userContactFixture()
+    const initialized=initializeMarketAgents(setup.world)
+    const reality=Object.values(initialized.marketRealityByPlayerId).find(item=>item.expectedYears>=2)!
+    const playerId=reality.playerId
+    const world=initialized
+    const represented=world.playerRepresentations.find(item=>item.playerId===playerId)!
+    const agent=world.agentsById[represented.agentId]!
+
+    const higherAnnualShorter=derivePlayerTermsResponse(world,{playerId,salary:reality.expectedSalary*reality.expectedYears,years:1,agentId:agent.id},addDays(world.currentDate,1))
+    const lowerAnnualLonger=derivePlayerTermsResponse(world,{playerId,salary:reality.expectedSalary-1,years:reality.expectedYears+1,agentId:agent.id},addDays(world.currentDate,1))
+    const lowAnnualLongTerm=derivePlayerTermsResponse(world,{playerId,salary:reality.expectedSalary-1,years:reality.expectedYears-1,agentId:agent.id},addDays(world.currentDate,1))
+
+    expect(higherAnnualShorter?.outcome).toBe('ACCEPTED')
+    expect(lowerAnnualLonger?.outcome).toBe('ACCEPTED')
+    expect(lowAnnualLongTerm).toMatchObject({outcome:'COUNTERED',counterTerms:{years:reality.expectedYears}})
+    expect(lowAnnualLongTerm?.counterTerms?.salary).toBeGreaterThanOrEqual(reality.expectedSalary)
+  })
+  it('uses a stronger simultaneous offer as a private counterparty alternative',()=>{
+    const setup=userContactFixture()
+    const initialized=initializeMarketAgents(setup.world)
+    const otherTeam=Object.values(initialized.teams).find(item=>item.id!==setup.team.id)!
+    const reality=Object.values(initialized.marketRealityByPlayerId).find(item=>item.expectedYears>=2)!
+    const playerId=reality.playerId
+    const contact=createNegotiationContact({organizationId:otherTeam.organizationId,teamId:otherTeam.id,playerId,startedOn:initialized.currentDate,actionKey:'competing-offer',responsibleActor:{kind:'USER'}})
+    const competingOffer:ContractNegotiation={...contact,status:'OPEN',salary:reality.expectedSalary+20_000,years:reality.expectedYears,round:0,offerSubmittedOn:addDays(initialized.currentDate,-1),offerResponsibleActor:{kind:'USER'}}
+    const world=updateGameWorld(initialized,{negotiations:[competingOffer]})
+    const agent=world.agentsById[world.playerRepresentations.find(item=>item.playerId===playerId)!.agentId]!
+
+    const response=derivePlayerTermsResponse(world,{organizationId:setup.team.organizationId,playerId,salary:reality.expectedSalary,years:reality.expectedYears,agentId:agent.id},world.currentDate)
+
+    expect(response).toMatchObject({outcome:'COUNTERED',origin:'AGENT',counterTerms:{years:reality.expectedYears}})
+    expect(response?.counterTerms?.salary).toBeGreaterThanOrEqual(competingOffer.salary)
+    expect(response?.counterTerms?.salary! * response?.counterTerms?.years!).toBeGreaterThanOrEqual(competingOffer.salary * competingOffer.years)
+  })
+  it('lets agent negotiation traits change the counter on the same player terms',()=>{
+    const setup=userContactFixture()
+    const initialized=initializeMarketAgents(setup.world)
+    const agentScore=(agent:Agent)=>agent.abilities.negotiation+agent.personality.aggressiveness+agent.personality.opportunism
+    const agents=Object.values(initialized.agentsById).sort((left,right)=>agentScore(left)-agentScore(right)||left.id.localeCompare(right.id))
+    const lowAgent=agents[0]!
+    const highAgent=agents[agents.length-1]!
+    const reality=initialized.marketRealityByPlayerId[setup.playerId]!
+    const world=initialized
+    const proposal={organizationId:setup.team.organizationId,playerId:setup.playerId,salary:reality.expectedSalary-50_000,years:reality.expectedYears}
+
+    const low=derivePlayerTermsResponse(world,{...proposal,agentId:lowAgent.id},world.currentDate)
+    const high=derivePlayerTermsResponse(world,{...proposal,agentId:highAgent.id},world.currentDate)
+
+    expect(low?.outcome).toBe('COUNTERED')
+    expect(high?.outcome).toBe('COUNTERED')
+    expect(high?.counterTerms?.salary).toBeGreaterThan(low?.counterTerms?.salary ?? 0)
+    expect(high?.counterTerms?.years).toBe(low?.counterTerms?.years)
+  })
   it('rejects an under-expectation offer without representation and closes an offer if the player is no longer free',()=>{
     const setup=userContactFixture()
     const initialized=initializeMarketAgents(setup.world)
-    const opened=openNegotiation(initialized,openInput(setup))
+    const opened=openNegotiation(initialized,{...openInput(setup),salary:1,years:1})
     const noAgent=updateGameWorld(opened,{playerRepresentations:[]})
-    const reality={...noAgent.marketRealityByPlayerId[setup.playerId]!,expectedSalary:2_000_000}
-    const due=updateGameWorld(noAgent,{currentDate:addDays(noAgent.currentDate,1),marketReality:[...Object.values(noAgent.marketRealityByPlayerId).filter(item=>item.playerId!==setup.playerId),reality]})
+    const due=updateGameWorld(noAgent,{currentDate:addDays(noAgent.currentDate,1)})
     const rejected=progressFormalOfferResponses(due)
     expect(rejected.negotiationsById[setup.contact.id]).toMatchObject({status:'REJECTED',playerResponse:{outcome:'REJECTED',origin:'PLAYER'}})
     expect(rejected.marketSignalsById).toEqual(due.marketSignalsById)
