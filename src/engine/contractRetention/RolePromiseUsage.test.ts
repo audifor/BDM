@@ -120,4 +120,26 @@ describe('professional RolePromise usage evidence', () => {
     const incomplete = { ...world, matchStatLogsByGameId: { ...world.matchStatLogsByGameId, [game.id]: { ...log, playerLines: log.playerLines.slice(1) } } }
     expect(deriveRolePromiseUsage(incomplete, promise)[0]!.evidence[0]!.status).toBe('INCOMPLETE_MATCH_LOG')
   })
+
+  it('uses the injury timeline for the game date rather than current availability', () => {
+    const { world, game, promise } = sample
+    const laterInjury = updateGameWorld(world, { injuries: [...Object.values(world.injuriesById), {
+      id: injuryIdFromString('injury:role-promise-after-game'), playerId: promise.playerId, kind: 'ankleSprain', severity: 'minor',
+      injuredOn: addDays(game.date, 1), expectedReturnDate: addDays(game.date, 8),
+    }] })
+    expect(deriveRolePromiseUsage(laterInjury, promise)[0]!.evidence[0]!.status).toBe('MEASURED')
+  })
+
+  it('rejects duplicate player lines and starts with no recorded playing time', () => {
+    const { world, game, promise } = sample
+    const log = world.matchStatLogsByGameId[game.id]!
+    const playerLine = log.playerLines.find((line) => line.playerId === promise.playerId)!
+    const duplicate = { ...world, matchStatLogsByGameId: { ...world.matchStatLogsByGameId, [game.id]: { ...log, playerLines: [...log.playerLines, playerLine] } } }
+    expect(deriveRolePromiseUsage(duplicate, promise)[0]!.evidence[0]!.status).toBe('INCOMPLETE_MATCH_LOG')
+    const impossibleStarter = updateGameWorld(world, { matchStatLogs: [...Object.values(world.matchStatLogsByGameId).filter((item) => item.gameId !== game.id), {
+      ...log, playerLines: log.playerLines.map((line) => line.playerId === world.teams[game.homeTeamId]!.rosterPlayerIds[0]
+        ? { ...line, stats: { ...line.stats, secondsPlayed: 0 } } : line),
+    }] })
+    expect(deriveRolePromiseUsage(impossibleStarter, promise)[0]!.evidence[0]!.status).toBe('INCOMPLETE_MATCH_LOG')
+  })
 })
