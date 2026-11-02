@@ -54,4 +54,30 @@ describe('Coach career application flow', () => {
     const withAi = identifyCoachCandidate(user.world, { openingId: opening.id, coachId: ai.id })
     expect(rankCoachCandidates(withAi.world, opening.id)).toEqual(rankCoachCandidates(withAi.world, opening.id))
   })
+
+  it('moves the same coach across ecosystems through an actual vacancy and closes the previous employment', () => {
+    const base = createNewGame()
+    const source = Object.values(base.teams).find((team) => team.coachId === base.userCoachId)!
+    const sourceEcosystemId = Object.values(base.competitions).find((competition) => competition.participantTeamIds.includes(source.id))!.ecosystemId
+    const destination = Object.values(base.teams).find((team) => {
+      if (team.coachId === undefined || team.id === source.id) return false
+      return Object.values(base.competitions).some((competition) => competition.participantTeamIds.includes(team.id) && competition.ecosystemId !== sourceEcosystemId)
+    })!
+    const fired = fireCoachFromTeam(base, destination.id)
+    const opening = Object.values(fired.coachJobOpeningsById).find((item) => item.teamId === destination.id && item.status === 'open')!
+    const applied = applyUserCoachForJob(fired, opening.id)
+    const offer = Object.values(applied.world.coachJobOffersById).find((item) => item.coachId === base.userCoachId && item.jobOpeningId === opening.id && item.status === 'pending')!
+    const moved = acceptCoachJobOffer(applied.world, offer.id)
+
+    expect(opening.ecosystemId).not.toBe(sourceEcosystemId)
+    expect(moved.userCoachId).toBe(base.userCoachId)
+    expect(moved.teams[source.id]!.coachId).not.toBe(base.userCoachId)
+    expect(moved.teams[destination.id]!.coachId).toBe(base.userCoachId)
+    expect(moved.coachEmploymentByCoachId[base.userCoachId]).toMatchObject({ status: 'employed', teamId: destination.id })
+    expect(moved.coachCareerHistoryByCoachId[base.userCoachId]).toEqual(expect.arrayContaining([
+      expect.objectContaining({ kind: 'departure', teamId: source.id, reason: 'acceptedOtherJob' }),
+      expect.objectContaining({ kind: 'appointment', teamId: destination.id, reason: 'hired' }),
+    ]))
+    expect(Object.values(moved.teamStaffAssignmentsById)).toContainEqual(expect.objectContaining({ staffPersonId: moved.coaches[base.userCoachId]!.staffProfileId, teamId: destination.id, role: 'headCoach' }))
+  })
 })
