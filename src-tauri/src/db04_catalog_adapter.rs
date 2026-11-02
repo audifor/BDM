@@ -90,6 +90,7 @@ pub struct EditionV1 {
     pub transitions: Vec<Value>,
     pub sources: Vec<Value>,
     pub source_rules: Vec<Value>,
+    pub format_sha256: Option<String>,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize)]
@@ -525,7 +526,7 @@ fn read_editions(
         return Ok(Vec::new());
     };
     let mut statement = connection
-        .prepare("SELECT e.edition_id, e.competition_id, e.season_label, e.edition_status, e.source_status, e.participant_count, f.format_version, f.certification_status, f.certification_scope, f.format_json FROM db04_competition_edition e LEFT JOIN db04_competition_format f ON f.edition_id=e.edition_id WHERE e.competition_id=?1 ORDER BY e.season_label, e.edition_id")
+        .prepare("SELECT e.edition_id, e.competition_id, e.season_label, e.edition_status, e.source_status, e.participant_count, f.format_version, f.certification_status, f.certification_scope, f.format_json, f.format_sha256 FROM db04_competition_edition e LEFT JOIN db04_competition_format f ON f.edition_id=e.edition_id WHERE e.competition_id=?1 ORDER BY e.season_label, e.edition_id")
         .map_err(|error| format!("Unable to prepare edition query: {error}"))?;
     let rows = statement
         .query_map([competition_id], |row| {
@@ -540,6 +541,7 @@ fn read_editions(
                 row.get::<_, Option<String>>(7)?,
                 row.get::<_, Option<String>>(8)?,
                 row.get::<_, Option<String>>(9)?,
+                row.get::<_, Option<String>>(10)?,
             ))
         })
         .map_err(|error| format!("Unable to query editions: {error}"))?;
@@ -556,6 +558,7 @@ fn read_editions(
             format_status,
             certification_scope,
             format_text,
+            format_sha256,
         ) = row.map_err(|error| format!("Unable to decode edition record: {error}"))?;
         let participants = read_participants(connection, &edition_id)?;
         let declares_certified =
@@ -599,6 +602,7 @@ fn read_editions(
             transitions,
             sources,
             source_rules,
+            format_sha256,
         });
     }
     Ok(editions)

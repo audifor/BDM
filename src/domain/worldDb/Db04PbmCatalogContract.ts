@@ -112,6 +112,7 @@ export interface Db04PbmEditionV1 {
   readonly transitions: readonly unknown[]
   readonly sources: readonly unknown[]
   readonly sourceRules: readonly unknown[]
+  readonly formatSha256: string | null
 }
 
 export interface Db04PbmTeamV1 {
@@ -307,6 +308,7 @@ function parseEdition(value: unknown): Db04PbmEditionV1 {
     transitions: array(row.transitions, 'edition.transitions'),
     sources: array(row.sources, 'edition.sources'),
     sourceRules: array(row.sourceRules, 'edition.sourceRules'),
+    formatSha256: nullableText(row.formatSha256, 'edition.formatSha256'),
   })
 }
 

@@ -25,7 +25,7 @@ fn run() -> Result<(), String> {
         }
     }
     let database = database
-        .ok_or_else(|| "DB-04 path required via --database or DB06_WORLDDB_PATH".to_owned())?;
+        .ok_or_else(|| "PBM WorldDB path required via --database or DB06_WORLDDB_PATH".to_owned())?;
     let result = match operation.as_str() {
         "countries" => serde_json::to_value(list_countries_v1(&database)?),
         "competitions" => {
@@ -46,5 +46,5 @@ fn run() -> Result<(), String> {
 }
 
 fn usage() -> String {
-    "Usage: worlddb-pbm-catalog <countries|competitions|competition> --database <DB-04.sqlite> [--country <ISO-like source code>] [--id <certified competition ID or DB-03 key>]".to_owned()
+    "Usage: worlddb-pbm-catalog <countries|competitions|competition> --database <worlddb-db07.sqlite> [--country <ISO-like source code>] [--id <certified competition ID or DB-03 key>]".to_owned()
 }

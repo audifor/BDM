@@ -1,4 +1,5 @@
 import type { WorldDbDatabaseInfoV1 } from './DatabaseInfo'
+import { STAFF_PROFESSIONAL_ATTRIBUTE_KEYS, type StaffProfessionalProfile } from '@/domain/staff'
 import { PERSONALITY_DIMENSIONS, type Personality } from '@/domain/personality'
 import { SEMANTIC_PERSONALITY_DIMENSIONS } from '@/domain/personality/SemanticPersonality'
 import { PLAYER_TRUTH_RATING_KEYS, PLAYER_TRUTH_TENDENCY_KEYS } from '@/domain/player/PlayerTruthCatalog'
@@ -83,7 +84,7 @@ export interface WorldDbGameBootstrapPlayerV1 {
     readonly basketballSpecializationTraits: readonly { readonly code: string; readonly startedOn: string }[]
   }
 }
-export interface WorldDbGameBootstrapStaffV1 { readonly staffId: string; readonly personId: string; readonly attributes: Readonly<Record<string, number>>; readonly specialismIds: readonly string[] }
+export interface WorldDbGameBootstrapStaffV1 { readonly staffId: string; readonly personId: string; readonly attributes?: Readonly<Record<string, number>>; readonly generatedAttributes?: StaffProfessionalProfile['attributes']; readonly specialismIds: readonly string[] }
 export interface WorldDbGameBootstrapStaffAssignmentV1 { readonly assignmentId: string; readonly staffId: string; readonly teamId: string; readonly roleCode: string; readonly assignedOn: string }
 export interface WorldDbGameBootstrapRosterAssignmentV1 { readonly rosterId: string; readonly teamId: string; readonly playerId: string; readonly status: string }
 
@@ -167,7 +168,13 @@ export function assertWorldDbGameBootstrapSliceV1(value: unknown): asserts value
       }
     }
   }, 'playerId')
-  assertArray(value.staffProfiles, 'staffProfiles', (entry) => { for (const field of ['staffId', 'personId'] as const) requireText(entry[field], `World DB bootstrap staff ${field}`); if (!isRecord(entry.attributes) || !Array.isArray(entry.specialismIds)) throw new TypeError('World DB bootstrap staff profile is incomplete') }, 'staffId')
+  assertArray(value.staffProfiles, 'staffProfiles', (entry) => {
+    for (const field of ['staffId', 'personId'] as const) requireText(entry[field], `World DB bootstrap staff ${field}`)
+    if (!Array.isArray(entry.specialismIds)) throw new TypeError('World DB bootstrap staff profile is incomplete')
+    if (entry.attributes !== undefined) assertExactKeys(entry.attributes, Array.from({ length: 80 }, (_, index) => `STAFF_ATTRIBUTE_${String(index + 1).padStart(2, '0')}`), 'staff attributes')
+    if (entry.generatedAttributes !== undefined) assertExactKeys(entry.generatedAttributes, STAFF_PROFESSIONAL_ATTRIBUTE_KEYS, 'generated staff attributes')
+    if (entry.attributes === undefined && entry.generatedAttributes === undefined) throw new TypeError('World DB bootstrap staff profile requires source or generated attributes')
+  }, 'staffId')
   const profiledPersonIds = new Set<string>([
     ...((value.players as Record<string, unknown>[]).map((entry) => entry.personId as string)),
     ...((value.staffProfiles as Record<string, unknown>[]).map((entry) => entry.personId as string)),
