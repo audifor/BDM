@@ -87,6 +87,7 @@ Exact heads not yet contained: 25 (#62, #63, #64, #100, #109, #111, #114, #116, 
 
 - Candidate currently includes F0-F6/F5 ancestry represented by F6, the DB-04 read-only catalog adapter, and documentation.
 - Branches whose exact refs are published but whose tips are not ancestors of the candidate remain preserved for later feature review; compare equivalent behavior before merging.
+- A safe replay attempt of PR #173 stopped at conflicts in `src-tauri/resources/worlddb_v2_bridge.py`, `src/app/game/WorldDbV2Game.ts`, and `src/app/game/createConfiguredGame.ts`. The differences affect F6 multi-league/gender routing and original/free-staff/head-coach selection, so no `ours`/`theirs` resolution was chosen. The replay was aborted and the candidate worktree is clean; PR #173 remains preserved on its published branch.
 - The F6 Market code from `7365013c` is preserved, but the immersive contact/people/decision/consequence UI requested for the next F6 work has not been implemented on this candidate.
 - No integration conflicts remain from the DB-04 cherry-pick. No changes were made to `main`; no PR has been created while the 25 open heads and complete regression boundary remain under review.
 
