@@ -448,4 +448,4 @@ Dirty worktrees were preserved. Missing/prunable worktrees were not pruned. The 
 
 - Candidate branch advanced from `83c04b0f` to `eccb26e5` by cherry-picking the read-only DB-04 adapter. This preserved functional source absent from F6 without bringing over generated outputs.
 - The ancestry audit of the 49 open PRs found 24 exact heads already in the candidate and 25 exact heads not yet contained. The full list and bases are in `BDM_CONSOLIDATION_REPORT.md`; non-ancestry is not treated as proof that behavior is absent.
-- After the initial preservation publication, 60 backup namespace refs were SHA-verified. The one original generated-save branch remains local. The integration candidate has not yet been published.
+- After the initial preservation publication, 60 backup namespace refs were SHA-verified. The original generated-save branch remains local. The integration candidate was later published at `57faf08c` and exposed through Draft PR [#187](https://github.com/audifor/BDM/pull/187), targeting `main`; no merge occurred.

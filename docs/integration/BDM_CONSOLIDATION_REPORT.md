@@ -1,6 +1,6 @@
 # BDM consolidation report
 
-**Status: PARTIAL.** The candidate preserves the F6 line and adds a read-only WorldDB DB-04 catalog source. The local branch is not yet published and no PR has been opened. Twenty-five current open PR heads are not ancestors of the candidate; their functional equivalence or supersession has not yet been established.
+**Status: PARTIAL.** The candidate preserves the F6 line and adds a read-only WorldDB DB-04 catalog source. The branch is published and Draft PR [#187](https://github.com/audifor/BDM/pull/187) targets `main`; it is not ready to merge. Twenty-five of the 49 PR heads in the audit snapshot are not ancestors of the candidate; their functional equivalence or supersession has not yet been established.
 
 ## Chosen base
 
@@ -8,12 +8,12 @@
 - Candidate branch: `integration/bdm-unified-20261102`, based on F6 source commit `83c04b0f` (which includes F5 `4366b19d` and F4C `f17f3251`).
 - F6 source already contains the current head of PR #186 (`7fd7742a`), plus the checked BS15/16/17 and HRPG integration heads. These were not merged a second time.
 - Additional WorldDB source commit `853d1dbe` (read-only DB-04 catalog adapter) was cherry-picked as candidate commit `eccb26e5`; it was absent as a file/module on the F6 candidate and adds no generated save or database. This preserves the catalog reader as a read-only projection and does not claim to make DB-04 game-executable.
-- Graph counts: candidate is 293 commits ahead of `origin/main` with no main-only commits (`0 / 293`). F6 contains PR #186 with 13 candidate-only commits over that PR head (`13 / 0`). The checked BS15/16/17 and HRPG integration tips are ancestors of F6 (their right-side unique counts are zero).
+- Graph counts at Draft PR #187 creation: candidate is 296 commits ahead of `origin/main` with no main-only commits (`0 / 296`). Candidate is 17 commits ahead of PR #186 (`0 / 17`); F6 itself was 13 commits ahead, with four subsequent DB-04/test/documentation commits. The checked BS15/16/17 and HRPG integration tips are ancestors of F6 (their right-side unique counts are zero).
 - PR #173 has 11 commits beyond the main merge base and is not an ancestor of F6. Its diff includes fiscal closing, staff/medical/roster/home-finance changes and native acceptance evidence, plus a 1.16 MB generated save and screenshots. The PR remains unchanged; code-level review is required before selective integration, and its generated save/evidence files are excluded from candidate history.
 
 ## Open PR head ancestry
 
-Snapshot: 49 PRs. `Yes` means the exact head SHA is an ancestor of the current candidate; it is an ancestry check, not a behavioral acceptance test. `No` means the head still requires code/diff review or evidence of an equivalent implementation. No PR was closed or changed.
+Audit snapshot: 49 pre-existing PRs. `Yes` means the exact head SHA is an ancestor of the candidate; it is an ancestry check, not a behavioral acceptance test. `No` means the head still requires code/diff review or evidence of an equivalent implementation. No pre-existing PR was closed or changed; Draft PR #187 was added afterward.
 
 | # | Title | Head → base | Head SHA | In candidate | Merge state | PR |
 |---:|---|---|---|---|---|---|
@@ -87,8 +87,8 @@ Exact heads not yet contained: 25 (#62, #63, #64, #100, #109, #111, #114, #116, 
 
 - Candidate currently includes F0-F6/F5 ancestry represented by F6, the DB-04 read-only catalog adapter, and documentation.
 - Branches whose exact refs are published but whose tips are not ancestors of the candidate remain preserved for later feature review; compare equivalent behavior before merging.
-- A safe replay attempt of PR #173 stopped at conflicts in `src-tauri/resources/worlddb_v2_bridge.py`, `src/app/game/WorldDbV2Game.ts`, and `src/app/game/createConfiguredGame.ts`. The differences affect F6 multi-league/gender routing and original/free-staff/head-coach selection, so no `ours`/`theirs` resolution was chosen. The replay was aborted and the candidate worktree is clean; PR #173 remains preserved on its published branch.
+- A safe replay attempt of PR #173 stopped at conflicts in `src-tauri/resources/worlddb_v2_bridge.py`, `src/app/game/WorldDbV2Game.ts`, and `src/app/game/createConfiguredGame.ts`. The differences affect F6 multi-league/gender routing and original/free-staff/head-coach selection, so no `ours`/`theirs` resolution was chosen. The replay was aborted without applying its changes; PR #173 remains preserved on its published branch.
 - The F6 Market code from `7365013c` is preserved, but the immersive contact/people/decision/consequence UI requested for the next F6 work has not been implemented on this candidate.
-- No integration conflicts remain from the DB-04 cherry-pick. No changes were made to `main`; no PR has been created while the 25 open heads and complete regression boundary remain under review.
+- No integration conflicts remain from the DB-04 cherry-pick or the aborted PR #173 replay. No changes were made to `main`; Draft PR #187 is open to expose the partial candidate for review, and must not be merged while the 25 heads and full regression boundary remain under review.
 
-Candidate code snapshot after the DB-04 adapter cherry-pick: `eccb26e555ca49931760d044242554572cf5a712`. A separate test-only commit `c102dcf5` raises the cold-build timeout for its CLI integration test; documentation commits follow.
+Candidate code snapshot after the DB-04 adapter cherry-pick: `eccb26e555ca49931760d044242554572cf5a712`. Test-only commit `c102dcf5` raises the cold-build timeout for its CLI integration test. Draft PR #187 was opened at `57faf08cc4262969bc7ceee67e01983619286038`; this report refresh advances the branch afterward.

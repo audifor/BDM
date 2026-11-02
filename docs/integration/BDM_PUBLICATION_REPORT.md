@@ -5,6 +5,7 @@ Snapshot: 2026-11-02. Repository: `https://github.com/audifor/BDM`. Publication 
 ## Policy and baseline
 
 - `origin/main` before publication: `12d926241fda7f2ba3f198083cd61fd480c2fec8`; it remains unchanged.
+- Integration branch `integration/bdm-unified-20261102` was pushed explicitly and Draft PR [#187](https://github.com/audifor/BDM/pull/187) was opened against `main`. Its head at PR creation was `57faf08cc4262969bc7ceee67e01983619286038`; the report refresh will advance it by a documentation-only commit.
 - Owner-requested publication policy is isolated in commit `83c04b0f` on `feature/bdm-f6-final-gameplay`, permitting explicitly requested branch and PR publication while prohibiting force push, direct main push, deletion, rewrite, secrets, and automatic merge.
 - Pre-publication audit found 60 local branch tips not reachable from any origin ref. 59 safe original tips were published: F6 at its original ref and 58 under the date-namespaced backup. The WorldDB save branch remains local.
 
@@ -15,6 +16,7 @@ Each remote SHA below was compared with the preserved local source SHA. The 60 r
 | Local source ref | Remote ref | Remote SHA | Result | URL |
 |---|---|---|---|---|
 | `feature/bdm-f6-final-gameplay` | `feature/bdm-f6-final-gameplay` | `83c04b0fd4b094c7b8e64f61c6dc9ece18f44f41` | exact SHA | https://github.com/audifor/BDM/tree/feature/bdm-f6-final-gameplay |
+| `integration/bdm-unified-20261102` | `integration/bdm-unified-20261102` | `57faf08cc4262969bc7ceee67e01983619286038` | exact SHA at PR #187 creation; report refresh follows | https://github.com/audifor/BDM/tree/integration/bdm-unified-20261102 |
 | `backup/m7-local-wip-before-main-sync` | `backup/m7-local-wip-before-main-sync` | `456cf11d7deba6de2a23437b34da3e9139eabde6` | exact SHA | https://github.com/audifor/BDM/tree/backup/m7-local-wip-before-main-sync |
 | `bdm-bs15-bs16-bs17-integration-readiness` | `bdm-bs15-bs16-bs17-integration-readiness` | `4c33bec1266c645d7c0c509b228abb49263ebe88` | exact SHA | https://github.com/audifor/BDM/tree/bdm-bs15-bs16-bs17-integration-readiness |
 | `bdm-master-capability-reuse-audit` | `bdm-master-capability-reuse-audit` | `67811994e48137ec77579ae3dcaa273e8a680c37` | exact SHA | https://github.com/audifor/BDM/tree/bdm-master-capability-reuse-audit |
@@ -88,5 +90,5 @@ Each remote SHA below was compared with the preserved local source SHA. The 60 r
 
 - Used explicit branch refspecs only; no `--all`, `--mirror`, force push, branch deletion, prune, reset, or stash pop.
 - Root `C:\BDM` remains on `playable/f4` at `c1905549` with its 27 pre-existing modified/untracked entries untouched. The five stashes remain intact.
-- The F6 source worktree remains clean at `83c04b0f`; the remote F6 ref matches that SHA. The integration branch is still under validation and has not yet been pushed or opened as a PR.
-- 49 existing open PRs remain unchanged. No new PR has been created yet.
+- The F6 source worktree remains clean at `83c04b0f`; the remote F6 ref matches that SHA. Integration candidate validation is partial; Draft PR #187 is open for review only.
+- The 49 pre-existing open PRs were left unchanged. Draft PR #187 is the only new PR from this work. No PR was merged and `main` was not pushed.
