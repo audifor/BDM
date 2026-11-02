@@ -97,7 +97,7 @@ F6/WorldDB V2 remains canonical for universe creation, categories, team selectio
 | Market, medical, roster and staff presentation | Existing F6 domain/UI authority | Yes | Ported compatible finance, currency and workspace presentation changes | No | `MedicalWorkspace.test.tsx`; `Final01RosterCurrency.test.tsx`; focused workspace tests |
 | Native acceptance snapshots and image evidence | No | No | Tests that need external private saves remain opt-in; personal generated save and screenshot set excluded | Snapshot-based real-career run unavailable in this environment | `Final01Native*.test.ts`, `Final01Season.test.ts` are gated by local environment variables; generated evidence is not committed |
 
-The native snapshot tests are retained as opt-in acceptance coverage and were not counted as executed. The portable synthetic and focused service/UI tests listed above were run. The four-competition long progression batch was interrupted before a result summary and is inconclusive; the real WorldDB multileague test was skipped because its local SQLite source is absent.
+The native snapshot tests are retained as opt-in acceptance coverage and were not counted as executed. The portable synthetic and focused service/UI tests listed above were run. The four-competition long progression batch and a later combined bootstrap/New Game/WorldDB route batch were interrupted before result summaries and are inconclusive; the real WorldDB multileague test was skipped because its local SQLite source is absent.
 
 ## Integration boundary and next work
 
