@@ -23,7 +23,7 @@ Professional player response now compares total salary guarantees across term le
 - Existing match engine, scouting/knowledge, training, recruitment, season and career authorities remain in place; presence of an engine is not treated as full playable depth.
 - Rival trade negotiation is BLOCKED at the autonomous response boundary.
 - Role/playing-time valuation, broad club autonomy, facilities gameplay connection, full team finance loop, staff performance effects, and multi-ecosystem long-horizon lifecycle remain partial or unverified.
-- No complete European, NBA, NCAA or unified-world user-through-GUI scenario was executed.
+- No complete European, NBA, NCAA or unified-world user-through-GUI scenario was executed. The native window was launched on 2026-11-02, but no full route was manually certified.
 - No three-season interactive run, ten-season simulation, or Windows GUI acceptance was executed.
 
 ## Performance / regressions
@@ -37,4 +37,11 @@ F6 long-horizon timings, memory, save size and UI response times are NOT TESTED.
 - `F6_PLAYABLE_ACCEPTANCE.md`: scenario acceptance status.
 - `F6_LONG_HORIZON_PERFORMANCE.md`: explicit untested matrix.
 
-Branch: `feature/bdm-f6-final-gameplay`. Worktree: `C:\BDM-worktrees\bdm-f6-final-gameplay`. The single local commit containing this report is identified in the final runner result; no push or merge is performed.
+## Consolidation update (2026-11-02)
+
+- F6 code commit `7365013c` and the isolated owner-requested publication policy commit `83c04b0f` are published on `feature/bdm-f6-final-gameplay`; the remote SHA was verified as `83c04b0fd4b094c7b8e64f61c6dc9ece18f44f41`.
+- The native Tauri app launched from `C:\BDM-worktrees\bdm-f6-final-gameplay` and displayed the Basketball Dynasty Manager window. This records startup only, not visual acceptance of gameplay flows.
+- Integration candidate `integration/bdm-unified-20261102` adds the read-only DB-04 catalog adapter. Its focused test passed 3/3; other candidate validations and the remaining PR review are recorded in `docs/integration/BDM_CONSOLIDATION_REPORT.md`.
+- F6 remains **PARTIAL**. No three-season or ten-season run, full New Game path, market signing UI route, or global regression suite has been certified.
+
+F6 source worktree: `C:\BDM-worktrees\bdm-f6-final-gameplay`. The separate integration candidate is not `main`; no merge to `main` has occurred.

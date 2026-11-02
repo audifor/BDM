@@ -33,3 +33,7 @@
 - Prior gameplay status matrix: `docs/strengthening/reviewed/BS0_GAMEPLAY_MANIFESTATION_MATRIX.md` (audit base recorded there as `c23771ff...`; used as a gap index, not as a current F6 test result).
 - Focused current evidence: `src/engine/market/MarketEngine.test.ts` and related market application tests.
 - Trade readiness behavior: `src/app/trades/TradeNegotiationService.ts` and its tests.
+
+## Consolidation update (2026-11-02)
+
+The F6 native app was launched successfully, which verifies desktop startup only. The integration candidate also contains a read-only DB-04 catalog projection with its own integration test (3/3 passed); it does not create a second game-world authority or make source-only competitions executable. These checks do not change the market, trade-autonomy, or end-to-end gameplay classifications above.

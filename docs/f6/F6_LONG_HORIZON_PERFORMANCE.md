@@ -12,3 +12,7 @@
 | Long-horizon population and memory growth | NOT TESTED | Player/retirement/newgen, histories, reports, negotiations, games and save-size checkpoints. |
 
 Known risks from the reviewed `BS0_GAMEPLAY_MANIFESTATION_MATRIX.md` include future NCAA lifecycle limitations, prospect accumulation without a general retirement/population controller, and unbounded retained histories. These are not asserted as measured regressions in this run. No optimization claim is made.
+
+## Consolidation update (2026-11-02)
+
+The native app startup and short catalog/market tests are not long-horizon or performance measurements. Every measure in the table remains NOT TESTED; no timing, memory, save-size, or multi-season result is inferred from the successful build.

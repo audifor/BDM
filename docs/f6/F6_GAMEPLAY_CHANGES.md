@@ -17,3 +17,7 @@ Role remains excluded from acceptance valuation because the current role-promise
 ## Known remaining gap
 
 Trade rival readiness still returns `MORE_INFORMATION_REQUIRED`. F6 did not add an autonomous trade policy because the existing code explicitly lacks a defensible organization-knowledge-bounded response rule. See `F6_GAMEPLAY_AUDIT.md`.
+
+## Consolidation update (2026-11-02)
+
+No new player-facing market behavior was added during repository consolidation. The integration candidate adds a separate read-only DB-04 catalog adapter and validates its data projection; it does not change the contract-response behavior described above. The requested immersive contact, people, decision, and consequence presentation remains the next F6 gameplay change after the consolidation review.

@@ -1,6 +1,6 @@
 ﻿# F6 Playable Acceptance
 
-**Result: PARTIAL / NOT CERTIFIED.** No full Windows GUI acceptance was performed in this run. Focused tests and static inspection do not substitute for real New Game workflows.
+**Result: PARTIAL / NOT CERTIFIED.** The native Tauri window launched successfully on 2026-11-02, but no full Windows GUI acceptance route was performed. Focused tests and startup do not substitute for real New Game workflows.
 
 | Scenario / route | Result | Evidence or outstanding work |
 |---|---|---|
@@ -13,6 +13,6 @@
 | Training, staff, scouting, finance, medical, facilities, governance | PARTIAL | Canonical services/UI exist; end-to-end consequence and delegation acceptance not run. Specific connection gaps are in the audit. |
 | Coach career / mobility | PARTIAL | F5 controlled mobility evidence exists; organic opportunity generation and three interactive seasons were not re-certified in F6. |
 | Save/load | NOT TESTED (F6) | No post-negotiation pending-save/load or full-world multi-season round trip run. |
-| Windows native GUI | NOT TESTED | No GUI launched or manually inspected. A native compile, if completed, is not visual acceptance. |
+| Windows native GUI | LAUNCHED / NOT ACCEPTED | `Basketball Dynasty Manager` opened from the F6 worktree. The agent did not manually inspect or complete the New Game → club → season → market route. |
 
 The focused market tests are recorded in `F6_FINAL_REPORT.md`. This document makes no claims about actions performed through a UI where none were performed.
