@@ -72,7 +72,10 @@ export function TacticsWorkspace() {
   const clearGamePlanTacticalOverride = useGameStore((state) => state.clearGamePlanTacticalOverride)
   const lineupNotice = useGameStore((state) => state.lineupNotice)
   const clearLineupNotice = useGameStore((state) => state.clearLineupNotice)
-  const [activeTab, setActiveTab] = useState<Exclude<TacticsPcbTab, 'designer'>>('board')
+  const [activeTab, setActiveTab] = useState<Exclude<TacticsPcbTab, 'designer'>>(() => {
+    const requestedTab = new URLSearchParams(window.location.search).get('tacticsTab')
+    return requestedTab === 'rotations' || requestedTab === 'matchups' || requestedTab === 'match' ? requestedTab : 'board'
+  })
   const [boardMode, setBoardMode] = useState<'prepare' | 'design' | 'analyse'>('prepare')
   const { openEntity } = useNgWorkspaceNavigation()
 

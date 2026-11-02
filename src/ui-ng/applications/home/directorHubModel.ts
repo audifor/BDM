@@ -3,7 +3,7 @@ import { getGamePlan } from '@/app/game/TacticalPlanning'
 import { getUserHumanSituations } from '@/app/hrpg/HumanSimulationService'
 import { getTeamResponsibilities } from '@/domain/world'
 import type { GameWorld } from '@/domain/world'
-import type { TeamId } from '@/domain/ids'
+import type { PlayerId, TeamId } from '@/domain/ids'
 import { getTeamRoster } from '@/domain/world'
 import { injuryLifecycleStatus } from '@/domain/injury'
 import { getNextUserGame, getUserTeam } from '@/engine/calendar'
@@ -14,6 +14,8 @@ export type DirectorHubTier = 'A' | 'B' | 'C' | 'D'
 
 export type DirectorHubAction =
   | { readonly type: 'navigate'; readonly app: WorkspaceAppId }
+  | { readonly type: 'navigate-tactics-rotations' }
+  | { readonly type: 'navigate-player'; readonly playerId: PlayerId }
   | { readonly type: 'resolve-human-situation'; readonly situationId: string; readonly actionId: string }
   | { readonly type: 'accept-staff-recommendation'; readonly outcomeId: string }
   | { readonly type: 'dismiss-staff-recommendation'; readonly outcomeId: string }
@@ -31,6 +33,7 @@ export interface DirectorHubItem {
   readonly secondaryAction?: DirectorHubAction
   readonly secondaryActionLabel?: string
   readonly choices?: readonly { readonly label: string; readonly action: DirectorHubAction }[]
+  readonly links?: readonly { readonly label: string; readonly action: DirectorHubAction }[]
 }
 
 export interface DirectorHubModel {
@@ -99,12 +102,18 @@ export function buildDirectorHubModel(world: GameWorld): DirectorHubModel {
   // persist a presentation-level decision.
   for (const situation of getUserHumanSituations(world).filter((item) => item.status === 'open' && item.choices.length > 0)) {
     const participantNames = situation.participants.map((participant) => participant.name).join(' · ')
+    const roleReview = situation.source.kind === 'memory' ? world.memoriesById[situation.source.id] : undefined
+    const isRoleConcern = roleReview !== undefined && roleReview.tags.includes('rolePromiseReview') && roleReview.context.reviewStatus === 'SUSTAINED_BREACH'
     items.push({
       id: `human-situation:${situation.id}`,
       tier: 'A',
       title: 'Situación profesional pendiente',
       summary: situation.narration.description,
-      detail: participantNames,
+      detail: isRoleConcern ? `${participantNames} · No consta una petición directa del jugador; las opciones disponibles proceden de HRPG.` : participantNames,
+      ...(roleReview !== undefined && roleReview.tags.includes('rolePromiseReview') && roleReview.context.reviewStatus === 'SUSTAINED_BREACH' && typeof roleReview.context.playerId === 'string' ? { links: [
+        { label: 'Abrir Rotations', action: { type: 'navigate-tactics-rotations' as const } },
+        { label: 'Abrir Player', action: { type: 'navigate-player' as const, playerId: roleReview.context.playerId as PlayerId } },
+      ] } : {}),
       choices: situation.choices.map((choice) => ({
         label: choice.label,
         action: { type: 'resolve-human-situation' as const, situationId: situation.id, actionId: choice.id },

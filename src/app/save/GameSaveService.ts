@@ -5,6 +5,8 @@ import { ensureUserClubBoardState } from '@/engine/board'
 import { ensureCanonicalFinanceFoundation } from '@/domain/finance'
 import type { GameSaveRepository } from './GameSaveRepository'
 import { bindWorldDbV2FrenchFormat } from '@/app/game/WorldDbV2FrenchFormatBinding'
+import { progressRolePromiseSeasonReviews } from '@/app/contractRetention/RolePromiseReviewService'
+import { synchronizeHumanSimulation } from '@/app/hrpg/HumanSimulationService'
 
 export async function saveCurrentGame(world: GameWorld, repository: GameSaveRepository, savedAt: string): Promise<void> {
   assertNoUnresolvedRosterContractIntegrity(world)
@@ -23,7 +25,9 @@ export async function loadSavedGame(repository: GameSaveRepository): Promise<Gam
   // must still open with canonical Board truth for the club the user coach is attached to.
   // BS16E: canonical spending authorization activates from the legacy TeamFinances authority when the
   // organization has a provisioned finance profile; it is idempotent and never overwrites canonical facts.
-  return bindWorldDbV2FrenchFormat(ensureCanonicalFinanceFoundation(ensureUserClubBoardState(integrity.world)))
+  const bound = bindWorldDbV2FrenchFormat(ensureCanonicalFinanceFoundation(ensureUserClubBoardState(integrity.world)))
+  const recovered = progressRolePromiseSeasonReviews(bound)
+  return recovered === bound ? bound : synchronizeHumanSimulation(bound, recovered)
 }
 
 function assertNoUnresolvedRosterContractIntegrity(world: GameWorld): void {

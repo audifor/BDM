@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 
-import { syncWorkspaceAppQuery } from '@/ui-ng/workspace/workspaceApps'
+import { navigateToTalentDestination, syncWorkspaceAppQuery } from '@/ui-ng/workspace/workspaceApps'
 import { useGameStore } from '@/stores/gameStore'
 import { buildDirectorHubModel, type DirectorHubAction, type DirectorHubItem } from './directorHubModel'
 
@@ -8,6 +8,8 @@ import './director-hub.css'
 
 function runAction(action: DirectorHubAction, handlers: { readonly acceptStaff: (id: string) => void; readonly dismissStaff: (id: string) => void; readonly acceptReport: (id: string) => void; readonly resolveHuman: (situationId: string, actionId: string) => void; readonly continue: () => void }) {
   if (action.type === 'navigate') syncWorkspaceAppQuery(action.app, 'push')
+  else if (action.type === 'navigate-tactics-rotations') syncWorkspaceAppQuery('tactics', 'push', { tacticsTab: 'rotations' })
+  else if (action.type === 'navigate-player') navigateToTalentDestination({ app: 'player', playerId: action.playerId })
   else if (action.type === 'resolve-human-situation') handlers.resolveHuman(action.situationId, action.actionId)
   else if (action.type === 'accept-staff-recommendation') handlers.acceptStaff(action.outcomeId)
   else if (action.type === 'dismiss-staff-recommendation') handlers.dismissStaff(action.outcomeId)
@@ -34,6 +36,7 @@ function HubItem({ item, onAction }: { readonly item: DirectorHubItem; readonly 
         {item.choices === undefined ? null : <div className="director-hub__choices">
           {item.choices.map((choice) => <button key={choice.action.type === 'resolve-human-situation' ? `${choice.action.situationId}:${choice.action.actionId}` : choice.label} className="ng-canon__action director-hub__action" type="button" onClick={() => onAction(choice.action)}>{choice.label}</button>)}
         </div>}
+        {item.links?.map((link) => <button key={link.label} className="ng-canon__action director-hub__action director-hub__action--secondary" type="button" onClick={() => onAction(link.action)}>{link.label}</button>)}
       </div>
     </article>
   )

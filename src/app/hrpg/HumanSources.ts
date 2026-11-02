@@ -152,10 +152,13 @@ export function readHumanFact(world: GameWorld, source: HumanSource): HumanFact 
         (coachId !== undefined && (!world.coaches[coachId as never] || !coachIsReferenced))) return undefined
       participants = [player(playerId), ...(coachId === undefined ? [] : [coach(coachId)])]
     }
+    const rolePromiseTitle = isRolePromiseReview
+      ? `Revision ${String(memory.context.reviewStage) === 'midseason' ? 'provisional durante la temporada' : 'de temporada'} [${String(memory.context.reviewStatus)}]: compromiso ${String(memory.context.role)}; ${String(memory.context.starts)} titularidades, ${String(memory.context.appearances)} apariciones y ${Math.max(0, Number(memory.context.measuredGames) - Number(memory.context.appearances))} DNP acreditados en ${String(memory.context.measuredGames)} partidos con acta completa; ${((Number(memory.context.regulationTimeShareBps) || 0) / 100).toFixed(1)}% del tiempo reglamentario acumulado. ${String(memory.context.rationale)}`
+      : undefined
     fact = { source, occurredOn: memory.occurredOn, topic: isPromise ? 'rememberedCommitment' : 'humanRecollection',
       participants, public: false,
-      title: isRolePromiseReview ? `Role promise review: ${String(memory.context.reviewStatus)}`
-        : isPromise ? `A remembered professional commitment: ${memory.type}` : `A remembered personal response: ${String(memory.context.actionId)}`,
+      title: rolePromiseTitle ?? (isRolePromiseReview ? `Role promise review: ${String(memory.context.reviewStatus)}`
+        : isPromise ? `A remembered professional commitment: ${memory.type}` : `A remembered personal response: ${String(memory.context.actionId)}`),
       stage: memory.tags.includes('broken') ? 'crisis' : memory.tags.some(tag => ['fulfilled', 'remedied', 'cancelled'].includes(tag)) ? 'resolution'
         : memory.tags.includes('aftermath') ? 'aftermath' : 'development',
       ...(isPromise && memory.sourceId ? { causalKey: memory.sourceId } : typeof memory.context.causalKey === 'string' ? { causalKey: memory.context.causalKey } : {}) }

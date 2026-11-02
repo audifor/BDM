@@ -61,6 +61,12 @@ describe('TacticsWorkspace', () => {
     expect(document.querySelector('.pcb-tactics__tabs')).toBeNull()
   })
 
+  it('opens the Rotations tab from an HRPG deep link', () => {
+    window.history.replaceState({}, '', '/?ui=ng&app=tactics&tacticsTab=rotations')
+    mountTacticsWorkspace()
+    expect(document.querySelector('[data-courtside-tactics-screen="rotations"]')).toBeInTheDocument()
+  })
+
   it('keeps Pizarra and Diseñador immediately below the workspace tabs without duplicate page headers', () => {
     mountTacticsWorkspace()
     expect(document.querySelector('.ct-page__head')).toBeNull()

@@ -97,6 +97,7 @@ export function navigateToTalentApp(app: 'talent' | 'scouting' | 'recruiting' | 
 
 export function navigateToTalentDestination(destination: { readonly app: 'player' | 'scouting' | 'recruiting' | 'portal' | 'draft'; readonly playerId: PlayerId; readonly playerView?: 'scouting' | 'history' | 'contract'; readonly focusPlayerId?: PlayerId }) {
   const url = new URL(window.location.href)
+  url.searchParams.delete('tacticsTab')
   url.searchParams.set('app', destination.app)
   url.searchParams.delete('playerId')
   url.searchParams.delete('playerView')
@@ -134,6 +135,7 @@ export interface NgWorkspaceContext {
   readonly negotiationId?: string
   readonly decisionId?: string
   readonly requestId?: string
+  readonly tacticsTab?: 'board' | 'matchups' | 'rotations' | 'match'
 }
 
 export function parseWorkspaceNegotiationId(value: string | null): string | null {
@@ -212,6 +214,8 @@ export function syncWorkspaceAppQuery(
   if (context.requestId !== undefined && context.requestId !== '') {
     url.searchParams.set('requestId', context.requestId)
   }
+  url.searchParams.delete('tacticsTab')
+  if (app === 'tactics' && context.tacticsTab !== undefined) url.searchParams.set('tacticsTab', context.tacticsTab)
   if (app !== 'market' && app !== 'scouting') url.searchParams.delete('marketTab')
   if (app !== 'recruiting') url.searchParams.delete('focusPlayerId')
   applyHistory(url, method)

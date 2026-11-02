@@ -1,6 +1,7 @@
 import { compareGameDates, type GameDate } from '@/domain/date'
 import { getPlayerContractStatus, type PlayerContract } from '@/domain/contract'
 import type { Game } from '@/domain/game'
+import type { GameId } from '@/domain/ids'
 import { isInjuryActive } from '@/domain/injury'
 import type { RolePromise } from '@/domain/market'
 import { contractsByPlayer, eligibilityRestrictionsByPlayer, injuriesByPlayer, resolveGameClockRulesForGame, type GameWorld } from '@/domain/world'
@@ -23,6 +24,55 @@ export interface RolePromiseUsageWindow {
   /** Share of regulation time; overtime seconds remain in the numerator. Never divided by five players. */
   readonly playingTimeShare: number | null
   readonly topThreeMinuteRate: number | null
+}
+
+const gameIndexBySeasons = new WeakMap<object, Map<string, GameId[]>>()
+function rolePromiseGameIndex(world: GameWorld, addedGameIds: readonly GameId[] = []): Map<string, GameId[]> {
+  let index = gameIndexBySeasons.get(world.seasons)
+  if (!index) {
+    index = new Map<string, GameId[]>()
+    for (const game of Object.values(world.games)) for (const teamId of [game.homeTeamId, game.awayTeamId]) {
+      const key = `${teamId}\u0000${game.competitionId}\u0000${game.seasonId}`
+      const ids = index.get(key) ?? []
+      ids.push(game.id)
+      index.set(key, ids)
+    }
+    gameIndexBySeasons.set(world.seasons, index)
+  }
+  for (const id of addedGameIds) {
+    const game = world.games[id]
+    if (!game) continue
+    for (const teamId of [game.homeTeamId, game.awayTeamId]) {
+      const key = `${teamId}\u0000${game.competitionId}\u0000${game.seasonId}`
+      const ids = index.get(key) ?? []
+      if (!ids.includes(id)) { ids.push(id); index.set(key, ids) }
+    }
+  }
+  return index
+}
+
+/** True only on the game that supplies the Nth available schedule opportunity for this promise. */
+export function isRolePromiseUsageCheckpoint(world: GameWorld, promise: RolePromise, competitionId: string, seasonId: string,
+  completedGameIds: ReadonlySet<GameId>, requiredGames: number): boolean {
+  const teamIds = new Set(Object.values(world.teams).filter(team => team.organizationId === promise.teamOrganizationId).map(team => team.id))
+  const contracts = contractsByPlayer(world.contractsById).get(promise.playerId) ?? []
+  const restrictions = eligibilityRestrictionsByPlayer(world.eligibilityRestrictionsById).get(promise.playerId) ?? []
+  const injuries = injuriesByPlayer(world.injuriesById).get(promise.playerId) ?? []
+  const index = rolePromiseGameIndex(world, [...completedGameIds])
+  const candidates = [...new Set([...teamIds].flatMap(teamId => index.get(`${teamId}\u0000${competitionId}\u0000${seasonId}`) ?? []))]
+    .map(id => world.games[id]).filter((game): game is Game => game !== undefined && game.status === 'completed' && compareGameDates(game.date, promise.acceptedOn) >= 0)
+    .sort((left, right) => left.date.localeCompare(right.date) || left.id.localeCompare(right.id))
+  let available = 0
+  for (const game of candidates) {
+    const teamId = teamIds.has(game.homeTeamId) ? game.homeTeamId : game.awayTeamId
+    if (!contracts.some(contract => contract.teamId === teamId && getPlayerContractStatus(contract, game.date) === 'active')) continue
+    const ecosystemId = world.competitions[game.competitionId]!.ecosystemId
+    if (restrictions.some(item => item.ecosystemId === ecosystemId && compareGameDates(item.startsAt, game.date) <= 0 && (item.endsAt === undefined || compareGameDates(game.date, item.endsAt) <= 0))
+      || injuries.some(injury => isInjuryActive(injury, game.date))) continue
+    available++
+    if (available === requiredGames) return completedGameIds.has(game.id)
+  }
+  return false
 }
 
 /**

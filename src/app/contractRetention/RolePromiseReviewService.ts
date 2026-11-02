@@ -1,18 +1,17 @@
-import { addDays, type GameDate } from '@/domain/date'
-import type { CoachId, PlayerId } from '@/domain/ids'
+import type { GameDate } from '@/domain/date'
+import type { CoachId, GameId, PlayerId, SeasonId, TeamId } from '@/domain/ids'
 import type { RolePromise } from '@/domain/market'
 import { applyMoraleEventToWorld, applyRelationshipEventsToWorld, type GameWorld } from '@/domain/world'
 import { recordMemory } from '@/engine/memory/MemoryEngine'
-import { evaluateRolePromiseUsage, type RolePromiseEvaluation } from '@/engine/contractRetention/RolePromiseEvaluation'
-import { deriveRolePromiseUsage } from '@/engine/contractRetention/RolePromiseUsage'
+import { evaluateRolePromiseUsage, ROLE_PROMISE_EVALUATION_CALIBRATION, type RolePromiseEvaluation } from '@/engine/contractRetention/RolePromiseEvaluation'
+import { deriveRolePromiseUsage, isRolePromiseUsageCheckpoint } from '@/engine/contractRetention/RolePromiseUsage'
 
-const reviewKey = (promiseId: string, competitionId: string, seasonId: string) => `role-promise-review:${promiseId}:${competitionId}:${seasonId}`
+const reviewKey = (promiseId: string, competitionId: string, seasonId: string, stage: 'midseason' | 'season' = 'season') => `role-promise-review:${promiseId}:${competitionId}:${seasonId}:${stage}`
 const reviewMemoryId = (key: string, actor: 'player' | 'coach') => `memory:${key}:${actor}`
 
-/** Applies one review at the natural end of a competition season. It never closes or edits RolePromise. */
-export function progressRolePromiseSeasonReviews(world: GameWorld): GameWorld {
-  const endingDate = addOneDayBack(world.currentDate)
-  const seasonsEnding = Object.values(world.seasons).filter((season) => season.endDate === endingDate)
+/** Reviews only completed-season facts supplied by the calendar (or a one-time recovery scan). */
+export function progressRolePromiseSeasonReviews(world: GameWorld, completedSeasonIds: readonly SeasonId[] = Object.keys(world.seasonHistoryBySeasonId) as SeasonId[]): GameWorld {
+  const seasonsEnding = completedSeasonIds.map(id => world.seasons[id]).filter((season): season is NonNullable<typeof season> => season !== undefined)
   if (seasonsEnding.length === 0) return world
 
   const promises = latestActivePromises(world)
@@ -20,11 +19,15 @@ export function progressRolePromiseSeasonReviews(world: GameWorld): GameWorld {
   for (const season of seasonsEnding.sort((left, right) => left.id.localeCompare(right.id))) {
     const competition = next.competitions[season.competitionId]
     if (competition === undefined) continue
-    if (Object.values(next.games).some((game) => game.competitionId === season.competitionId && game.seasonId === season.id
-      && game.date <= season.endDate && game.status !== 'completed')) continue
+    const completedOn = next.seasonHistoryBySeasonId[season.id]?.completedOn
+    if (completedOn === undefined || completedOn > next.currentDate) continue
     const teamIds = competition.participantTeamIds.filter((teamId) => next.teams[teamId]?.organizationId !== undefined)
     const organizations = new Set(teamIds.map((teamId) => next.teams[teamId]!.organizationId))
     for (const promise of promises.filter((item) => organizations.has(item.teamOrganizationId))) {
+      const history = next.seasonHistoryBySeasonId[season.id]
+      if (history === undefined || history.completedOn > next.currentDate || promise.acceptedOn > history.completedOn) continue
+      const key = reviewKey(promise.id, season.competitionId, season.id)
+      if (next.memoriesById[reviewMemoryId(key, 'player')] !== undefined) continue
       const window = deriveRolePromiseUsage(next, promise).find((item) => item.competitionId === season.competitionId && item.seasonId === season.id)
       if (window === undefined) continue
       const assessment = evaluateRolePromiseUsage(promise, window)
@@ -32,10 +35,51 @@ export function progressRolePromiseSeasonReviews(world: GameWorld): GameWorld {
       const teamId = teamIds.find((id) => next.teams[id]?.organizationId === promise.teamOrganizationId)
       if (teamId === undefined) continue
       const coachId = next.teams[teamId]?.coachId
-      const key = reviewKey(promise.id, season.competitionId, season.id)
-      if (next.memoriesById[reviewMemoryId(key, 'player')] !== undefined) continue
-      next = recordReviewMemories(next, promise, assessment, teamId, coachId, season.endDate, key)
-      next = applyReviewConsequences(next, promise, assessment, teamId, coachId, season.endDate, key)
+      const interimKey = reviewKey(promise.id, season.competitionId, season.id, 'midseason')
+      const hasInterimConsequence = next.memoriesById[reviewMemoryId(interimKey, 'player')] !== undefined
+      next = recordReviewMemories(next, promise, assessment, teamId, coachId, completedOn, key, !hasInterimConsequence)
+      if (!hasInterimConsequence) next = applyReviewConsequences(next, promise, assessment, teamId, coachId, completedOn, key)
+    }
+  }
+  return next
+}
+
+/** A single provisional checkpoint, opened only after the existing evidence minimum is met. */
+export function progressRolePromiseInSeasonReviews(world: GameWorld, completedGameIds: readonly GameId[]): GameWorld {
+  if (completedGameIds.length === 0) return world
+  const playedTeamIds = new Set(completedGameIds.flatMap(id => {
+    const game = world.games[id]
+    return game?.status === 'completed' ? [game.homeTeamId, game.awayTeamId] : []
+  }))
+  if (playedTeamIds.size === 0) return world
+  const completedIds = new Set(completedGameIds)
+  const checkpoints = new Set(completedGameIds.map(id => world.games[id]).filter(game => game?.status === 'completed')
+    .map(game => `${game!.competitionId}\u0000${game!.seasonId}`))
+  const checkpointDate = completedGameIds.map(id => world.games[id]).filter(game => game?.status === 'completed')
+    .map(game => game!.date).sort().at(-1) ?? world.currentDate
+  const teamByOrganization = new Map<string, TeamId>()
+  const playedOrganizations = new Set<string>()
+  for (const teamId of playedTeamIds) {
+    const organizationId = world.teams[teamId]?.organizationId
+    if (organizationId !== undefined) { playedOrganizations.add(organizationId); teamByOrganization.set(organizationId, teamId) }
+  }
+  let next = world
+  for (const promise of latestActivePromises(world).filter(item => playedOrganizations.has(item.teamOrganizationId))) {
+    const teamId = teamByOrganization.get(promise.teamOrganizationId)
+    if (teamId === undefined) continue
+    for (const checkpoint of checkpoints) {
+      const [competitionId, seasonId] = checkpoint.split('\u0000')
+      if (!seasonId || !competitionId || next.seasons[seasonId as SeasonId]?.competitionId !== competitionId
+        || !isRolePromiseUsageCheckpoint(next, promise, competitionId, seasonId, completedIds, ROLE_PROMISE_EVALUATION_CALIBRATION.minimumMeasuredGames)) continue
+      const window = deriveRolePromiseUsage(next, promise).find(item => item.competitionId === competitionId && item.seasonId === seasonId)
+      if (!window || window.measuredGames < ROLE_PROMISE_EVALUATION_CALIBRATION.minimumMeasuredGames) continue
+      const key = reviewKey(promise.id, window.competitionId, window.seasonId, 'midseason')
+      if (next.memoriesById[reviewMemoryId(key, 'player')]) continue
+      const assessment = evaluateRolePromiseUsage(promise, window)
+      if (assessment.status !== 'SUSTAINED_BREACH') continue
+      const coachId = next.teams[teamId]?.coachId
+      next = recordReviewMemories(next, promise, assessment, teamId, coachId, checkpointDate, key, true, 'midseason')
+      next = applyReviewConsequences(next, promise, assessment, teamId, coachId, checkpointDate, key)
     }
   }
   return next
@@ -53,12 +97,19 @@ function latestActivePromises(world: GameWorld): readonly RolePromise[] {
 }
 
 function recordReviewMemories(world: GameWorld, promise: RolePromise, assessment: RolePromiseEvaluation,
-  teamId: string, coachId: CoachId | undefined, occurredOn: GameDate, key: string): GameWorld {
+  teamId: string, coachId: CoachId | undefined, occurredOn: GameDate, key: string,
+  exposeToHrpg = assessment.status === 'SUSTAINED_BREACH', reviewStage: 'midseason' | 'season' = 'season'): GameWorld {
   const roleTag = assessment.status === 'SUSTAINED_BREACH' ? 'sustainedBreach' : assessment.status === 'AT_RISK' ? 'atRisk' : 'reasonable'
   const commonContext = { rolePromiseReview: true, rolePromiseId: promise.id, playerId: promise.playerId,
     ...(coachId === undefined ? {} : { coachId }), teamId, competitionId: assessment.competitionId,
     seasonId: assessment.seasonId, role: promise.role, reviewStatus: assessment.status,
-    calibrationVersion: assessment.calibrationVersion }
+    calibrationVersion: assessment.calibrationVersion, reviewStage,
+    measuredGames: assessment.measuredGames, availableGames: assessment.availableGames,
+    starts: assessment.startRate === null ? 0 : Math.round(assessment.startRate * assessment.measuredGames),
+    appearances: assessment.appearanceRate === null ? 0 : Math.round(assessment.appearanceRate * assessment.measuredGames),
+    regulationTimeShareBps: Math.round((assessment.regulationTimeShare ?? 0) * 10000),
+    rationale: assessment.rationale }
+  const tags = ['player', 'contract', 'rolePromiseReview', roleTag, ...(exposeToHrpg ? ['promise'] : [])]
   let next = recordMemory(world, {
     id: reviewMemoryId(key, 'player'), owner: { kind: 'player', id: promise.playerId },
     type: assessment.status === 'SUSTAINED_BREACH' ? 'betrayal' : 'support', occurredOn,
@@ -66,7 +117,7 @@ function recordReviewMemories(world: GameWorld, promise: RolePromise, assessment
     sourceId: promise.id, semanticKey: `${key}:player`, importance: assessment.status === 'SUSTAINED_BREACH' ? 'important' : 'notable',
     valence: assessment.status === 'SUSTAINED_BREACH' ? -30 : assessment.status === 'REASONABLE' ? 12 : -5,
     intensity: assessment.status === 'SUSTAINED_BREACH' ? 55 : 35, decayPerMonth: 1, permanent: false,
-    tags: ['player', 'contract', 'promise', 'rolePromiseReview', roleTag], context: commonContext,
+    tags, context: commonContext,
   })
   if (coachId !== undefined) next = recordMemory(next, {
     id: reviewMemoryId(key, 'coach'), owner: { kind: 'coach', id: coachId },
@@ -75,7 +126,7 @@ function recordReviewMemories(world: GameWorld, promise: RolePromise, assessment
     sourceId: promise.id, semanticKey: `${key}:coach`, importance: assessment.status === 'SUSTAINED_BREACH' ? 'important' : 'notable',
     valence: assessment.status === 'SUSTAINED_BREACH' ? -18 : assessment.status === 'REASONABLE' ? 8 : -3,
     intensity: assessment.status === 'SUSTAINED_BREACH' ? 45 : 30, decayPerMonth: 1, permanent: false,
-    tags: ['coach', 'contract', 'promise', 'rolePromiseReview', roleTag], context: commonContext,
+    tags: ['coach', 'contract', 'rolePromiseReview', roleTag, ...(exposeToHrpg ? ['promise'] : [])], context: commonContext,
   })
   return next
 }
@@ -107,8 +158,4 @@ function applyReviewConsequences(world: GameWorld, promise: RolePromise, assessm
       context: { rolePromiseId: promise.id, rolePromiseReview: assessment.status, teamId },
     } },
   ])
-}
-
-function addOneDayBack(date: GameDate): GameDate {
-  return addDays(date, -1)
 }

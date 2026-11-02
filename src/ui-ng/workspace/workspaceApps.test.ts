@@ -26,12 +26,13 @@ import {
 describe('workspaceApps navigation', () => {
   it('deep links an attention action to the same Player and relevant view', () => {
     const playerId = 'player:bs15h-route' as PlayerId
-    window.history.replaceState({}, '', '/?ui=ng&app=talent')
+    window.history.replaceState({}, '', '/?ui=ng&app=tactics&tacticsTab=rotations')
     navigateToTalentDestination({ app: 'player', playerId, playerView: 'scouting' })
     let params = new URL(window.location.href).searchParams
     expect(params.get('app')).toBe('player')
     expect(params.get('playerId')).toBe(playerId)
     expect(params.get('playerView')).toBe('scouting')
+    expect(params.get('tacticsTab')).toBeNull()
 
     navigateToTalentDestination({ app: 'recruiting', playerId, focusPlayerId: playerId })
     params = new URL(window.location.href).searchParams
@@ -73,6 +74,14 @@ describe('workspaceApps navigation', () => {
     expect(parseWorkspaceStaffId(null)).toBeNull()
     expect(parseWorkspaceTeamId('team:leyma')).toBe('team:leyma')
     expect(parseWorkspaceTeamId(null)).toBeNull()
+  })
+
+  it('opens the Tactics workspace at Rotations without retaining the subroute for other apps', () => {
+    window.history.replaceState({}, '', '/?ui=ng&app=home')
+    syncWorkspaceAppQuery('tactics', 'push', { tacticsTab: 'rotations' })
+    expect(new URL(window.location.href).searchParams.get('tacticsTab')).toBe('rotations')
+    syncWorkspaceAppQuery('home', 'push')
+    expect(new URL(window.location.href).searchParams.get('tacticsTab')).toBeNull()
   })
 
   it('navigateToStaff opens the staff dossier URL', () => {

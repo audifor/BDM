@@ -11,22 +11,26 @@ import { updateGameWorld } from '@/domain/world'
 import { createInjury } from '@/domain/injury'
 import { serializeGameWorldV4, deserializeGameWorldV4 } from '@/save/GameWorldSaveV4'
 import { deriveRetentionPlayerResponse } from '@/engine/contractRetention/ContractRetentionEngine'
-import { progressRolePromiseSeasonReviews } from './RolePromiseReviewService'
+import { progressRolePromiseInSeasonReviews, progressRolePromiseSeasonReviews } from './RolePromiseReviewService'
+import { ROLE_PROMISE_EVALUATION_CALIBRATION } from '@/engine/contractRetention/RolePromiseEvaluation'
 import { decideUserHumanSituation, getUserHumanSituations, synchronizeHumanSimulation } from '@/app/hrpg/HumanSimulationService'
 import { calculateSeasonStandings } from '@/domain/season/calculateStandings'
+import { loadSavedGame } from '@/app/save/GameSaveService'
+import { buildDirectorHubModel } from '@/ui-ng/applications/home/directorHubModel'
+import { fireCoachFromTeam } from '@/app/coachCareer/CoachCareerService'
 
 const base = createNewGame()
 type Mode = 'STAR_STEADY' | 'STARTER_BREACH' | 'ROTATION_HIGH' | 'ROTATION_NO_USE'
 interface Scenario { readonly world: ReturnType<typeof createNewGame>; readonly promise: RolePromise; readonly teamId: TeamId; readonly playerIds: readonly string[]; readonly seasonEnd: GameDate; readonly cutoff: GameDate }
 
-function createWorld(mode: Mode, targetIndices: readonly number[] = [mode === 'ROTATION_HIGH' || mode === 'ROTATION_NO_USE' ? 5 : 0], throughEnd = true): Scenario {
+function createWorld(mode: Mode, targetIndices: readonly number[] = [mode === 'ROTATION_HIGH' || mode === 'ROTATION_NO_USE' ? 5 : 0], throughEnd = true, targetCompletedGames?: number): Scenario {
   const team = Object.values(base.teams).find((item) => item.coachId === base.userCoachId)!
   const competition = Object.values(base.competitions).find((item) => item.participantTeamIds.includes(team.id))!
   const season = Object.values(base.seasons).find((item) => item.competitionId === competition.id
     && (item.participantTeamIds ?? competition.participantTeamIds).includes(team.id))!
   const teamGames = Object.values(base.games).filter((game) => game.competitionId === competition.id && game.seasonId === season.id && (game.homeTeamId === team.id || game.awayTeamId === team.id))
     .sort((left, right) => left.date.localeCompare(right.date) || left.id.localeCompare(right.id))
-  const cutoff = throughEnd ? season.endDate : teamGames[Math.floor(teamGames.length / 2)]!.date
+  const cutoff = throughEnd ? season.endDate : targetCompletedGames === undefined ? teamGames[Math.floor(teamGames.length / 2)]!.date : teamGames[targetCompletedGames - 1]!.date
   const playerIds = targetIndices.map((index) => team.rosterPlayerIds[index]!)
   const rolePromises: RolePromise[] = playerIds.map((playerId) => ({ id: `role-promise:review-test:${mode}:${playerId}`, playerId, teamOrganizationId: team.organizationId,
     role: mode === 'STAR_STEADY' ? 'STAR' as const : mode === 'STARTER_BREACH' ? 'STARTER' as const : 'ROTATION' as const,
@@ -152,7 +156,14 @@ describe('seasonal RolePromise consequences', () => {
     const synchronized = synchronizeHumanSimulation(syncBefore, reviewed)
     const coachMemoryId = Object.values(reviewed.memoriesById).find(item => item.owner.kind === 'coach' && item.context.rolePromiseId === scenario.promise.id)!.id
     const conversation = getUserHumanSituations(synchronized).find(item => item.source.id === coachMemoryId)
-    expect(conversation?.narration.description).toContain('Role promise review: SUSTAINED_BREACH')
+    expect(conversation?.narration.description).toContain('SUSTAINED_BREACH')
+    expect(conversation?.narration.description).toContain('0 titularidades')
+    expect(conversation?.narration.description).toContain('14 apariciones')
+    expect(conversation?.narration.description).toContain('0 DNP acreditados')
+    const hubCard = buildDirectorHubModel(synchronized).items.find(item => item.id === `human-situation:${conversation?.id}`)
+    expect(hubCard?.detail).toContain('No consta una petición directa')
+    expect(hubCard?.choices?.length).toBeGreaterThan(0)
+    expect(hubCard?.links?.map(link => link.label)).toEqual(['Abrir Rotations', 'Abrir Player'])
     const coachId = synchronized.teams[scenario.teamId]!.coachId!
     const key = relationshipKey(scenario.promise.playerId, coachId)
     const before = synchronized.relationshipsByKey[key]?.value ?? 0
@@ -211,5 +222,65 @@ describe('seasonal RolePromise consequences', () => {
     const replayed = progressRolePromiseSeasonReviews(loadedAfterReview)
     expect(Object.values(replayed.memoriesById).filter(item => item.context.rolePromiseId === finished.promise.id && item.owner.kind === 'player')).toHaveLength(1)
     expect(replayed.moraleByPersonId[finished.promise.playerId]).toEqual(loadedAfterReview.moraleByPersonId[finished.promise.playerId])
+  })
+
+  it('opens one provisional HRPG concern at the existing evidence checkpoint and avoids repeating final consequences', () => {
+    const partial = createWorld('STARTER_BREACH', [0], false, ROLE_PROMISE_EVALUATION_CALIBRATION.minimumMeasuredGames)
+    const competition = Object.values(partial.world.competitions).find(item => item.participantTeamIds.includes(partial.teamId))!
+    const season = Object.values(partial.world.seasons).find(item => item.competitionId === competition.id)!
+    const teamGameIds = Object.values(partial.world.games).filter(game => game.status === 'completed' && game.competitionId === competition.id && game.seasonId === season.id
+      && (game.homeTeamId === partial.teamId || game.awayTeamId === partial.teamId)).map(game => game.id)
+    expect(teamGameIds).toHaveLength(ROLE_PROMISE_EVALUATION_CALIBRATION.minimumMeasuredGames)
+    const midseason = progressRolePromiseInSeasonReviews(partial.world, teamGameIds)
+    const interim = Object.values(midseason.memoriesById).find(memory => memory.owner.id === partial.promise.playerId && memory.context.rolePromiseId === partial.promise.id)
+    expect(interim?.context).toMatchObject({ reviewStage: 'midseason', reviewStatus: 'SUSTAINED_BREACH' })
+    expect(interim?.tags).toContain('promise')
+    const moraleAfterInterim = midseason.moraleByPersonId[partial.promise.playerId]
+    const loaded = deserializeGameWorldV4(serializeGameWorldV4(midseason, '2026-11-02T12:00:00.000Z'))
+    expect(progressRolePromiseInSeasonReviews(loaded, teamGameIds).memoriesById).toEqual(loaded.memoriesById)
+
+    const finished = createWorld('STARTER_BREACH')
+    const resumed = updateGameWorld(finished.world, { memories: Object.values(loaded.memoriesById),
+      moraleByPersonId: loaded.moraleByPersonId, relationshipsByKey: loaded.relationshipsByKey })
+    const closed = progressRolePromiseSeasonReviews(resumed)
+    expect(closed.moraleByPersonId[partial.promise.playerId]).toEqual(moraleAfterInterim)
+    expect(Object.values(closed.memoriesById).filter(memory => memory.context.rolePromiseId === partial.promise.id && memory.owner.kind === 'player')).toHaveLength(2)
+    expect(Object.values(closed.memoriesById).find(memory => memory.owner.id === partial.promise.playerId && memory.context.reviewStage === 'season')?.tags).not.toContain('promise')
+  })
+
+  it('recovers a delayed completed season from canonical history, not the planned end date', () => {
+    const scenario = createWorld('STARTER_BREACH')
+    const competition = Object.values(scenario.world.competitions).find(item => item.participantTeamIds.includes(scenario.teamId))!
+    const season = Object.values(scenario.world.seasons).find(item => item.competitionId === competition.id)!
+    const history = scenario.world.seasonHistoryBySeasonId[season.id]!
+    const delayedDate = addDays(season.endDate, 12)
+    const beforeCompletion = updateGameWorld(scenario.world, { currentDate: delayedDate, seasonHistory: [] })
+    expect(progressRolePromiseSeasonReviews(beforeCompletion).memoriesById).toEqual(beforeCompletion.memoriesById)
+    const delayed = updateGameWorld(beforeCompletion, { seasonHistory: [{ ...history, completedOn: delayedDate }] })
+    const recovered = progressRolePromiseSeasonReviews(delayed)
+    expect(Object.values(recovered.memoriesById).some(memory => memory.context.rolePromiseId === scenario.promise.id)).toBe(true)
+    expect(progressRolePromiseSeasonReviews(recovered).memoriesById).toEqual(recovered.memoriesById)
+  })
+
+  it('records the player-side interim review after the responsible coach leaves', () => {
+    const partial = createWorld('STARTER_BREACH', [0], false, ROLE_PROMISE_EVALUATION_CALIBRATION.minimumMeasuredGames)
+    const competition = Object.values(partial.world.competitions).find(item => item.participantTeamIds.includes(partial.teamId))!
+    const season = Object.values(partial.world.seasons).find(item => item.competitionId === competition.id)!
+    const completedIds = Object.values(partial.world.games).filter(game => game.status === 'completed' && game.seasonId === season.id
+      && (game.homeTeamId === partial.teamId || game.awayTeamId === partial.teamId)).map(game => game.id)
+    const changed = fireCoachFromTeam(partial.world, partial.teamId)
+    const reviewed = progressRolePromiseInSeasonReviews(changed, completedIds)
+    expect(Object.values(reviewed.memoriesById).some(memory => memory.owner.kind === 'player' && memory.context.rolePromiseId === partial.promise.id)).toBe(true)
+    expect(Object.values(reviewed.memoriesById).some(memory => memory.owner.kind === 'coach' && memory.context.rolePromiseId === partial.promise.id)).toBe(false)
+  })
+
+  it('recovers a pending completed-season review during Save V4 load exactly once', async () => {
+    const scenario = createWorld('STARTER_BREACH')
+    let saved = JSON.stringify(serializeGameWorldV4(scenario.world, '2026-11-02T12:00:00.000Z'))
+    const repo = { save: async (value: string) => { saved = value }, load: async () => saved, getInfo: async () => null }
+    const loaded = await loadSavedGame(repo)
+    expect(Object.values(loaded.memoriesById).filter(memory => memory.context.rolePromiseId === scenario.promise.id && memory.owner.kind === 'player')).toHaveLength(1)
+    const reloaded = await loadSavedGame(repo)
+    expect(Object.values(reloaded.memoriesById).filter(memory => memory.context.rolePromiseId === scenario.promise.id && memory.owner.kind === 'player')).toHaveLength(1)
   })
 })
