@@ -6,6 +6,7 @@ import { getUserTeam } from '@/engine/calendar'
 import { assessContractRelease } from '@/app/market/ContractReleaseService'
 import { assessRetentionEligibility } from '@/engine/contractRetention/ContractRetentionEngine'
 import { assessContractReviewOutlook } from '@/engine/clubNeeds'
+import { deriveRolePromiseUsage } from '@/engine/contractRetention/RolePromiseUsage'
 import { resolveActiveCompetitionSeasonForTeam } from '@/engine/competition'
 import { salaryRulesInForce } from '@/engine/salary'
 import { useGameStore } from '@/stores/gameStore'
@@ -22,6 +23,13 @@ const SECTIONS = [
   { id: 'history', label: 'History' },
 ] as const
 
+function rolePromiseOrigin(id: string): string {
+  if (id.startsWith('role-promise:signed-free-agent:')) return 'Free-agent signing'
+  if (id.startsWith('role-promise:signed-retention:')) return 'Renewal'
+  if (id.startsWith('role-promise:signed-transfer:')) return 'Transfer'
+  return 'Recorded commitment'
+}
+
 type SectionId = (typeof SECTIONS)[number]['id']
 
 /** Remaining contract duration in whole years and months (the manager reads "2 a 9 m", never a raw date difference). */
@@ -37,6 +45,11 @@ function playerName(world: NonNullable<ReturnType<typeof useGameStore.getState>[
 
 export function ContractsWorkspace() {
   const world = useGameStore((state) => state.world)
+  const team = world === null ? undefined : getUserTeam(world)
+  const rolePromiseUsageById = useMemo(() => world === null || team === undefined ? {} : Object.fromEntries(
+    Object.values(world.rolePromisesById).filter((promise) => promise.teamOrganizationId === team.organizationId && promise.status === 'ACTIVE')
+      .map((promise) => [promise.id, deriveRolePromiseUsage(world, promise)]),
+  ), [world, team?.organizationId])
   const decideReview = useGameStore((state) => state.decideContractReview)
   const openRetention = useGameStore((state) => state.openContractRetention)
   const submitOffer = useGameStore((state) => state.submitContractRetentionOffer)
@@ -50,7 +63,6 @@ export function ContractsWorkspace() {
   // Respect PLAYER > CONTRACT's deep link without mutating contract state.
   const focusedPlayerId = typeof window === 'undefined' ? null : new URL(window.location.href).searchParams.get('playerId')
 
-  const team = world === null ? undefined : getUserTeam(world)
   const contracts = useMemo(() => world === null || team === undefined ? [] : Object.values(world.contractsById)
     .filter((contract) => contract.teamId === team.id)
     .sort((a, b) => a.term.expiresOn.localeCompare(b.term.expiresOn) || a.playerId.localeCompare(b.playerId)), [team?.id, world])
@@ -75,6 +87,7 @@ export function ContractsWorkspace() {
       const signedTransaction = Object.values(world.playerTransactionsById).find((item) => item.contractId === contract.id && item.kind === 'signedFreeAgent')
       const review = reviews.find((item) => item.contractId === contract.id)
       const rolePromise = Object.values(world.rolePromisesById).find((item) => item.playerId === contract.playerId && item.teamOrganizationId === team.organizationId && item.status === 'ACTIVE')
+      const roleUsage = rolePromiseUsageById[rolePromise?.id ?? ''] ?? []
       const negotiation = Object.values(world.retentionNegotiationsById).find((item) => item.predecessorContractId === contract.id && !['REJECTED', 'WITHDRAWN', 'EXPIRED'].includes(item.status))
       const status = getPlayerContractStatus(contract, world.currentDate)
       const capRules = salaryRulesInForce(world, team.id, world.currentDate)[0]
@@ -90,7 +103,11 @@ export function ContractsWorkspace() {
         <td>{contractStatus}<div>Through {contract.term.expiresOn}</div>{status === 'active' && <><div data-testid="contract-remaining">Remaining {remainingLabel(world.currentDate, contract.term.expiresOn)}</div><div>{renewalWindowLabel(world, team.id, contract.id, contract.term.expiresOn)}</div><div data-testid="contract-continuity">Future guaranteed years (not yet recognised): {continuityCost(world, contract.id).toLocaleString('es-ES')}</div></>}</td>
         <td>{compensation.cashSalary.toLocaleString()} contract units{cappedSalary ? ` ? cap ${compensation.capHit.toLocaleString()}` : ''}<div>{compensation.guaranteedAmount.toLocaleString()} guaranteed</div></td>
         <td>{successor !== undefined ? `Future successor starts ${successor.term.startsOn}` : predecessor !== undefined ? `Successor of contract ending ${predecessor.term.expiresOn}` : 'No successor'}<div>{signedOn === undefined ? 'No recorded signing date' : `Signed ${signedOn}`}</div>{retentionExecution?.governanceDecisionId !== undefined && <div>Governance: {retentionExecution.governanceDecisionId}</div>}</td>
-        <td>{review?.decision?.replaceAll('_', ' ') ?? 'No intent'}{rolePromise !== undefined && <div>Role promise active</div>}{negotiation !== undefined && <div>Negotiating</div>}{team.coachId === world.userCoachId && <div><select aria-label={`Planning intent for ${playerName(world, contract.playerId)}`} value={review?.decision ?? ''} onChange={(event) => { if (event.target.value) decideReview(team.id, contract.id, event.target.value as 'PURSUE_EXTENSION' | 'ALLOW_EXPIRY' | 'REVIEW_RELEASE' | 'DEFER') }}><option value="">Set intent</option><option value="PURSUE_EXTENSION">Pursue extension</option><option value="ALLOW_EXPIRY">Allow expiry</option><option value="REVIEW_RELEASE">Review release</option><option value="DEFER">Defer</option></select></div>}</td>
+        <td>{review?.decision?.replaceAll('_', ' ') ?? 'No intent'}{rolePromise !== undefined && <div data-testid={`role-promise-usage-${contract.playerId}`}><strong>{rolePromise.role} promise · {rolePromiseOrigin(rolePromise.id)} · accepted {rolePromise.acceptedOn}</strong>{roleUsage.length === 0 ? <div>No completed eligible games yet.</div> : roleUsage.map((window) => {
+          const incomplete = window.evidence.filter((item) => item.status === 'MISSING_MATCH_LOG' || item.status === 'INCOMPLETE_MATCH_LOG').length
+          const excluded = window.evidence.filter((item) => item.status === 'EXCLUDED_INJURY' || item.status === 'EXCLUDED_RESTRICTION').length
+          return <div key={`${window.competitionId}:${window.seasonId}`}>{world.competitions[window.competitionId]?.name ?? 'Competition'} · {window.measuredGames} measured games · {window.starts} starts · {window.appearances} appearances · {Math.floor(window.playerSeconds / 60)} minutes · {window.playingTimeShare === null ? '—' : new Intl.NumberFormat('en-GB', { style: 'percent', maximumFractionDigits: 0 }).format(window.playingTimeShare)} of regulation time{incomplete > 0 ? ` · ${incomplete} games without a complete record` : ''}{excluded > 0 ? ` · ${excluded} availability exclusions` : ''}</div>
+        })}<small>Usage evidence only; no fulfilment decision is active.</small></div>}{negotiation !== undefined && <div>Negotiating</div>}{team.coachId === world.userCoachId && <div><select aria-label={`Planning intent for ${playerName(world, contract.playerId)}`} value={review?.decision ?? ''} onChange={(event) => { if (event.target.value) decideReview(team.id, contract.id, event.target.value as 'PURSUE_EXTENSION' | 'ALLOW_EXPIRY' | 'REVIEW_RELEASE' | 'DEFER') }}><option value="">Set intent</option><option value="PURSUE_EXTENSION">Pursue extension</option><option value="ALLOW_EXPIRY">Allow expiry</option><option value="REVIEW_RELEASE">Review release</option><option value="DEFER">Defer</option></select></div>}</td>
       </tr>
     })}</tbody></table></div>
 

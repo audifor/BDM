@@ -21,12 +21,15 @@ describe('ContractsWorkspace', () => {
     const playerId = team.rosterPlayerIds[0]!
     const contract = Object.values(base.contractsById).find((item) => item.teamId === team.id && item.playerId === playerId)!
     const expiring = { ...contract, term: { ...contract.term, expiresOn: addDays(base.currentDate, 90) } }
-    const world = updateGameWorld(base, { contracts: Object.values(base.contractsById).map((item) => item.id === contract.id ? expiring : item) })
+    const rolePromise = { id: 'role-promise:signed-free-agent:test', playerId, teamOrganizationId: team.organizationId, role: 'ROTATION' as const, acceptedOn: base.currentDate, status: 'ACTIVE' as const }
+    const world = updateGameWorld(base, { contracts: Object.values(base.contractsById).map((item) => item.id === contract.id ? expiring : item), rolePromises: [rolePromise] })
     useGameStore.getState().replaceWorld(world)
 
     render(<ContractsWorkspace />)
     expect(screen.getByRole('heading', { name: 'Current roster contracts' })).toBeInTheDocument()
     expect(screen.getByText(`${base.players[playerId]!.firstName} ${base.players[playerId]!.lastName}`)).toBeInTheDocument()
+    expect(screen.getByTestId(`role-promise-usage-${playerId}`)).toHaveTextContent('ROTATION promise · Free-agent signing')
+    expect(screen.getByTestId(`role-promise-usage-${playerId}`)).toHaveTextContent('No completed eligible games yet.')
     fireEvent.click(screen.getByRole('button', { name: 'Expiring' }))
     expect(screen.getByRole('heading', { name: 'Expiring and planning' })).toBeInTheDocument()
     fireEvent.change(screen.getByLabelText(`Planning intent for ${base.players[playerId]!.firstName} ${base.players[playerId]!.lastName}`), { target: { value: 'PURSUE_EXTENSION' } })
