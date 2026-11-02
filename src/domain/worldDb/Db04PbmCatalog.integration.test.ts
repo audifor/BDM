@@ -27,6 +27,7 @@ function runCli(...args: string[]) {
 }
 
 describe('DB-06 real DB-04 catalog reader', () => {
+  // The first CLI call may compile the Rust binary on a cold worktree.
   it('lists countries and PBM competitions with explicit certification states', () => {
     const countries = parseDb04PbmCountriesResponseV1(readCli('countries'))
     expect(countries.countries).toHaveLength(210)
@@ -46,7 +47,7 @@ describe('DB-06 real DB-04 catalog reader', () => {
     const unknownCountry = runCli('competitions', '--country', 'ZZZ')
     expect(unknownCountry.status).not.toBe(0)
     expect(unknownCountry.stderr).toContain('Unknown PBM source country code: ZZZ')
-  })
+  }, 120_000)
 
   it('reads the exact ACB edition, participant identities, sources and graph into existing BDM contracts', () => {
     const raw = readCli('competition', '--id', 'competition:ESP:liga-endesa')
