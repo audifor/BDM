@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>MatchEngine Next · Phaser POC</title>
+    <style>
+      html,
+      body,
+      #root {
+        margin: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #0b0f14;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module">
+      const params = new URLSearchParams(location.search)
+      const seed = params.get('seed') ? Number(params.get('seed')) : undefined
+      const pace = params.get('pace') ? Number(params.get('pace')) : undefined
+      const { mountMatchPhaserDemo } = await import('/src/presentation/match-phaser/dev/mountMatchPhaserDemo.ts')
+      const handle = mountMatchPhaserDemo(document.getElementById('root'), {
+        ...(seed !== undefined && Number.isFinite(seed) ? { seed } : {}),
+        ...(pace !== undefined && Number.isFinite(pace) ? { enginePace: pace } : {}),
+      })
+      window.__bdmMatchPhaserDemo = handle
+    </script>
+  </body>
+</html>
