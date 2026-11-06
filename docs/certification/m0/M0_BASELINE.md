@@ -337,3 +337,70 @@ Additional repository checks:
 Recommended next task: M0.2, extending the same isolated suite to the next approved
 multi-day/season scope with an explicit mandatory-decision policy and breakpoint
 inventory. M0.2–M0.6 are **NOT_RUN** and are not implemented by this milestone.
+
+## Performance baseline added by M0.2a
+
+The preceding sections are the preserved historical M0.1 report. Its original
+certified commit is `16512bafd624c904ec1ca95c008733671b6938e2`; the historical
+`git log -1 -- <report>` recipe now also sees this additive update. M0.1 remains
+**PASS** with the exact same initial/final hashes, scores, four stat logs per run
+and eight real production executions. M0.2a adds timing without relaxing any
+canonical-state assertion or rebuilding the dedicated Vitest configuration.
+
+Timing uses `performance.now()` only around certification work. Every measurement
+is returned separately from GameWorld and logged after canonical comparisons;
+none feeds seeds, IDs, action order or state hashes. Both worlds are independently
+bootstrapped from the original configuration and root seed **20261106**.
+
+Measurement boundaries:
+
+- `bootstrapMs`: that world's `generateWorld` plus real schedule generation and
+  canonical `updateGameWorld`, including validation done by those factories and
+  service. Excludes the test's later explicit initial-world validations, initial
+  cross-world comparisons and the intentional blocked-advance guard probe.
+- `userMatchMs`: the synchronous `instantResult` call only. Includes canonical
+  match preparation, real Match Next FAST simulation, result/stat/consequence
+  application and the production completion boundary's world validation. Excludes
+  subsequent test assertions and explicit additional validation.
+- `dayAdvanceMs`: the synchronous `advanceGameDayWithResult` call only. Includes
+  breakpoint checks, preparation/simulation/application of the **three remaining
+  opening-round matches**, calendar lifecycle, phase diagnostics and production
+  day-publication validation. The already completed user match is not run again.
+- `completedMatches`: four per independent run, including the user match.
+- `scenarioTotalMs`: the sum of that world's bootstrap interval and its own
+  `certify` interval, including resolution-side candidate checks, assertions,
+  explicit post-match/final world validation and stat-conservation checks. It is
+  measured directly from those two disjoint intervals, not by adding match timings
+  again. It excludes imports, the other world's work, initial comparison/guard
+  probes and final cross-run comparisons. Consequently it is not total Vitest
+  process wall time. Component metrics are subdivisions, not extra work to add to
+  this total.
+
+Observed in a dedicated invocation after focused regressions/typecheck had
+completed (milliseconds rounded to three decimals):
+
+- Independent run 1: `bootstrapMs=60.917`, `userMatchMs=4739.691`,
+  `dayAdvanceMs=10584.464`, `completedMatches=4`, `scenarioTotalMs=15400.209`.
+- Independent run 2: `bootstrapMs=19.543`, `userMatchMs=2866.949`,
+  `dayAdvanceMs=9006.527`, `completedMatches=4`, `scenarioTotalMs=11902.848`.
+- Component-wise median of the two observations: `bootstrapMs=40.230`,
+  `userMatchMs=3803.320`, `dayAdvanceMs=9795.495`, `completedMatches=4`,
+  `scenarioTotalMs=13651.528`.
+
+Exact timing stdout from
+`npm run test:m0 -- --reporter=verbose --disableConsoleIntercept`:
+
+```text
+M0.1 timing {"runs":[{"bootstrapMs":60.91699999999946,"userMatchMs":4739.6911,"dayAdvanceMs":10584.4639,"completedMatches":4,"scenarioTotalMs":15400.209099999996},{"bootstrapMs":19.542699999999968,"userMatchMs":2866.949199999999,"dayAdvanceMs":9006.526700000002,"completedMatches":4,"scenarioTotalMs":11902.847599999997}]}
+```
+
+Per-match timings for the three day-advance games are **NOT_RUN / not separately
+isolated**: production exposes a combined resolution phase, not a reliable
+per-game wall-clock metric. No fabricated per-match division or production
+instrumentation change is used. Cold/warm JIT, host load and only two observations
+limit interpretation. This one-day benchmark establishes observed local timing,
+not reliable full-season throughput or a season-duration prediction.
+
+M0.2a's resolver scenarios and reason inventory are reported separately in
+`M0_2A_CERTIFICATION.md` and `M0_BREAKPOINT_INVENTORY.md`; they do not retroactively
+expand M0.1's first-round certification claim.

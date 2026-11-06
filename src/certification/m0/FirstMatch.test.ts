@@ -1,46 +1,20 @@
-import { createHash } from 'node:crypto'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { createGameDate } from '@/domain/date'
 import type { Game } from '@/domain/game'
-import { updateGameWorld, validateGameWorld, type GameWorld } from '@/domain/world'
+import { validateGameWorld, type GameWorld } from '@/domain/world'
 import { getScheduledGamesToday, getUserTeam } from '@/engine/calendar'
-import { generateRoundRobinSchedule } from '@/engine/competition/schedule'
-import { hashStringToSeed } from '@/engine/random'
-import { generateWorld } from '@/engine/world'
 import { advanceGameDayWithResult, assertSimulationMayAdvance, SimulationAdvanceBlockedError } from '@/app/game/advanceGameDay'
 import { instantResult } from '@/app/game/matchResolution'
 import { evaluateSimulationBreakpoints, type SimulationBreakpointResult } from '@/app/game/SimulationBreakpoints'
 import { MatchNextEnginePort } from '@/app/matchNext/MatchNextEnginePort'
-
-const ROOT_SEED = 20261106
-const configuration = { seed: ROOT_SEED, gender: 'male', startDate: createGameDate(2032, 10, 1) } as const
-
-function bootstrap(): GameWorld {
-  const world = generateWorld(configuration)
-  return updateGameWorld(world, { games: generateRoundRobinSchedule({ world, seasonId: world.currentSeasonId }) })
-}
-
-// All canonical JSON state is included; only object keys are sorted. Arrays retain order.
-function canonical(value: unknown): string {
-  return JSON.stringify(value, (_key, item: unknown) => item !== null && typeof item === 'object' && !Array.isArray(item)
-    ? Object.fromEntries(Object.entries(item).sort(([left], [right]) => left < right ? -1 : left > right ? 1 : 0))
-    : item)
-}
-
-function digest(value: unknown): string {
-  return createHash('sha256').update(canonical(value)).digest('hex')
-}
-
-function seedFor(game: Game): number {
-  return hashStringToSeed(`m0-match-v1:${ROOT_SEED}:${game.seasonId}:${game.competitionId}:${game.id}:${game.date}`)
-}
+import { bootstrap, canonical, configuration, digest, seedFor } from './M0Support'
 
 function unresolved(decision: SimulationBreakpointResult) {
   // Never select only the highest-priority candidate: a userGame cannot hide another obligation.
   return decision.candidates.filter(item => (item.level === 'ACTION_REQUIRED' || item.level === 'BLOCKING') && item.reason !== 'userGame')
 }
 
-function certify(initial: GameWorld) {
+function certify(initial: GameWorld, bootstrapMs: number) {
+  const scenarioStarted = performance.now()
   let world = initial
   const breakpoints: object[] = []
   const seeds: { gameId: string; seed: number }[] = []
@@ -63,7 +37,9 @@ function certify(initial: GameWorld) {
   expect(game.result).toBeNull()
   const seed = seedFor(game)
   seeds.push({ gameId: game.id, seed })
+  const userMatchStarted = performance.now()
   world = instantResult(world, undefined, seed)
+  const userMatchMs = performance.now() - userMatchStarted
   expect(world.games[game.id]!.status).toBe('completed')
   expect(evaluateSimulationBreakpoints(world).candidates.some(item => item.reason === 'userGame')).toBe(false)
   Object.assign(breakpoints.find(item => 'sourceId' in item && item.sourceId === game.id)!, { resultingStatus: 'RESOLVED' })
@@ -74,6 +50,7 @@ function certify(initial: GameWorld) {
   let draw = 0
   // MatchSeedFactory has no Game parameter. Bind its draws to the production schedule order,
   // hashing each Game's stable identity rather than introducing a counter-based RNG authority.
+  const dayStarted = performance.now()
   const day = advanceGameDayWithResult(world, () => {
     const scheduled = remaining[draw++]
     if (scheduled === undefined) throw new Error('Unexpected match seed draw')
@@ -81,6 +58,7 @@ function certify(initial: GameWorld) {
     seeds.push({ gameId: scheduled.id, seed: nextSeed })
     return nextSeed
   }, [])
+  const dayAdvanceMs = performance.now() - dayStarted
   expect(day.failure).toBeUndefined()
   expect(['COMPLETED', 'BREAKPOINT_AFTER_PROCESSING']).toContain(day.status)
   expect(draw).toBe(remaining.length)
@@ -106,7 +84,9 @@ function certify(initial: GameWorld) {
       expect(lines.reduce((sum, line) => sum + line.stats.points, 0)).toBe(teamId === match.homeTeamId ? log.finalScore.home : log.finalScore.away)
     }
   }
-  return { world, completed, seeds, breakpoints, daysAdvanced: 1 }
+  const timing = { bootstrapMs, userMatchMs, dayAdvanceMs, completedMatches: completed.length,
+    scenarioTotalMs: bootstrapMs + performance.now() - scenarioStarted }
+  return { world, completed, seeds, breakpoints, daysAdvanced: 1, timing }
 }
 
 describe('M0.1 deterministic headless first production match', () => {
@@ -115,8 +95,12 @@ describe('M0.1 deterministic headless first production match', () => {
   it('bootstraps two canonical worlds and persists identical real Match Next results without bypassing decisions', () => {
     expect(typeof document).toBe('undefined')
     const simulate = vi.spyOn(MatchNextEnginePort.prototype, 'simulate') // Pass-through: the real engine runs.
+    const firstStarted = performance.now()
     const first = bootstrap()
+    const firstBootstrapMs = performance.now() - firstStarted
+    const secondStarted = performance.now()
     const second = bootstrap()
+    const secondBootstrapMs = performance.now() - secondStarted
     validateGameWorld(first)
     validateGameWorld(second)
     expect(canonical(first)).toBe(canonical(second))
@@ -137,8 +121,8 @@ describe('M0.1 deterministic headless first production match', () => {
     expect(canonical(first)).toBe(before)
     expect(simulate).not.toHaveBeenCalled()
 
-    const a = certify(first)
-    const b = certify(second)
+    const a = certify(first, firstBootstrapMs)
+    const b = certify(second, secondBootstrapMs)
     expect(canonical(first)).toBe(before)
     expect(a.completed.map(game => game.id)).toEqual(b.completed.map(game => game.id))
     expect(a.completed.map(game => game.result)).toEqual(b.completed.map(game => game.result))
@@ -162,6 +146,7 @@ describe('M0.1 deterministic headless first production match', () => {
     console.log('M0.1 evidence', JSON.stringify({ status: 'PASS', configuration, initialHash: digest(first), finalHash: digest(a.world),
       daysAdvanced: a.daysAdvanced, seeds: a.seeds, completed: a.completed.map(game => ({ id: game.id, result: game.result })),
       statLogs: Object.keys(a.world.matchStatLogsByGameId).length, breakpoints: a.breakpoints, productionExecutions: simulate.mock.calls.length }))
+    console.log('M0.1 timing', JSON.stringify({ runs: [a.timing, b.timing] }))
   })
 
   it('detects every mandatory candidate, including one below the user-game priority', () => {
