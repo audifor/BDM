@@ -8,6 +8,7 @@
     "build": "tsc -b && vite build",
     "typecheck": "tsc -b --pretty false",
     "test": "vitest run --passWithNoTests",
+    "test:m0": "vitest run --config vitest.m0.config.ts",
     "test:watch": "vitest",
     "tauri": "tauri"
   },

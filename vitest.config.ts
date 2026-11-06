@@ -1,4 +1,4 @@
-import { defineConfig } from 'vitest/config'
+import { configDefaults, defineConfig } from 'vitest/config'
 import { fileURLToPath, URL } from 'node:url'
 
 export default defineConfig({
@@ -9,6 +9,7 @@ export default defineConfig({
   },
   test: {
     environment: 'node',
+    exclude: [...configDefaults.exclude, 'src/certification/m0/**'],
     // Vitest forks do not inherit the parent's V8 flags. Long-horizon memory
     // measurements require actual forced GC in the simulation worker.
     ...(process.env.BS15I_LONG_HORIZON === '1' || process.env.BS15I_CLOSURE_REPLAY ? {
